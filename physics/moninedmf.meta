@@ -567,6 +567,20 @@
   type = real
   kind = kind_phys
   intent = inout
+[do3dt_PBL]
+  standard_name = cumulative_change_in_ozone_mixing_ratio_due_to_PBL
+  long_name = cumulative change in ozone mixing ratio due to PBL
+  units = kg kg-1
+  dimensions = (horizontal_dimension,vertical_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
+[flag_for_pbl_generic_tend]
+  standard_name = true_if_GFS_PBL_generic_should_calculate_tendencies
+  long_name = true if GFS_PBL_generic should calculate tendencies
+  units = flag
+  dimensions = ()
+  type = logical
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP
