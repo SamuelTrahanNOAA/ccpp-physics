@@ -1307,14 +1307,24 @@ c
             rtg(i,k,1) = rtg(i,k,1)+qtend
             dtsfc(i)   = dtsfc(i)+cont*del(i,k)*ttend
             dqsfc(i)   = dqsfc(i)+conq*del(i,k)*qtend
-            if(ldiag3d) then
-               dt3dt(i,k) = dt3dt(i,k)+dspfac*ttend
-               if(qdiag3d) then
-                  dq3dt(i,k) = dq3dt(i,k)+dspfac*qtend
-               endif
-            endif
          enddo
       enddo
+      if(ldiag3d) then
+        do  k = 1,km
+          do i = 1,im
+            ttend      = (f1(i,k)-t1(i,k))*rdt
+            dt3dt(i,k) = dt3dt(i,k)+dspfac*ttend*delt
+          enddo
+        enddo
+        if(qdiag3d) then
+          do  k = 1,km
+            do i = 1,im
+              qtend      = (f2(i,k)-q1(i,k,1))*rdt
+              dq3dt(i,k) = dq3dt(i,k)+dspfac*qtend*delt
+            enddo
+          enddo
+        endif
+      endif
 !
       if(ntrac1 >= 2) then
         do kk = 2, ntrac1
@@ -1323,28 +1333,40 @@ c
             do i = 1, im
               qtend = (f2(i,k+is)-q1(i,k,kk))*rdt
               rtg(i,k,kk) = rtg(i,k,kk)+qtend
-              if(kk==ntoz) then
-                 do3dt(i,k) = do3dt(i,k)+qtend
-              endif
             enddo
           enddo
         enddo
+        if(ldiag3d .and. qdiag3d .and. ntoz>0) then
+          kk=ntoz
+          is = (kk-1) * km
+          do k = 1, km
+            do i = 1, im
+              qtend = (f2(i,k+is)-q1(i,k,kk))*rdt
+              do3dt(i,k) = do3dt(i,k)+qtend*delt
+            enddo
+          enddo
+        endif
       endif
 !
 !     add tke dissipative heating to temperature tendency
 !
       if(dspheat) then
-      do k = 1,km1
-        do i = 1,im
-!         tem = min(diss(i,k), dspmax)
-!         ttend = tem / cp
-          ttend = diss(i,k) / cp
-          tdt(i,k) = tdt(i,k) + dspfac * ttend
-          if(ldiag3d) then
-             dt3dt(i,k) = dt3dt(i,k)+dspfac * ttend
-          endif
+        do k = 1,km1
+          do i = 1,im
+!           tem = min(diss(i,k), dspmax)
+!           ttend = tem / cp
+            ttend = diss(i,k) / cp
+            tdt(i,k) = tdt(i,k) + dspfac * ttend
+          enddo
         enddo
-      enddo
+        if(ldiag3d) then
+          do k = 1,km1
+            do i = 1,im
+              ttend = diss(i,k) / cp
+              dt3dt(i,k) = dt3dt(i,k)+dspfac * ttend*delt
+            enddo
+          enddo
+        endif
       endif
 c
 c     compute tridiagonal matrix elements for momentum
@@ -1419,13 +1441,18 @@ c
             dv(i,k)  = dv(i,k)+vtend
             dusfc(i) = dusfc(i)+conw*del(i,k)*utend
             dvsfc(i) = dvsfc(i)+conw*del(i,k)*vtend
-
-            if(ldiag3d) then
-               du3dt(i,k) = du3dt(i,k) + utend
-               dv3dt(i,k) = dv3dt(i,k) + vtend
-            endif
          enddo
       enddo
+      if(ldiag3d) then
+        do k = 1,km
+          do i = 1,im
+            utend = (f1(i,k)-u1(i,k))*rdt
+            vtend = (f2(i,k)-v1(i,k))*rdt
+            du3dt(i,k) = du3dt(i,k) + utend*delt
+            dv3dt(i,k) = dv3dt(i,k) + vtend*delt
+          enddo
+        enddo
+      endif
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !  pbl height for diagnostic purpose
