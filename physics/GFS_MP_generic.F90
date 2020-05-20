@@ -16,12 +16,12 @@
 !> \section arg_table_GFS_MP_generic_pre_run Argument Table
 !! \htmlinclude GFS_MP_generic_pre_run.html
 !!
-      subroutine GFS_MP_generic_pre_run(im, levs, ldiag3d, do_aw, ntcw, nncl, ntrac, gt0, gq0, save_t, save_q, errmsg, errflg)
+      subroutine GFS_MP_generic_pre_run(im, levs, ldiag3d, do_aw, ntcw, nncl, ntrac, gt0, gq0, save_t, save_q, num_dfi_radar, errmsg, errflg)
 !
       use machine,               only: kind_phys
 
       implicit none
-      integer,                                          intent(in) :: im, levs, ntcw, nncl, ntrac
+      integer,                                          intent(in) :: im, levs, ntcw, nncl, ntrac, num_dfi_radar
       logical,                                          intent(in) :: ldiag3d, do_aw
       real(kind=kind_phys), dimension(im, levs),        intent(in) :: gt0
       real(kind=kind_phys), dimension(im, levs, ntrac), intent(in) :: gq0
@@ -38,6 +38,14 @@
       errmsg = ''
       errflg = 0
 
+      if (ldiag3d .or. do_aw .or. num_dfi_radar>0) then
+        do k=1,levs
+          do i=1,im
+            save_t(i,k) = gt0(i,k)
+          enddo
+        enddo
+      endif
+    
       if (ldiag3d .or. do_aw) then
         do k=1,levs
           do i=1,im
@@ -86,24 +94,29 @@
         graupel0, del, rain, domr_diag, domzr_diag, domip_diag, doms_diag, tprcp, srflag, sr, cnvprcp, totprcp, totice,   &
         totsnw, totgrp, cnvprcpb, totprcpb, toticeb, totsnwb, totgrpb, dt3dt, dq3dt, rain_cpl, rainc_cpl, snow_cpl, pwat, &
         do_sppt, dtdtr, dtdtc, drain_cpl, dsnow_cpl, lsm, lsm_ruc, lsm_noahmp, raincprv, rainncprv, iceprv, snowprv,      &
-        graupelprv, draincprv, drainncprv, diceprv, dsnowprv, dgraupelprv, dtp, errmsg, errflg)
+        graupelprv, draincprv, drainncprv, diceprv, dsnowprv, dgraupelprv, dtp, num_dfi_radar, fh_dfi_radar,              &
+        ix_dfi_radar, dfi_radar_tten, fhour, errmsg, errflg)
 !
       use machine, only: kind_phys
 
       implicit none
 
       integer, intent(in) :: im, ix, levs, kdt, nrcm, ncld, nncl, ntcw, ntrac
-      integer, intent(in) :: imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_mg, imp_physics_fer_hires
+      integer, intent(in) :: imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_mg, imp_physics_fer_hires, num_dfi_radar
       logical, intent(in) :: cal_pre, lssav, ldiag3d, cplflx, cplchm
 
-      real(kind=kind_phys),                           intent(in)    :: dtf, frain, con_g
+      real(kind=kind_phys),                           intent(in)    :: dtf, frain, con_g, fh_dfi_radar(5), fhour
+      integer                                                       :: ix_dfi_radar(4)
       real(kind=kind_phys), dimension(im),            intent(in)    :: rainc, rain1, xlat, xlon, tsfc
       real(kind=kind_phys), dimension(im),            intent(inout) :: ice, snow, graupel
       real(kind=kind_phys), dimension(im),            intent(in)    :: rain0, ice0, snow0, graupel0
       real(kind=kind_phys), dimension(ix,nrcm),       intent(in)    :: rann
-      real(kind=kind_phys), dimension(im,levs),       intent(in)    :: gt0, prsl, save_t, save_qv, del
+      real(kind=kind_phys), dimension(im,levs),       intent(inout) :: gt0
+      real(kind=kind_phys), dimension(im,levs),       intent(in)    :: prsl, save_t, save_qv, del
       real(kind=kind_phys), dimension(im,levs+1),     intent(in)    :: prsi, phii
       real(kind=kind_phys), dimension(im,levs,ntrac), intent(in)    :: gq0
+
+      real(kind=kind_phys), dimension(:,:,:), pointer, intent(in)   :: dfi_radar_tten
 
       real(kind=kind_phys), dimension(im),      intent(in   ) :: sr
       real(kind=kind_phys), dimension(im),      intent(inout) :: rain, domr_diag, domzr_diag, domip_diag, doms_diag, tprcp,  &
@@ -146,10 +159,10 @@
       real(kind=kind_phys), parameter :: p850    = 85000.0d0
       ! *DH
 
-      integer :: i, k, ic
+      integer :: i, k, ic, itime, count
 
       real(kind=kind_phys), parameter :: zero = 0.0d0, one = 1.0d0
-      real(kind=kind_phys) :: crain, csnow, onebg, tem, total_precip
+      real(kind=kind_phys) :: crain, csnow, onebg, tem, total_precip, sumabs, ttend
       real(kind=kind_phys), dimension(im) :: domr, domzr, domip, doms, t850, work1
 
       ! Initialize CCPP error handling variables
@@ -157,6 +170,33 @@
       errflg = 0
 
       onebg = one/con_g
+
+      do itime=1,num_dfi_radar
+         if(ix_dfi_radar(itime)<1) cycle
+         if(fhour<fh_dfi_radar(itime)) cycle
+         if(fhour>=fh_dfi_radar(itime+1)) cycle
+         exit
+      enddo
+      if_radar: if(itime<=num_dfi_radar) then
+         count=0
+         sumabs=0
+         radar_k: do k=1,levs
+            radar_i: do i=1,im
+               ttend=dfi_radar_tten(i,k,itime)*dtp
+               if_active: if (ttend > -.1 .and. ttend < .1) then
+                  ttend=ttend*dtp
+                  count=count+1
+                  sumabs=sumabs+abs(ttend)
+                  ! add radar temp tendency
+                  ! there is radar coverage
+                  gt0(i,k) = save_t(i,k) + ttend
+               endif if_active
+            enddo radar_i
+         enddo radar_k
+303      format('DFI set ',I0,' tendencies of ',I0,' points avg(abs(...))=',F20.12)
+!         if(count>0 .and. sumabs>1e-12) &
+!              write(0,303) count,levs*im,sumabs/count
+      endif if_radar
       
       do i = 1, im
         rain(i) = rainc(i) + frain * rain1(i) ! time-step convective plus explicit
