@@ -180,7 +180,7 @@
       if_radar: if(itime<=num_dfi_radar) then
          count=0
          sumabs=0
-         radar_k: do k=1,levs
+         radar_k: do k=3,levs
             radar_i: do i=1,im
                ttend=dfi_radar_tten(i,k,itime)*dtp
                if_active: if (ttend > -.1 .and. ttend < .1) then
