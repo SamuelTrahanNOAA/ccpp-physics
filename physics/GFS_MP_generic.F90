@@ -159,10 +159,10 @@
       real(kind=kind_phys), parameter :: p850    = 85000.0d0
       ! *DH
 
-      integer :: i, k, ic, itime, count
+      integer :: i, k, ic, itime
 
       real(kind=kind_phys), parameter :: zero = 0.0d0, one = 1.0d0
-      real(kind=kind_phys) :: crain, csnow, onebg, tem, total_precip, sumabs, ttend
+      real(kind=kind_phys) :: crain, csnow, onebg, tem, total_precip, ttend
       real(kind=kind_phys), dimension(im) :: domr, domzr, domip, doms, t850, work1
 
       ! Initialize CCPP error handling variables
@@ -178,15 +178,10 @@
          exit
       enddo
       if_radar: if(itime<=num_dfi_radar) then
-         count=0
-         sumabs=0
          radar_k: do k=3,levs-2
             radar_i: do i=1,im
                ttend=dfi_radar_tten(i,k,itime)*dtp
                if_active: if (ttend > -.1 .and. ttend < .1) then
-                  ttend=ttend*dtp
-                  count=count+1
-                  sumabs=sumabs+abs(ttend)
                   ! add radar temp tendency
                   ! there is radar coverage
                   gt0(i,k) = save_t(i,k) + ttend
@@ -194,8 +189,6 @@
             enddo radar_i
          enddo radar_k
 303      format('DFI set ',I0,' tendencies of ',I0,' points avg(abs(...))=',F20.12)
-!         if(count>0 .and. sumabs>1e-12) &
-!              write(0,303) count,levs*im,sumabs/count
       endif if_radar
       
       do i = 1, im
