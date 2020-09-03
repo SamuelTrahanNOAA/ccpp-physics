@@ -75,6 +75,7 @@ contains
                hbot,htop,kcnv,xland,hfx2,qfx2,cliw,clcw,                        &
                pbl,ud_mf,dd_mf,dt_mf,cnvw_moist,cnvc,imfshalcnv,                &
                nwfa,con_rd,gq0,ntinc,ntlnc,imp_physics,imp_physics_thompson,    &
+               fhour,fh_dfi_radar,ix_dfi_radar,num_dfi_radar,dfi_radar_tten,    &
                errmsg,errflg)
 !-------------------------------------------------------------
       implicit none
@@ -105,6 +106,10 @@ contains
    real(kind=kind_phys),  dimension( ix , km, 11 ) :: gdc,gdc2
    real(kind=kind_phys),  dimension( ix , km ),     intent(out ) :: cnvw_moist,cnvc
    real(kind=kind_phys),  dimension( ix , km ), intent(inout ) :: cliw, clcw
+
+   real(kind=kind_phys), intent(in) :: fhour, fh_dfi_radar(5)
+   integer, intent(in) :: num_dfi_radar, ix_dfi_radar(4)
+   real(kind=kind_phys), intent(in), pointer :: dfi_radar_tten(:,:,:)
 
 !  change from ix to im
    integer, dimension (im), intent(inout) :: hbot,htop,kcnv
@@ -190,6 +195,9 @@ contains
    real(kind=kind_phys), dimension (im)  :: hfx,qfx
    real(kind=kind_phys) tem,tem1,tf,tcr,tcrf
 
+   real(kind=kind_phys) :: cap_suppress_j(km)
+   integer :: itime, do_cap_suppress
+
    parameter (tf=243.16, tcr=270.16, tcrf=1.0/(tcr-tf))
   !parameter (tf=263.16, tcr=273.16, tcrf=1.0/(tcr-tf))
   !parameter (tf=233.16, tcr=263.16, tcrf=1.0/(tcr-tf))
@@ -197,6 +205,21 @@ contains
   ! initialize ccpp error handling variables
      errmsg = ''
      errflg = 0
+
+     do itime=1,num_dfi_radar
+        if(ix_dfi_radar(itime)<1) cycle
+        if(fhour<fh_dfi_radar(itime)) cycle
+        if(fhour>=fh_dfi_radar(itime+1)) cycle
+        exit
+     enddo
+     if_radar: if(itime<=num_dfi_radar) then
+        do_cap_suppress = 1
+        cap_suppress_j = dfi_radar_tten(1,1:km,itime)
+     else
+        do_cap_suppress = 0
+        cap_suppress_j = 0
+     endif if_radar
+
 !
 ! Scale specific humidity to dry mixing ratio
 !
@@ -576,9 +599,7 @@ contains
                                ! more is possible, talk to developer or
                                ! implement yourself. pattern is expected to be
                                ! betwee -1 and +1
-#if ( wrf_dfi_radar == 1 )
-              ,do_capsuppress,cap_suppress_j &
-#endif
+              ,do_cap_suppress,cap_suppress_j &
               ,k22m          &
               ,jminm,tropics)
 
@@ -657,9 +678,7 @@ contains
                                ! more is possible, talk to developer or
                                ! implement yourself. pattern is expected to be
                                ! betwee -1 and +1
-#if ( wrf_dfi_radar == 1 )
-              ,do_capsuppress,cap_suppress_j &
-#endif
+              ,do_cap_suppress,cap_suppress_j &
               ,k22          &
               ,jmin,tropics)
           jpr=0
