@@ -30,6 +30,7 @@
           gasvmr_co,    gasvmr_cfc11, gasvmr_cfc12,                  &
           gasvmr_cfc22, gasvmr_ccl4,  gasvmr_cfc113,                 &
           faersw1,  faersw2,  faersw3,                               &
+          cplchm_rad_opt,faersw_cpl,                                 &
           faerlw1, faerlw2, faerlw3, aerodp,                         &
           clouds1, clouds2, clouds3, clouds4, clouds5, clouds6,      &
           clouds7, clouds8, clouds9, cldsa, cldfra,                  &
@@ -117,6 +118,8 @@
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1),lm+LTP,NBDLW), intent(out) :: faerlw1, &
                                                                              faerlw2, faerlw3
+      real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levr+LTP,14,3),intent(inout) :: faersw_cpl
+      logical, intent(in) :: cplchm_rad_opt
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1),NSPC1),        intent(out) :: aerodp
 
@@ -512,6 +515,19 @@
           enddo
         enddo
        enddo
+
+      if(cplchm_rad_opt.and.maxval(faersw_cpl(:,:,:,1)).gt.0.) then !  use chemistry feedback
+       do j = 1,14
+        do k = 1, LMK
+          do i = 1, IM
+            ! NF_AESW = 3
+            faersw1(i,k,j) = faersw_cpl(i,k,j,1)
+            faersw2(i,k,j) = faersw_cpl(i,k,j,2)
+            faersw3(i,k,j) = faersw_cpl(i,k,j,3)
+          enddo
+        enddo
+       enddo
+      endif
 
       do j = 1,NBDLW
         do k = 1, LMK
