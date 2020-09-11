@@ -1,3 +1,8 @@
+[ccpp-table-properties]
+  name = gsd_chem_driver
+  type = scheme
+  dependencies = gsd_chem_prep.F90,gsd_chem_config.F90,seas_data_mod.F90,seas_ngac_mod.F90,seas_mod.F90,dust_data_mod.F90,dust_gocart_mod.F90,dust_afwa_mod.F90,dust_fengsha_mod.F90,plume_zero_mod.F90,plume_scalar_mod.F90,plume_data_mod.F90,plume_rise_mod.F90,dep_dry_mod.F90,dep_dry_gocart_mod.F90,dep_simple_mod.F90,dep_vertmx_mod.F90,dep_wet_ls_mod.F90,gocart_settling_mod.F90,gocart_dmsemis_mod.F90,gocart_chem_mod.F90,gocart_aerosols_mod.F90,opt_mod.F90,opt_gocart_mod.F90,opt_driver_mod.F90,opt_data_mod.F90,opt_averaging_mod.F90,opt_aer_mod.F90,opt_aer_ra_mod.F90,opt_aer_out_mod.F90,aero_soa_vbs_data_mod.F90,vash_settling_mod.F90
+
 [ccpp-arg-table]
   name = gsd_chem_driver_init
   type = scheme
@@ -99,7 +104,7 @@
 [rlat]
   standard_name = latitude
   long_name = latitude
-  units = radians
+  units = radian
   dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
@@ -108,7 +113,7 @@
 [rlon]
   standard_name = longitude
   long_name = longitude
-  units = radians
+  units = radian
   dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
