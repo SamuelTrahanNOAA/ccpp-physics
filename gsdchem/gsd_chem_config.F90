@@ -277,4 +277,4 @@ module gsd_chem_config
     !end select
 
 
-end module
+end module gsd_chem_config
