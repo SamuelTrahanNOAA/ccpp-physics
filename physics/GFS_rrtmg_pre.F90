@@ -118,7 +118,7 @@
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1),lm+LTP,NBDLW), intent(out) :: faerlw1, &
                                                                              faerlw2, faerlw3
-      real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levr+LTP,14,3),intent(inout) :: faersw_cpl
+      real(kind=kind_phys), dimension(:,:,:,:), optional,intent(inout) :: faersw_cpl
       logical, intent(in) :: cplchm_rad_opt
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1),NSPC1),        intent(out) :: aerodp
@@ -516,7 +516,8 @@
         enddo
        enddo
 
-      if(cplchm_rad_opt.and.maxval(faersw_cpl(:,:,:,1)).gt.0.) then !  use chemistry feedback
+      if(cplchm_rad_opt) then
+       if(maxval(faersw_cpl(:,:,:,1)).gt.0.) then !  use chemistry feedback
        do j = 1,14
         do k = 1, LMK
           do i = 1, IM
@@ -527,6 +528,7 @@
           enddo
         enddo
        enddo
+       endif
       endif
 
       do j = 1,NBDLW
