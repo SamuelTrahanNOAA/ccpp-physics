@@ -516,7 +516,7 @@
         enddo
        enddo
 
-      if(cplchm_rad_opt) then
+      if(cplchm_rad_opt .and. present(faersw_cpl)) then
        if(maxval(faersw_cpl(:,:,:,1)).gt.0.) then !  use chemistry feedback
        do j = 1,14
         do k = 1, LMK
