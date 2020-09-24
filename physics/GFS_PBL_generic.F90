@@ -247,6 +247,7 @@
           if (cplchm) then
            if (errflg==1) return
           else
+           ! Should never get here since trans_aero is disabled if cplchm is disabled.
            if (.not.errflg==1) then
              errmsg='set_aerosol_tracer_index succeeded.'
              errflg=1
@@ -411,6 +412,7 @@
           if (cplchm) then
            if (errflg==1) return
           else
+           ! Should never get here since trans_aero is disabled if cplchm is disabled.
            if (.not.errflg==1) then
              errmsg='set_aerosol_tracer_index succeeded.'
              errflg=1
