@@ -247,7 +247,11 @@
           if (cplchm) then
            if (errflg==1) return
           else
-           if (.not.errflg==1) return
+           if (.not.errflg==1) then
+             errmsg='set_aerosol_tracer_index succeeded.'
+             errflg=1
+             return
+           endif
           endif
           !
           k1 = kk
@@ -407,7 +411,11 @@
           if (cplchm) then
            if (errflg==1) return
           else
-           if (.not.errflg==1) return
+           if (.not.errflg==1) then
+             errmsg='set_aerosol_tracer_index succeeded.'
+             errflg=1
+             return
+           endif
           endif
           !
           k1 = kk
