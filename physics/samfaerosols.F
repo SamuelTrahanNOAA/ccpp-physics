@@ -72,6 +72,7 @@ c     -- initialize work variables
 
       chem_c    = zero
       chem_pw   = zero
+      wet_dep   = zero
       ctro2     = zero
       dellae2   = zero
       ecdo2     = zero

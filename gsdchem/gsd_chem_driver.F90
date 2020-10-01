@@ -268,6 +268,15 @@ contains
    !ppm2ugkg(p_so2 ) = 1.e+03_kind_phys * mw_so2_aer / mwdry
     ppm2ugkg(p_sulf) = 1.e+03_kind_phys * mw_so4_aer / mwdry
 
+    ! -- set run parameters
+    ! -- nbegin is the start address (-1) of the first chem variable in tr3d
+    !if (num_moist > 3) then
+    !  nbegin = ntra + num_moist - 2
+    !else
+    !  nbegin = ntra + num_moist - 3
+    !end if
+    nbegin = ntso2-1
+
     ! -- initialize large-sacle wet depostion
     if (ktau==1) then
      call dep_wet_ls_init()
