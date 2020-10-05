@@ -34,7 +34,20 @@ contains
 
 !> \brief Brief description of the subroutine
 !!
-      subroutine gsd_chem_driver_init()
+      subroutine gsd_chem_driver_init(im,emis_mul,do_ca,ca_global_emis,errmsg,errflg)
+        implicit none
+        integer, intent(in) :: im
+        logical, intent(in) :: do_ca,ca_global_emis
+        logical, intent(out) :: errflg
+        character(len=*), intent(out) :: errmsg
+        real(kind=kind_phys), intent(out) :: emis_mul(im)
+
+        errmsg=''
+        errflg=0
+        if(do_ca .and. ca_global_emis) then
+          emis_mul=1.0
+        endif
+
       end subroutine gsd_chem_driver_init
 
 !> \brief Brief description of the subroutine
@@ -75,10 +88,14 @@ contains
                    dust_alpha_in,dust_gamma_in,dust_uthres_in,                  &
                    aer_ra_feedback_in,aer_ra_frq_in,chem_in_opt,                &
                    dust_calcdrag_in,wetdep_ls_opt_in,cplchm_rad_opt,            &
+                   ca1,emis_mul,do_ca,ca_global_emis,                           &
                    errmsg,errflg)
 
     implicit none
 
+    logical, intent(in) :: do_ca,ca_global_emis
+    real(kind=kind_phys), intent(out) :: emis_mul(im)
+    real(kind=kind_phys), intent(in) :: ca1(im)
 
     integer,        intent(in) :: im,kte,kme,ktau,nsoil,jdate(8),idat(8),tile_num
     integer,        intent(in) :: nseasalt,ndust,ntchmdiag,ntrac
@@ -214,7 +231,6 @@ contains
     logical :: store_arrays
     integer :: nbegin, nv, nvv
     integer :: i, j, jp, k, kp, n
-  
 
     errmsg = ''
     errflg = 0
@@ -250,7 +266,6 @@ contains
     ssca   =0.
     asympar=0.
 
-
     gmt = real(idat(5))
     julday = real(julian)                                       
 
@@ -267,6 +282,17 @@ contains
     ppm2ugkg         = 1._kind_phys
    !ppm2ugkg(p_so2 ) = 1.e+03_kind_phys * mw_so2_aer / mwdry
     ppm2ugkg(p_sulf) = 1.e+03_kind_phys * mw_so4_aer / mwdry
+
+    if(do_ca .and. ca_global_emis) then
+      do i=1,im
+        if(ca1(i)<1.0) then
+          emis_mul(i)=emis_mul(i)*0.95
+        else if(ca1(i)>=1.0) then
+          emis_mul(i)=emis_mul(i)/0.95
+        endif
+        emis_mul(i) = min(1.2,max(0.8,emis_mul(i)))
+      enddo
+    endif
 
     ! -- initialize large-sacle wet depostion
     if (ktau==1) then
@@ -465,7 +491,7 @@ contains
             chem(i,k,j,p_bc1) = chem(i,k,j,p_bc1) + factor  * ebu_in(i,j,p_ebu_in_bc  )
             chem(i,k,j,p_p25) = chem(i,k,j,p_p25) + factor  * ebu_in(i,j,p_ebu_in_pm25)
             chem(i,k,j,p_p10) = chem(i,k,j,p_p10) + factor  * ebu_in(i,j,p_ebu_in_pm10)
-            chem(i,k,j,p_so2) = chem(i,k,j,p_so2) + factor2 * ebu_in(i,j,p_ebu_in_so2 )
+            chem(i,k,j,p_so2) = chem(i,k,j,p_so2) + factor2 * ebu_in(i,j,p_ebu_in_so2 ) * emis_mul(i)
           end do
         end do
 
@@ -481,7 +507,7 @@ contains
               chem(i,k,j,p_bc1) = chem(i,k,j,p_bc1) + factor  * ebu(i,k,j,p_ebu_bc  )
               chem(i,k,j,p_p25) = chem(i,k,j,p_p25) + factor  * ebu(i,k,j,p_ebu_pm25)
               chem(i,k,j,p_p10) = chem(i,k,j,p_p10) + factor  * ebu(i,k,j,p_ebu_pm10)
-              chem(i,k,j,p_so2) = chem(i,k,j,p_so2) + factor2 * ebu(i,k,j,p_ebu_so2 )
+              chem(i,k,j,p_so2) = chem(i,k,j,p_so2) + factor2 * ebu(i,k,j,p_ebu_so2 ) * emis_mul(i)
             end do
           end do
         end do

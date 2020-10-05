@@ -6,6 +6,50 @@
 [ccpp-arg-table]
   name = gsd_chem_driver_finalize
   type = scheme
+[im]
+  standard_name = horizontal_dimension
+  long_name = horizontal dimension
+  units = count
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[emis_mul]
+  standard_name = emission_multiplier_global_pattern
+  long_name = multiplier for chemical emissions based on cellular automata
+  units = frac
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[do_ca]
+  standard_name = flag_for_cellular_automata
+  long_name = cellular automata main switch
+  units = flag
+  dimensions = ()
+  type = logical
+[ca_global_emis]
+  standard_name = flag_for_emissions_global_cellular_automata
+  long_name = switch for global ca applied to chemical emissions
+  units = flag
+  dimensions = ()
+  type = logical
+[errmsg]
+  standard_name = ccpp_error_message
+  long_name = error message for error handling in CCPP
+  units = none
+  dimensions = ()
+  type = character
+  kind = len=*
+  intent = out
+  optional = F
+[errflg]
+  standard_name = ccpp_error_flag
+  long_name = error flag for error handling in CCPP
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = out
+  optional = F
 
 ########################################################################
 [ccpp-arg-table]
@@ -851,6 +895,32 @@
   type = logical
   intent = in
   optional = F
+[ca1]
+  standard_name = cellular_automata_global_pattern
+  long_name = cellular automata global pattern
+  units = flag
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[emis_mul]
+  standard_name = emission_multiplier_global_pattern
+  long_name = multiplier for chemical emissions based on cellular automata
+  units = frac
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[do_ca]
+  standard_name = flag_for_cellular_automata
+  long_name = cellular automata main switch
+  units = flag
+  dimensions = ()
+  type = logical
+[ca_global_emis]
+  standard_name = flag_for_emissions_global_cellular_automata
+  long_name = switch for global ca applied to chemical emissions
+  units = flag
+  dimensions = ()
+  type = logical
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP

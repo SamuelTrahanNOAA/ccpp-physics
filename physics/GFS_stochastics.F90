@@ -26,27 +26,32 @@
 !! -# defines random seed indices for radiation (in a reproducible way)
 !! -# interpolates coefficients for prognostic ozone calculation
 !! -# performs surface data cycling via the GFS gcycle routine
-      subroutine GFS_stochastics_run (im, km, kdt, do_sppt, use_zmtnblck, do_shum,       &
-                                      do_skeb, do_ca,ca_global,ca1,si,vfact_ca,          &
+      subroutine GFS_stochastics_run (im, km, kdt, ntrac, do_sppt, use_zmtnblck, do_shum,&
+                                      do_skeb, do_ca,ca_global,ca1,si,vfact_ca, ntqv,    &
                                       zmtnblck, sppt_wts, skebu_wts, skebv_wts, shum_wts,&
                                       sppt_wts_inv, skebu_wts_inv, skebv_wts_inv,        &
                                       shum_wts_inv, diss_est,                            &
                                       ugrs, vgrs, tgrs, qgrs, gu0, gv0, gt0, gq0, dtdtr, &
                                       rain, rainc, tprcp, totprcp, cnvprcp,              &
-                                      totprcpb, cnvprcpb, cplflx,                        &
+                                      totprcpb, cnvprcpb, cplflx, ca_global_chem,        &
                                       rain_cpl, snow_cpl, drain_cpl, dsnow_cpl,          &
-                                      errmsg, errflg)
+                                      ntchm, ntchs, errmsg, errflg)
 
          use machine,               only: kind_phys
 
          implicit none
 
+         integer,                               intent(in)    :: ntrac
+         integer,                               intent(in)    :: ntchs
+         integer,                               intent(in)    :: ntchm
+         integer,                               intent(in)    :: ntqv
          integer,                               intent(in)    :: im
          integer,                               intent(in)    :: km
          integer,                               intent(in)    :: kdt
          logical,                               intent(in)    :: do_sppt
          logical,                               intent(in)    :: do_ca
          logical,                               intent(in)    :: ca_global
+         logical,                               intent(in)    :: ca_global_chem
          logical,                               intent(in)    :: use_zmtnblck
          logical,                               intent(in)    :: do_shum
          logical,                               intent(in)    :: do_skeb
@@ -67,11 +72,11 @@
          real(kind_phys), dimension(1:im,1:km), intent(in)    :: ugrs
          real(kind_phys), dimension(1:im,1:km), intent(in)    :: vgrs
          real(kind_phys), dimension(1:im,1:km), intent(in)    :: tgrs
-         real(kind_phys), dimension(1:im,1:km), intent(in)    :: qgrs
+         real(kind_phys), dimension(1:im,1:km,1:ntrac), intent(in)    :: qgrs
          real(kind_phys), dimension(1:im,1:km), intent(inout) :: gu0
          real(kind_phys), dimension(1:im,1:km), intent(inout) :: gv0
          real(kind_phys), dimension(1:im,1:km), intent(inout) :: gt0
-         real(kind_phys), dimension(1:im,1:km), intent(inout) :: gq0
+         real(kind_phys), dimension(1:im,1:km,1:ntrac), intent(inout) :: gq0
          ! dtdtr only allocated if do_sppt == .true.
          real(kind_phys), dimension(:,:),       intent(in)    :: dtdtr
          real(kind_phys), dimension(1:im),      intent(in)    :: rain
@@ -95,15 +100,14 @@
          integer,                               intent(out)   :: errflg
 
          !--- local variables
-         integer :: k, i
-         real(kind=kind_phys) :: upert, vpert, tpert, qpert, qnew, sppt_vwt
+         integer :: k, i, n
+         real(kind=kind_phys) :: upert, vpert, tpert, qpert, qnew, sppt_vwt, dq
          real(kind=kind_phys), dimension(1:im,1:km) :: ca
 
          ! Initialize CCPP error handling variables
          errmsg = ''
          errflg = 0
-
-         if (do_sppt) then
+         if_sppt: if (do_sppt) then
            do k=1,km
              do i=1,im
                sppt_vwt=1.0
@@ -131,15 +135,15 @@
                upert = (gu0(i,k) - ugrs(i,k))   * sppt_wts(i,k)
                vpert = (gv0(i,k) - vgrs(i,k))   * sppt_wts(i,k)
                tpert = (gt0(i,k) - tgrs(i,k) - dtdtr(i,k)) * sppt_wts(i,k)
-               qpert = (gq0(i,k) - qgrs(i,k)) * sppt_wts(i,k)
+               qpert = (gq0(i,k,ntqv) - qgrs(i,k,ntqv)) * sppt_wts(i,k)
 
                gu0(i,k)  = ugrs(i,k)+upert
                gv0(i,k)  = vgrs(i,k)+vpert
 
                !negative humidity check
-               qnew = qgrs(i,k)+qpert
+               qnew = qgrs(i,k,ntqv)+qpert
                if (qnew >= 1.0e-10) then
-                  gq0(i,k) = qnew
+                  gq0(i,k,ntqv) = qnew
                   gt0(i,k) = tgrs(i,k) + tpert + dtdtr(i,k)
                endif
              enddo
@@ -159,12 +163,11 @@
                snow_cpl(:) = snow_cpl(:) + (sppt_wts(:,15) - 1.0)*dsnow_cpl(:)
             endif
 
-         endif
+         endif if_sppt
 
-         if (do_ca .and. ca_global) then
-
-          if(kdt == 1)then
-            do k=1,km
+         doing_ca: if (do_ca .and. (ca_global .or. ca_global_chem)) then
+           init_vfact_ca: if(kdt == 1)then
+              do k=1,km
                if (si(k) .lt. 0.1 .and. si(k) .gt. 0.025) then
                   vfact_ca(k) = (si(k)-0.025)/(0.1-0.025)
                else if (si(k) .lt. 0.025) then
@@ -172,43 +175,71 @@
                else
                   vfact_ca(k) = 1.0
                endif
-            enddo
-            vfact_ca(2)=vfact_ca(3)*0.5
-            vfact_ca(1)=0.0
-          endif
-   
+              enddo
+              vfact_ca(2)=vfact_ca(3)*0.5
+              vfact_ca(1)=0.0
+           endif init_vfact_ca
+
+           init_ca: do k = 1,km
+             do i = 1,im
+               sppt_vwt=1.0
+               if (zmtnblck(i).EQ.0.0) then
+                 sppt_vwt=1.0
+               else
+                 if (k.GT.zmtnblck(i)+2) then
+                   sppt_vwt=1.0
+                 endif
+                 if (k.LE.zmtnblck(i)) then
+                   sppt_vwt=0.0
+                 endif
+                 if (k.EQ.zmtnblck(i)+1) then
+                   sppt_vwt=0.333333
+                 endif
+                 if (k.EQ.zmtnblck(i)+2) then
+                   sppt_vwt=0.666667
+                 endif
+               endif
+               
+               ca(i,k)=((ca1(i)-1.)*sppt_vwt*vfact_ca(k))+1.0
+             end do
+           end do init_ca
+           
+           doing_chem: if(ca_global_chem) then
+             do n = ntchs,ntchs+ntchm-1
+               do k = 1,km
+                 do i = 1,im
+                   ! How much did the physics change the tracer here?
+                   dq = gq0(i,k,n) - qgrs(i,k,n)
+
+                   ! Only perturb chemistry if the tracer is changing
+                   ! significantly. Otherwise we might, for example,
+                   ! add SO2 in a situation where no SO2 reaction is
+                   ! happening.
+                   if ( abs(dq) < 1e-11 ) cycle
+                   qnew = qgrs(i,k,n) + dq * ca(i,k)
+
+                   ! Don't perturb tracer concentration if we would eliminate
+                   ! all of that tracer.
+                   if ( qnew < 1.0e-11 ) cycle
+                   gq0(i,k,n) = qnew
+                 end do
+               end do
+             end do
+           endif doing_chem
+           
+           doing_global: if(ca_global) then   
             do k = 1,km
                do i = 1,im
-                  sppt_vwt=1.0
-                  if (zmtnblck(i).EQ.0.0) then
-                     sppt_vwt=1.0
-                  else
-                     if (k.GT.zmtnblck(i)+2) then
-                        sppt_vwt=1.0
-                     endif
-                     if (k.LE.zmtnblck(i)) then
-                        sppt_vwt=0.0
-                     endif
-                     if (k.EQ.zmtnblck(i)+1) then
-                        sppt_vwt=0.333333
-                     endif
-                     if (k.EQ.zmtnblck(i)+2) then
-                        sppt_vwt=0.666667
-                     endif
-                  endif
-
-                  ca(i,k)=((ca1(i)-1.)*sppt_vwt*vfact_ca(k))+1.0
-
                   upert = (gu0(i,k)   - ugrs(i,k))   * ca(i,k)
                   vpert = (gv0(i,k)   - vgrs(i,k))   * ca(i,k)
                   tpert = (gt0(i,k)   - tgrs(i,k) - dtdtr(i,k)) * ca(i,k)
-                  qpert = (gq0(i,k)   - qgrs(i,k)) * ca(i,k)
+                  qpert = (gq0(i,k,ntqv)   - qgrs(i,k,ntqv)) * ca(i,k)
                   gu0(i,k)  = ugrs(i,k)+upert
                   gv0(i,k)  = vgrs(i,k)+vpert
                   !negative humidity check                                                                                                                                                                                                                     
-                  qnew = qgrs(i,k)+qpert
+                  qnew = qgrs(i,k,ntqv)+qpert
                   if (qnew >= 1.0e-10) then
-                     gq0(i,k) = qnew
+                     gq0(i,k,ntqv) = qnew
                      gt0(i,k)   = tgrs(i,k) + tpert + dtdtr(i,k)
                   endif
                enddo
@@ -227,13 +258,12 @@
                rain_cpl(:) = rain_cpl(:) + (ca(:,15) - 1.0)*drain_cpl(:)
                snow_cpl(:) = snow_cpl(:) + (ca(:,15) - 1.0)*dsnow_cpl(:)
             endif
-
-
-         endif
+          endif doing_global
+         endif doing_ca
 
          if (do_shum) then
            do k=1,km
-             gq0(:,k) = gq0(:,k)*(1.0 + shum_wts(:,k))
+             gq0(:,k,ntqv) = gq0(:,k,ntqv)*(1.0 + shum_wts(:,k))
              shum_wts_inv(:,k) = shum_wts(:,k)
            end do
          endif
