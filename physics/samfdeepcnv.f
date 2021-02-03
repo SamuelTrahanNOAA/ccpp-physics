@@ -78,7 +78,7 @@
      &    CNV_DQLDT,CLCN,CNV_FICE,CNV_NDROP,CNV_NICE,mp_phys,mp_phys_mg,&
      &    clam,c0s,c1,betal,betas,evfact,evfactl,pgcon,asolfac,         &
      &    do_ca, ca_closure, ca_entr, ca_trigger, nthresh, ca_deep,     &
-     &    rainevap,wetdpc_deep,cplchm,                                  &
+     &    rainevap,ca_sgs_emis,wetdpc_deep,cplchm,                      &
      &    errmsg,errflg)
 !
       use machine , only : kind_phys
@@ -94,7 +94,7 @@
       real(kind=kind_phys), intent(in) :: psp(im), delp(im,km),         &
      &   prslp(im,km),  garea(im), dot(im,km), phil(im,km)
       real(kind=kind_phys), dimension(:), intent(in) :: fscav
-      logical, intent(in)  :: hwrf_samfdeep
+      logical, intent(in)  :: hwrf_samfdeep, ca_sgs_emis
       real(kind=kind_phys), intent(in) :: nthresh
       real(kind=kind_phys), intent(in) :: ca_deep(im)
       real(kind=kind_phys), intent(out) :: rainevap(im)
@@ -2745,7 +2745,7 @@ c             if(islimsk(i) == 1) evef = 0.
       enddo
 
 !LB:                                                                                                                                                                                                                                                  
-      if(do_ca)then
+      if(do_ca .and. .not. ca_sgs_emis)then
          do i = 1,im
             rainevap(i)=delqev(i)
          enddo

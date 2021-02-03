@@ -794,7 +794,7 @@
                      if (Model%lndp_type /= 0) then
                         call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Coupling%sfc_wts'  , Coupling%sfc_wts   )
                      end if
-                     if (Model%do_ca) then
+                     if (Model%do_ca .and. .not. Model%ca_sgs_emis) then
                         call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Coupling%ca1      ', Coupling%ca1       )
                         call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Coupling%ca_deep  ', Coupling%ca_deep   )
                         call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Coupling%ca_turb  ', Coupling%ca_turb   )
