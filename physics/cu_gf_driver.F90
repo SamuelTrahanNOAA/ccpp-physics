@@ -195,7 +195,7 @@ contains
    real(kind=kind_phys), dimension (im)  :: hfx,qfx
    real(kind=kind_phys) tem,tem1,tf,tcr,tcrf
 
-   real(kind=kind_phys) :: cap_suppress_j(km)
+   real(kind=kind_phys) :: cap_suppress_j(im)
    integer :: itime, do_cap_suppress
 
   !parameter (tf=243.16, tcr=270.16, tcrf=1.0/(tcr-tf)) ! FV3 original
@@ -214,7 +214,7 @@ contains
      enddo
      if_radar: if(itime<=num_dfi_radar) then
         do_cap_suppress = 1
-        cap_suppress_j = dfi_radar_tten(1,1:km,itime)
+        cap_suppress_j = dfi_radar_tten(:,1,itime)
      else
         do_cap_suppress = 0
         cap_suppress_j = 0
