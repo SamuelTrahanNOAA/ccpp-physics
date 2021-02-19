@@ -199,7 +199,7 @@
 
                  ! add radar temp tendency
                  ! there is radar coverage
-                 gt0(i,k) = save_t(i,k) + ttend
+                 gt0(i,k) = save_t(i,k) + ttend*dtf
               endif if_active
             enddo radar_i
          enddo radar_k
