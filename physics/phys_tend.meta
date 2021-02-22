@@ -224,6 +224,15 @@
   kind = kind_phys
   intent = in
   optional = F
+[dt3dt_radar_tten]
+  standard_name = cumulative_change_in_temperature_due_to_dfi_radar
+  long_name = cumulative change in temperature due to dfi radar
+  units = K
+  dimensions = (horizontal_dimension,vertical_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+  optional = F
 [dt3dt_phys]
   standard_name = cumulative_change_in_temperature_due_to_physics
   long_name = cumulative change in temperature due to physics

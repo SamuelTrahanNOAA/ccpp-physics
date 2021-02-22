@@ -26,7 +26,7 @@ contains
        dv3dt_rdamp, dv3dt_shalcnv, dv3dt_phys,                &
        dt3dt_lw, dt3dt_sw, dt3dt_pbl, dt3dt_deepcnv,          &
        dt3dt_shalcnv, dt3dt_mp, dt3dt_orogwd, dt3dt_rdamp,    &
-       dt3dt_congwd, dt3dt_phys,                              &
+       dt3dt_congwd, dt3dt_radar_tten, dt3dt_phys,            &
        dq3dt_pbl, dq3dt_deepcnv, dq3dt_shalcnv, dq3dt_mp,     &
        dq3dt_o3pbl, dq3dt_o3prodloss, dq3dt_o3mix,            &
        dq3dt_o3tmp, dq3dt_o3column, dq3dt_phys, dq3dt_o3phys, &
@@ -57,6 +57,7 @@ contains
        real(kind=kind_phys), intent(in   ) :: dt3dt_orogwd(:,:)
        real(kind=kind_phys), intent(in   ) :: dt3dt_rdamp(:,:)
        real(kind=kind_phys), intent(in   ) :: dt3dt_congwd(:,:)
+       real(kind=kind_phys), intent(in   ) :: dt3dt_radar_tten(:,:)
        real(kind=kind_phys), intent(  out) :: dt3dt_phys(:,:)
        real(kind=kind_phys), intent(in   ) :: dq3dt_pbl(:,:)
        real(kind=kind_phys), intent(in   ) :: dq3dt_deepcnv(:,:)
@@ -86,7 +87,8 @@ contains
 
        dt3dt_phys   = dt3dt_lw + dt3dt_sw + dt3dt_pbl +          &
                       dt3dt_deepcnv + dt3dt_shalcnv + dt3dt_mp + &
-                      dt3dt_orogwd + dt3dt_rdamp + dt3dt_congwd
+                      dt3dt_orogwd + dt3dt_rdamp + dt3dt_congwd+ &
+                      dt3dt_radar_tten
 
        dq3dt_phys   = dq3dt_pbl + dq3dt_deepcnv +                &
                       dq3dt_shalcnv + dq3dt_mp

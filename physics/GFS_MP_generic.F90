@@ -102,7 +102,7 @@
         totsnw, totgrp, cnvprcpb, totprcpb, toticeb, totsnwb, totgrpb, dt3dt, dq3dt, rain_cpl, rainc_cpl, snow_cpl, pwat, &
         do_sppt, ca_global, dtdtr, dtdtc, drain_cpl, dsnow_cpl, lsm, lsm_ruc, lsm_noahmp, raincprv, rainncprv, iceprv, snowprv,      &
         graupelprv, draincprv, drainncprv, diceprv, dsnowprv, dgraupelprv, dtp, num_dfi_radar, fh_dfi_radar,              &
-        ix_dfi_radar, dfi_radar_tten, radar_tten_limits, fhour, errmsg, errflg)
+        ix_dfi_radar, dfi_radar_tten, radar_tten_limits, dt3dt_dfi_radar, fhour, errmsg, errflg)
 !
       use machine, only: kind_phys
 
@@ -132,7 +132,7 @@
                                                                  totprcpb, toticeb, totsnwb, totgrpb, rain_cpl, rainc_cpl,   &
                                                                  snow_cpl, pwat
 
-      real(kind=kind_phys), dimension(:,:),     intent(inout) :: dt3dt ! only if ldiag3d
+      real(kind=kind_phys), dimension(:,:),     intent(inout) :: dt3dt, dt3dt_dfi_radar ! only if ldiag3d
       real(kind=kind_phys), dimension(:,:),     intent(inout) :: dq3dt ! only if ldiag3d and qdiag3d
 
       ! Stochastic physics / surface perturbations
@@ -179,31 +179,6 @@
       errflg = 0
 
       onebg = one/con_g
-
-      do itime=1,num_dfi_radar
-         if(ix_dfi_radar(itime)<1) cycle
-         if(fhour<fh_dfi_radar(itime)) cycle
-         if(fhour>=fh_dfi_radar(itime+1)) cycle
-         exit
-      enddo
-      if_radar: if(itime<=num_dfi_radar) then
-         radar_k: do k=3,levs-2
-            radar_i: do i=1,im
-               ! if(dfi_radar_tten(i,k,itime)>-19) then
-               !    gt0(i,k) = save_t(i,k) + dfi_radar_tten(i,k,itime)
-               ! endif
-              ttend = dfi_radar_tten(i,k,itime)
-              if_active: if (ttend>-19) then
-                 ttend = max(ttend,radar_tten_limits(1))
-                 ttend = min(ttend,radar_tten_limits(2))
-
-                 ! add radar temp tendency
-                 ! there is radar coverage
-                 gt0(i,k) = save_t(i,k) + ttend*dtf
-              endif if_active
-            enddo radar_i
-         enddo radar_k
-      endif if_radar
 
       do i = 1, im
         rain(i) = rainc(i) + frain * rain1(i) ! time-step convective plus explicit
@@ -287,6 +262,36 @@
 
       endif
 
+      do itime=1,num_dfi_radar
+         if(ix_dfi_radar(itime)<1) cycle
+         if(fhour<fh_dfi_radar(itime)) cycle
+         if(fhour>=fh_dfi_radar(itime+1)) cycle
+         exit
+      enddo
+      if_radar: if(itime<=num_dfi_radar) then
+         radar_k: do k=3,levs-2
+            radar_i: do i=1,im
+               ! if(dfi_radar_tten(i,k,itime)>-19) then
+               !    gt0(i,k) = save_t(i,k) + dfi_radar_tten(i,k,itime)
+               ! endif
+              ttend = dfi_radar_tten(i,k,itime)
+              if_active: if (ttend>-19) then
+                 ttend = max(ttend,radar_tten_limits(1))
+                 ttend = min(ttend,radar_tten_limits(2))
+
+                 ! add radar temp tendency
+                 ! there is radar coverage
+                 gt0(i,k) = save_t(i,k) + ttend*dtp
+                 if(ldiag3d) then
+                    dt3dt_dfi_radar(i,k) = dt3dt_dfi_radar(i,k) + (gt0(i,k)-save_t(i,k)) * frain
+                 endif
+              elseif(ldiag3d) then
+                 dt3dt(i,k) = dt3dt(i,k) + (gt0(i,k)-save_t(i,k)) * frain
+              endif if_active
+            enddo radar_i
+         enddo radar_k
+      endif if_radar
+
       if (lssav) then
 !        if (Model%me == 0) print *,'in phys drive, kdt=',Model%kdt, &
 !          'totprcpb=', Diag%totprcpb(1),'totprcp=',Diag%totprcp(1), &
@@ -306,11 +311,13 @@
         enddo
 
         if (ldiag3d) then
-          do k=1,levs
-            do i=1,im
-              dt3dt(i,k) = dt3dt(i,k) + (gt0(i,k)-save_t(i,k)) * frain
-            enddo
-          enddo
+          if(itime>num_dfi_radar) then
+             do k=1,levs
+                do i=1,im
+                   dt3dt(i,k) = dt3dt(i,k) + (gt0(i,k)-save_t(i,k)) * frain
+                enddo
+             enddo
+          endif
           if (qdiag3d) then
              do k=1,levs
                 do i=1,im
