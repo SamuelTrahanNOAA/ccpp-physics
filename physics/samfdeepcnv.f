@@ -340,12 +340,16 @@ c
         xpwav(i)= 0.
         xpwev(i)= 0.
         vshear(i) = 0.
-        rainevap(i) = 0.
         gdx(i) = sqrt(garea(i))
         if(cplchm) then
            wetdpc_deep(i,:) = 0.
         endif
       enddo
+      if(do_ca .and. .not. ca_sgs_emis)then
+        do i=1,im
+          rainevap(i) = 0.
+        enddo
+      endif
 !
       if (hwrf_samfdeep) then
         do i=1,im
