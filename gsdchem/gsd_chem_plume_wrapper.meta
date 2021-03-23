@@ -58,6 +58,14 @@
   kind = kind_phys
   intent = in
   optional = F
+[vegtype_cpl]
+  standard_name = vegetation_type_classification_for_coupling
+  long_name = vegetation type at each grid cell copied from vegtype
+  units = index
+  dimensions = (horizontal_dimension)
+  type = integer
+  intent = out
+  optional = F
 [pr3d]
   standard_name = air_pressure_at_interface
   long_name = air pressure at model layer interfaces

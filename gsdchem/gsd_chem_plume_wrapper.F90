@@ -40,7 +40,7 @@ contains
 !!
 !>\section gsd_chem_plume_wrapper GSD Chemistry Scheme General Algorithm
 !> @{
-    subroutine gsd_chem_plume_wrapper_run(im, kte, kme, ktau, dt,                &
+    subroutine gsd_chem_plume_wrapper_run(im, kte, kme, ktau, dt, vegtype_cpl,   &
                    pr3d, ph3d,phl3d, prl3d, tk3d, us3d, vs3d, spechum,           &
                    w,vegtype,fire_GBBEPx,fire_MODIS,ca_sgs_gbbepx_frp,           &
                    ntrac,ntso2,ntpp25,ntbc1,ntoc1,ntpp10,do_ca,ca_sgs_emis,      &
@@ -62,6 +62,7 @@ contains
     logical,        intent(in) :: do_sppt_emis, do_ca, ca_sgs_emis, ca_sgs
     real(kind_phys), optional, intent(in) :: sppt_wts(:,:)
     integer, dimension(im), intent(in) :: vegtype    
+    integer, dimension(im), intent(out) :: vegtype_cpl
     real(kind_phys), dimension(im,    5), intent(in) :: fire_GBBEPx
     real(kind_phys), dimension(im,   13), intent(in) :: fire_MODIS
     real(kind_phys), intent(out) :: ca_sgs_gbbepx_frp(:)
@@ -162,6 +163,7 @@ contains
     if(doing_sgs_emis) then
       do i=ids,ide
         ca_sgs_gbbepx_frp(i) = ca_sgs_gbbepx_frp_with_j(i,jds)
+        vegtype_cpl(i) = vegtype(i)
       enddo
     endif
 
