@@ -29,8 +29,11 @@ module gsd_chem_config
   integer :: wetdep_ls_opt = 1
 
   real(kind=kind_phys), parameter :: depo_fact=0.
+
+  ! These must match GFS_typedefs.F90:
   integer, parameter :: CHEM_OPT_GOCART= 300
   integer, parameter :: CHEM_OPT_GOCART_CO    = 499
+
   integer, parameter :: CHEM_OPT_GOCART_RACM  = 301
   integer, parameter :: CHEM_OPT_RACM_SOA_VBS = 108
   INTEGER, PARAMETER :: gocartracm_kpp = 301
@@ -88,27 +91,28 @@ module gsd_chem_config
   real(kind=kind_phys) :: wetdep_ls_alpha(chem_tune_tracers)=-999.
 
 
-  !-- tracers
-  integer, parameter :: p_so2=1
-  integer, parameter :: p_sulf=2
-  integer, parameter :: p_dms=3
-  integer, parameter :: p_msa=4
-  integer, parameter :: p_p25=5
-  integer, parameter :: p_bc1=6
-  integer, parameter :: p_bc2=7
-  integer, parameter :: p_oc1=8
-  integer, parameter :: p_oc2=9
-  integer, parameter :: p_dust_1=10
-  integer, parameter :: p_dust_2=11
-  integer, parameter :: p_dust_3=12
-  integer, parameter :: p_dust_4=13
-  integer, parameter :: p_dust_5=14
-  integer, parameter :: p_seas_1=15
-  integer, parameter :: p_seas_2=16
-  integer, parameter :: p_seas_3=17
-  integer, parameter :: p_seas_4=18
-  integer, parameter :: p_seas_5=19
-  integer, parameter :: p_p10   =20
+  !-- tracers. These are overwritten by gsd_chem_config_wrapper.F90
+  integer :: p_so2=1
+  integer :: p_sulf=2
+  integer :: p_dms=3
+  integer :: p_msa=4
+  integer :: p_p25=5
+  integer :: p_co=-999
+  integer :: p_bc1=6
+  integer :: p_bc2=7
+  integer :: p_oc1=8
+  integer :: p_oc2=9
+  integer :: p_dust_1=10
+  integer :: p_dust_2=11
+  integer :: p_dust_3=12
+  integer :: p_dust_4=13
+  integer :: p_dust_5=14
+  integer :: p_seas_1=15
+  integer :: p_seas_2=16
+  integer :: p_seas_3=17
+  integer :: p_seas_4=18
+  integer :: p_seas_5=19
+  integer :: p_p10   =20
 
   integer, parameter :: p_edust1=1,p_edust2=2,p_edust3=3,p_edust4=4,p_edust5=5
   integer, parameter :: p_eseas1=1,p_eseas2=2,p_eseas3=3,p_eseas4=4,p_eseas5=5
@@ -185,6 +189,7 @@ module gsd_chem_config
   integer, parameter :: p_e_so2=5
   integer, parameter :: p_e_pm_10=6
   integer, parameter :: p_e_dms=7
+  integer, parameter :: p_e_co=8
   integer, parameter :: p_ebu_bc  =1
   integer, parameter :: p_ebu_oc  =2
   integer, parameter :: p_ebu_sulf=3
@@ -192,6 +197,7 @@ module gsd_chem_config
   integer, parameter :: p_ebu_so2=5
   integer, parameter :: p_ebu_pm10=6
   integer, parameter :: p_ebu_dms=7
+  integer, parameter :: p_ebu_co=8
   integer, parameter :: p_ebu_in_bc  =1
   integer, parameter :: p_ebu_in_oc  =2
   integer, parameter :: p_ebu_in_sulf=3
@@ -199,6 +205,7 @@ module gsd_chem_config
   integer, parameter :: p_ebu_in_so2=5
   integer, parameter :: p_ebu_in_pm10=6
   integer, parameter :: p_ebu_in_dms=7
+  integer, parameter :: p_ebu_in_co=8
 
 
   !-- gocartracm

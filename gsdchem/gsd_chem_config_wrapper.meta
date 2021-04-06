@@ -1,0 +1,212 @@
+[ccpp-table-properties]
+  name = gsd_chem_config_wrapper
+  type = scheme
+  dependencies = gsd_chem_config.F90
+
+########################################################################
+[ccpp-arg-table]
+  name = gsd_chem_config_wrapper_init
+  type = scheme
+[ntso2]
+  standard_name = index_for_so2
+  long_name = tracer index for so2
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntsulf]
+  standard_name = index_for_sulf
+  long_name = tracer index for sulf
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntDMS]
+  standard_name = index_for_DMS
+  long_name = tracer index for DMS
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntmsa]
+  standard_name = index_for_msa
+  long_name = tracer index for msa
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntco]
+  standard_name = index_for_co
+  long_name = tracer index for co
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntpp25]
+  standard_name = index_for_pp25
+  long_name = tracer index for pp25
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntbc1]
+  standard_name = index_for_bc1
+  long_name = tracer index for bc1
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntbc2]
+  standard_name = index_for_bc2
+  long_name = tracer index for bc2
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntoc1]
+  standard_name = index_for_oc1
+  long_name = tracer index for oc1
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntoc2]
+  standard_name = index_for_oc2
+  long_name = tracer index for oc2
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntdust1]
+  standard_name = index_for_dust_1
+  long_name = tracer index for dust 1
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntdust2]
+  standard_name = index_for_dust_2
+  long_name = tracer index for dust 2
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntdust3]
+  standard_name = index_for_dust_3
+  long_name = tracer index for dust 3
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntdust4]
+  standard_name = index_for_dust_4
+  long_name = tracer index for dust 4
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntdust5]
+  standard_name = index_for_dust_5
+  long_name = tracer index for dust 5
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntss1]
+  standard_name = index_for_sea_salt_1
+  long_name = tracer index for sea salt 1
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntss2]
+  standard_name = index_for_sea_salt_2
+  long_name = tracer index for sea salt 2
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntss3]
+  standard_name = index_for_sea_salt_3
+  long_name = tracer index for sea salt 3
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntss4]
+  standard_name = index_for_sea_salt_4
+  long_name = tracer index for sea salt 4
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntss5]
+  standard_name = index_for_sea_salt_5
+  long_name = tracer index for sea salt 5
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[ntpp10]
+  standard_name = index_for_pp10
+  long_name = tracer index for pp10
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[chem_opt]
+  standard_name = gsd_chem_option
+  long_name = gsd chem option
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[errmsg]
+  standard_name = ccpp_error_message
+  long_name = error message for error handling in CCPP
+  units = none
+  dimensions = ()
+  type = character
+  kind = len=*
+  intent = out
+  optional = F
+[errflg]
+  standard_name = ccpp_error_flag
+  long_name = error flag for error handling in CCPP
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = out
+  optional = F
+
+########################################################################
+[ccpp-arg-table]
+  name = gsd_chem_config_wrapper_finalize
+  type = scheme
+
+########################################################################
+[ccpp-arg-table]
+  name = gsd_chem_config_wrapper_run
+  type = scheme
