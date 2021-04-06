@@ -94,6 +94,9 @@ end subroutine gocart_aerosols_driver
             ids,ide, jds,jde, kds,kde,               &
             ims,ime, jms,jme, kms,kme,               &
             its,ite, jts,jte, kts,kte                )
+
+   USE chem_config_mod, ONLY : CHEM_OPT_GOCART_CO
+
    IMPLICIT NONE
    REAL(kind_phys), PARAMETER :: mwso4 = 96.066
    INTEGER,      INTENT(IN   ) :: chem_opt,ids,ide, jds,jde, kds,kde,               &
@@ -126,7 +129,7 @@ end subroutine gocart_aerosols_driver
             do n=p_p25,p_dust_1
                pm2_5_dry(i,k,j) = pm2_5_dry(i,k,j)+chem(i,k,j,n)        
             enddo
-            if(chem_opt.eq.300.or.chem_opt.eq.301)then
+            if(chem_opt.eq.300.or.chem_opt.eq.301 .or. chem_opt == CHEM_OPT_GOCART_CO)then
                pm2_5_dry(i,k,j) = pm2_5_dry(i,k,j)+chem(i,k,j,p_dust_2)*d_2_5     &
                                             +chem(i,k,j,p_seas_1)           &
                                             +chem(i,k,j,p_seas_2)           &

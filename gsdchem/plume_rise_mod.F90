@@ -125,6 +125,11 @@ contains
                ebu(i,kts,j,p_ebu_so2)=ebu_in(i,j,p_ebu_in_so2)
                ebu(i,kts,j,p_ebu_pm25)=ebu_in(i,j,p_ebu_in_pm25)
                ebu(i,kts,j,p_ebu_pm10)=ebu_in(i,j,p_ebu_in_pm10)
+
+               IF (chem_opt == 'GOCART_CO') THEN
+                  ebu(i,kts,j,p_ebu_co)=ebu_in(i,j,p_ebu_in_co)
+               ENDIF
+
             enddo
          enddo
        elseif ( burn_opt == 'BIOMASSB_MOZC' .or. &

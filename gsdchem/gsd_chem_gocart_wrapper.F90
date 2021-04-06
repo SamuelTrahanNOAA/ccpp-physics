@@ -450,7 +450,7 @@ contains
             do k=kts,kte
               do i=its,ite
                 ip = i - its + 1
-                if (chem_opt == CHEM_OPT_GOCART) then
+                if (chem_opt == CHEM_OPT_GOCART .OR. chem_opt == CHEM_OPT_GOCART_CO) then
                   do n=1,num_chem
                     chem(i,k,j,n)=1.e-12
                   enddo
@@ -466,6 +466,9 @@ contains
                   chem(i,k,j,p_oc2)=0.1e-3
                   chem(i,k,j,p_p25)=0.1e-3 !lzhang
                   chem(i,k,j,p_p10)=0.1e-3 !lzhang
+
+                  IF (chem_opt == CHEM_OPT_GOCART_CO ) chem(i,k,j,p_co) = co_background
+
                 endif !chem_opt >= 300 .and. chem_opt <  500
 
 !                if ((chem_opt == CHEM_OPT_GOCART_RACM) .or. (chem_opt == CHEM_OPT_RACM_SOA_VBS)) then  !added o3 background !lzhang
@@ -535,7 +538,8 @@ contains
     ! -- gocart background fields only if gocart is called
     !
     !if (.NOT. readrestart) then
-    if (call_gocart .and. (chem_opt == CHEM_OPT_GOCART))then
+    IF (call_gocart .AND. ((chem_opt == CHEM_OPT_GOCART) &
+         .OR. (chem_opt == CHEM_OPT_GOCART_CO)) )THEN
       do j=jts,jte
         do i=its,ite
           do k=kts,kte

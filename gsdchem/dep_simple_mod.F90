@@ -1,6 +1,6 @@
 module dep_simple_mod
 
-  use gsd_chem_config, GOCART_SIMPLE => CHEM_OPT_GOCART, chem_opt=>chem_opt
+  use gsd_chem_config, GOCART_SIMPLE => CHEM_OPT_GOCART, chem_opt=>chem_opt, CHEM_OPT_GOCART_CO
 !  use chem_tracers_mod, config_flags => chem_config
 
 ! USE module_data_sorgam
@@ -443,6 +443,19 @@ tile_lon_loop : &
             end do
          end do
       end if
+
+      if  (chem_opt == CHEM_OPT_GOCART_CO          )   then
+         DO j=jts,jte
+            DO i=its,ite
+               ddvel(i,j,p_msa)         = ddvel(i,j,p_sulf)
+               ddvel(i,j,p_sulf)        = 0.
+               ddvel(i,j,p_dms)         = 0.
+               ddvel(i,j,p_co)         = 0.
+            end do
+         end do
+      end if
+
+
 !-----------------------------------------------------------
 ! For mozart
 !-----------------------------------------------------------

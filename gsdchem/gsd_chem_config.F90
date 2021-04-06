@@ -30,6 +30,7 @@ module gsd_chem_config
 
   real(kind=kind_phys), parameter :: depo_fact=0.
   integer, parameter :: CHEM_OPT_GOCART= 300
+  integer, parameter :: CHEM_OPT_GOCART_CO    = 499
   integer, parameter :: CHEM_OPT_GOCART_RACM  = 301
   integer, parameter :: CHEM_OPT_RACM_SOA_VBS = 108
   INTEGER, PARAMETER :: gocartracm_kpp = 301
@@ -139,6 +140,7 @@ module gsd_chem_config
   integer :: nbandlw  = 16
   REAL,    PARAMETER :: oc_mfac = 1.8 
   REAL,    PARAMETER :: nh4_mfac = 1.375
+  REAL,    PARAMETER :: co_background=60.e-3 !60 ppb used in CHEM_OPT_GOCART_CO
 
 
   INTEGER, PARAMETER :: cbmz_mosaic_4bin_aq = 9

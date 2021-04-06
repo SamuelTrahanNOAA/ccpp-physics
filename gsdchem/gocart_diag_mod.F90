@@ -37,7 +37,7 @@ contains
     trcm = 0._kind_phys
 
     select case (chem_opt)
-      case (CHEM_OPT_GOCART, CHEM_OPT_GOCART_RACM)
+      case (CHEM_OPT_GOCART, CHEM_OPT_GOCART_RACM, CHEM_OPT_GOCART_CO)
 
         do k = 1, nk
           do j = 1, nj
@@ -121,6 +121,7 @@ contains
     do n = 1, nt
       if (n == p_so2) cycle
       if (n == p_msa) cycle
+      if (n == p_co) cycle
       m = m + 1
       w(:,:,m,ipos) = ugkg*v(:,:,n) !kg/m2/s
     end do

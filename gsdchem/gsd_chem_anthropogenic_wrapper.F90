@@ -300,6 +300,11 @@ contains
           emis_ant(i,k,j,p_e_dms)= 0. !emiss_ab(j,p_e_dms)
           emis_ant(i,k,j,p_e_pm_25)=emiss_ab(i,j,p_e_pm_25)
           emis_ant(i,k,j,p_e_pm_10)=emiss_ab(i,j,p_e_pm_10)
+
+          IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+             emis_ant(i,k,j,p_e_co)=emiss_ab(i,j,p_e_co)
+          ENDIF
+
         enddo
       enddo
     endif
@@ -338,6 +343,20 @@ contains
             chem(i,k,j,p_sulf)=chem(i,k,j,p_sulf)+emis_ant(i,k,j,p_e_sulf)*factor
             chem(i,k,j,p_so2)=chem(i,k,j,p_so2)+emis_ant(i,k,j,p_e_so2)*factor2
           enddo
+        enddo
+      elseif (chem_opt == CHEM_OPT_GOCART_CO) then
+        do j=jts,jte
+           do i=its,ite
+              factor=dtstep*rri(i,k,j)/dz8w(i,k,j)
+              factor2=4.828e-4*dtstep*rri(i,k,j)/(60.*dz8w(i,k,j))
+              chem(i,k,j,p_bc1)=chem(i,k,j,p_bc1)+emis_ant(i,k,j,p_e_bc)*factor
+              chem(i,k,j,p_oc1)=chem(i,k,j,p_oc1)+emis_ant(i,k,j,p_e_oc)*factor
+              chem(i,k,j,p_p25)=chem(i,k,j,p_p25)+emis_ant(i,k,j,p_e_pm_25)*factor
+              chem(i,k,j,p_p10)=chem(i,k,j,p_p10)+emis_ant(i,k,j,p_e_pm_10)*factor
+              chem(i,k,j,p_sulf)=chem(i,k,j,p_sulf)+emis_ant(i,k,j,p_e_sulf)*factor
+              chem(i,k,j,p_so2)=chem(i,k,j,p_so2)+emis_ant(i,k,j,p_e_so2)*factor2
+              chem(i,k,j,p_co)=chem(i,k,j,p_co)+emis_ant(i,k,j,p_e_co)*factor2
+           enddo
         enddo
       endif
     else if (p_tr2 > 1)then    !co2 here

@@ -169,11 +169,20 @@ contains
 
     ! compute wild-fire plumes
     if (call_plume) then
+
+      IF (chem_opt==CHEM_OPT_GOCART) THEN
+         option='GOCART'
+      ELSEIF (chem_opt==CHEM_OPT_GOCART_CO) then
+         option='GOCART_CO'
+      ELSE
+         option='NONE'
+      ENDIF
+
       call plumerise_driver (ktau,dtstep,num_chem,num_ebu,num_ebu_in,   &
         ebu,ebu_in,                                                     &
         mean_fct_agtf,mean_fct_agef,mean_fct_agsv,mean_fct_aggr,        &
         firesize_agtf,firesize_agef,firesize_agsv,firesize_aggr,        &
-        'GOCART','BIOMASSB', t_phy,moist(:,:,:,p_qv),                   &
+        option,'BIOMASSB', t_phy,moist(:,:,:,p_qv),                     &
         rho_phy,vvel,u_phy,v_phy,p_phy,                                 &
         z_at_w,scale_fire_emiss,plume_frp,plumerise_flag,               &
         ids,ide, jds,jde, kds,kde,                                      &
@@ -219,6 +228,11 @@ contains
             chem(i,k,j,p_p25) = chem(i,k,j,p_p25) + factor  * ebu_in(i,j,p_ebu_in_pm25)
             chem(i,k,j,p_p10) = chem(i,k,j,p_p10) + factor  * ebu_in(i,j,p_ebu_in_pm10)
             chem(i,k,j,p_so2) = chem(i,k,j,p_so2) + factor2 * ebu_in(i,j,p_ebu_in_so2 )
+
+            IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+              chem(i,k,j,p_co) = chem(i,k,j,p_co) + factor2 * ebu(i,k,j,p_ebu_co )
+            ENDIF
+
           end do
         end do
 
@@ -235,6 +249,11 @@ contains
               chem(i,k,j,p_p25) = chem(i,k,j,p_p25) + factor  * ebu(i,k,j,p_ebu_pm25)
               chem(i,k,j,p_p10) = chem(i,k,j,p_p10) + factor  * ebu(i,k,j,p_ebu_pm10)
               chem(i,k,j,p_so2) = chem(i,k,j,p_so2) + factor2 * ebu(i,k,j,p_ebu_so2 )
+
+              IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+                 chem(i,k,j,p_co) = chem(i,k,j,p_co) + factor2 * ebu(i,k,j,p_ebu_co )
+              ENDIF
+
             end do
           end do
         end do
@@ -343,6 +362,8 @@ contains
 !   real(kind=kind_phys), dimension(ims:ime, kms:kme, jms:jme) :: p_phy
     real(kind_phys) ::  factor,factor2
     integer i,ip,j,jp,k,kp,kk,kkp,l,ll,n
+
+    CHARACTER(len=32) :: option
 
     ! -- initialize output arrays
     ebu_in         = 0._kind_phys
@@ -513,6 +534,11 @@ contains
               ebu_in(i,j,p_ebu_in_bc)   = frpc * emiss_abu(i,j,p_e_bc)
               ebu_in(i,j,p_ebu_in_pm25) = frpc * (emiss_abu(i,j,p_e_pm_25) - emiss_abu(i,j,p_e_bc) - emiss_abu(i,j,p_e_oc))
               ebu_in(i,j,p_ebu_in_so2)  = frpc * emiss_abu(i,j,p_e_so2)
+
+              IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+                 ebu_in(i,j,p_ebu_in_co) = frpc * emiss_abu(i,j,p_e_co)
+              ENDIF
+
               plumedist(i,j,p_frp_flam_frac) = flaming(catb(ivgtyp(i,j)))
               plumedist(i,j,p_frp_mean     ) = frp2plume * plume(i,j,1)
               plumedist(i,j,p_frp_std      ) = 0.3_kind_phys   * frp2plume * plume(i,j,1)

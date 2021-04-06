@@ -53,6 +53,9 @@ contains
         select case (chem_opt)
           case (CHEM_OPT_GOCART)
             alpha = 1.0
+          case (CHEM_OPT_GOCART_CO)
+            alpha = 1.0
+            alpha(p_co) = 0.
           case (CHEM_OPT_GOCART_RACM)
             alpha = 1.0
 !            alpha(p_h2o2) = 0.5
@@ -82,6 +85,28 @@ contains
             alpha(p_sulf  ) = 1.5
             alpha(p_dms   ) = 0.
             alpha(p_msa   ) = 0.
+            alpha(p_p25   ) = 1.
+            alpha(p_bc1   ) = 0.7
+            alpha(p_bc2   ) = 0.7
+            alpha(p_oc1   ) = 1.
+            alpha(p_oc2   ) = 1.
+            alpha(p_dust_1) = 1.
+            alpha(p_dust_2) = 1.
+            alpha(p_dust_3) = 1.
+            alpha(p_dust_4) = 1.
+            alpha(p_dust_5) = 1.
+            alpha(p_seas_1) = 1.
+            alpha(p_seas_2) = 1.
+            alpha(p_seas_3) = 1.
+            alpha(p_seas_4) = 1.
+            alpha(p_seas_5) = 1.
+            alpha(p_p10   ) = 1.
+          case (CHEM_OPT_GOCART_CO)
+            alpha(p_so2   ) = 0.
+            alpha(p_sulf  ) = 1.5
+            alpha(p_dms   ) = 0.
+            alpha(p_msa   ) = 0.
+            alpha(p_co    ) = 0.
             alpha(p_p25   ) = 1.
             alpha(p_bc1   ) = 0.7
             alpha(p_bc2   ) = 0.7

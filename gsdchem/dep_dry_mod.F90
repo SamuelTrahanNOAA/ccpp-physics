@@ -2,7 +2,7 @@ module dep_dry_mod
 
   use machine ,        only : kind_phys
   use gsd_chem_config, only : epsilc, GOCART_SIMPLE => CHEM_OPT_GOCART, CTRA_OPT_NONE, &
-            GOCARTRACM_KPP,RADM2SORG_AQ,RACMSORG_AQ,                                   &
+            CHEM_OPT_GOCART_CO,GOCARTRACM_KPP,RADM2SORG_AQ,RACMSORG_AQ,                &
             CBMZ_MOSAIC_4BIN, CBMZ_MOSAIC_8BIN, CBMZ_MOSAIC_4BIN_AQ,                   &
             CBMZ_MOSAIC_8BIN_AQ
 !  use chem_tracers_mod, only : p_o3,p_dust_1,p_vash_1,p_vash_4,p_vash_10,p_dms,
@@ -181,7 +181,7 @@ contains
 !
 !      CALL wrf_debug(15,'DOING DRY DEP VELOCITIES WITH WESELY METHOD')
 
-      IF( chem_opt /= GOCART_SIMPLE ) THEN
+      IF( chem_opt /= GOCART_SIMPLE .OR. chem_opt /= CHEM_OPT_GOCART_CO ) THEN
          call wesely_driver(ktau,dtstep,                                 &
               current_month,                                              &
               gmt,julday,t_phy,moist,p8w,t8w,raincv,                      &
@@ -193,6 +193,7 @@ contains
               its,ite, jts,jte, kts,kte                                  )
       ENDIF
        IF (( chem_opt == GOCART_SIMPLE ) .or.            &
+              ( chem_opt == CHEM_OPT_GOCART_CO ) .or.      &
               ( chem_opt == GOCARTRACM_KPP)  .or.            &
               ( chem_opt == 316)  .or.            &
               ( chem_opt == 317)  .or.            &
@@ -209,6 +210,9 @@ contains
                ids,ide, jds,jde, kds,kde,                      &
                ims,ime, jms,jme, kms,kme,                      &
                its,ite, jts,jte, kts,kte                       )
+
+         IF (chem_opt == CHEM_OPT_GOCART_CO) ddvel(:,:,p_co)=0.
+
        ELSE if (chem_opt == 501 ) then
 ! for caesium .1cm/s
 !

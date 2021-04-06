@@ -2,7 +2,7 @@ module gocart_chem_mod
 
   use machine ,        only : kind_phys
 
-  use gsd_chem_config, only : airmw, smw,                      &
+  use gsd_chem_config, only : airmw, smw, co_background, p_co, &
                               p_o3,p_qi,p_qc,p_qv,p_dms,p_so2, &
                               p_sulf,p_msa,p_ho,p_h2o2,p_no3,  &
                               ndms, nso2, nso4, nmsa
@@ -20,6 +20,9 @@ contains
          ids,ide, jds,jde, kds,kde,                                        &
          ims,ime, jms,jme, kms,kme,                                        &
          its,ite, jts,jte, kts,kte                                         )
+
+  USE chem_config_mod, ONLY : CHEM_OPT_GOCART_CO
+
   IMPLICIT NONE
 
    INTEGER,      INTENT(IN   ) :: julday, ktau,                     &
@@ -51,7 +54,7 @@ contains
   real(kind_phys), DIMENSION (1,1) :: sza,cosszax
   real(kind_phys), DIMENSION (1,1,1,4) :: tc,bems
   real(kind_phys), dimension (1) :: dxy
-  real(kind_phys):: rlat,xlonn
+  real(kind_phys):: rlat,xlonn,co_tmp
   real(kind_phys):: xtime,zenith,zenita,azimuth,xhour,xmin,xtimin,gmtp
       INTEGER :: ixhour
        imx=1
@@ -77,7 +80,8 @@ contains
 !      chem_select: SELECT CASE(config_flags%chem_opt)
 !         CASE (GOCART_SIMPLE)
 !          CALL wrf_debug(15,'calling gocart chemistry ')
-       if(chem_opt == 300 .or. chem_opt==316  .or. chem_opt==317)then
+       if(chem_opt == 300 .or. chem_opt==316  .or. chem_opt==317 .or. &
+          chem_opt == CHEM_OPT_GOCART_CO) then
 !TBH       write(6,*)'in gocart_chem, julday = ',julday
        do j=jts,jte
        do i=its,ite
@@ -148,6 +152,13 @@ endif
           chem(i,k,j,p_msa)=tc(1,1,1,4)*1.e6
           h2o2_t(i,k,j)=h2o2(1,1,1)*1.e6
           no3_t(i,k,j)=xno3(1,1,1)*1.e6
+
+          IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+             co_tmp=chem(i,k,j,p_co)
+             CALL chem_co(dt,co_tmp)
+             chem(i,k,j,p_co)=co_tmp
+          ENDIF
+
        enddo
        enddo
        enddo
@@ -827,5 +838,25 @@ SUBROUTINE szangle(imx, jmx, doy, xhour, sza, cossza,xlon,rlat)
   END DO
      
 END subroutine szangle
+
+SUBROUTINE chem_co(dt,co)
+
+  IMPLICIT NONE
+
+! return to the background with tau timescale
+! timescale of return to background mixing ratio = 30 days - maybe needs to be shorter
+! background = 60. ppb = 0.06 ppm 
+
+  REAL(kind=kind_phys), PARAMETER :: tau=30.*24.*3600., kt=1./tau, co_min=1.e-12
+ 
+  REAL(kind=kind_phys), INTENT(in) :: dt
+
+  REAL(kind=kind_phys), INTENT(INOUT) :: co
+
+!  co=MAX(co-kt*(co-co_background)*dt,co_min) !forward
+  co=MAX((co+kt*co_background*dt)/(1.+kt),co_min) !backward
+
+END SUBROUTINE chem_co
+
 
 end module gocart_chem_mod
