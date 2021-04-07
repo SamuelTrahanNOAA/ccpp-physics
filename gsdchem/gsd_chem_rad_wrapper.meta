@@ -142,6 +142,14 @@
   type = integer
   intent = in
   optional = F
+[ntco]
+  standard_name = index_for_co
+  long_name = tracer index for co
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
 [ntbc1]
   standard_name = index_for_bc1
   long_name = tracer index for bc1

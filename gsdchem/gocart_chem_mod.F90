@@ -21,7 +21,7 @@ contains
          ims,ime, jms,jme, kms,kme,                                        &
          its,ite, jts,jte, kts,kte                                         )
 
-  USE chem_config_mod, ONLY : CHEM_OPT_GOCART_CO
+  USE gsd_chem_config, ONLY : CHEM_OPT_GOCART_CO
 
   IMPLICIT NONE
 

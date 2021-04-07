@@ -40,7 +40,7 @@ contains
 !> @{
     subroutine gsd_chem_anthropogenic_wrapper_run(im, kte, kme, ktau, dt,               &
                    pr3d, ph3d,phl3d, prl3d, tk3d, spechum,emi_in,                       &
-                   ntrac,ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,                        &
+                   ntrac,ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,ntco,                   &
                    gq0,qgrs,abem,chem_opt_in,kemit_in,pert_scale_anthro,                &
                    emis_amp_anthro,do_sppt_emis,sppt_wts,errmsg,errflg)
 
@@ -49,7 +49,7 @@ contains
 
     integer,        intent(in) :: im,kte,kme,ktau
     integer,        intent(in) :: ntrac
-    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf
     real(kind_phys),intent(in) :: dt, emis_amp_anthro, pert_scale_anthro
     real(kind_phys), optional, intent(in) :: sppt_wts(:,:)
@@ -59,7 +59,7 @@ contains
     integer, parameter :: ims=1,jms=1,jme=1, kms=1
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
-    real(kind_phys), dimension(im, 10), intent(in) :: emi_in
+    real(kind_phys), dimension(:,:), intent(in) :: emi_in
     real(kind_phys), dimension(im,kme), intent(in) :: ph3d, pr3d
     real(kind_phys), dimension(im,kte), intent(in) :: phl3d, prl3d, tk3d, spechum
     real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0, qgrs
@@ -137,6 +137,9 @@ contains
        gq0(i,k,ntpp10 )=ppm2ugkg(p_p10   ) * max(epsilc,chem(i,k,1,p_p10))
      enddo
     enddo
+    if(chem_opt == CHEM_OPT_GOCART_CO) then
+       gq0(:,:,ntco   )=ppm2ugkg(p_co    ) * max(epsilc,chem(:,:,1,p_co))
+    endif
 
     do k=kts,kte
      do i=its,ite
@@ -148,6 +151,9 @@ contains
        qgrs(i,k,ntpp10 )=gq0(i,k,ntpp10 )
      enddo
     enddo
+    if(chem_opt == CHEM_OPT_GOCART_CO) then
+       qgrs(:,:,ntco) = gq0(:,:,ntco)
+    endif
 
     abem(:,1)=ugkg*emis_ant(:,kts,1,p_e_bc )
     abem(:,2)=ugkg*emis_ant(:,kts,1,p_e_oc )
@@ -179,7 +185,7 @@ contains
     integer, intent(in) :: ntrac
     integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
     integer,        intent(in) :: ntsulf
-    real(kind=kind_phys), dimension(ims:ime,    10),   intent(in) :: emi_in
+    real(kind=kind_phys), dimension(:,:),   intent(in) :: emi_in
     real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) :: pr3d,ph3d
     real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) :: phl3d,tk3d,prl3d,spechum
     real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
@@ -284,6 +290,9 @@ contains
       emiss_ab(i,j,p_e_pm_25)=emi_in(i,4)*random_factor(i,j)
       emiss_ab(i,j,p_e_so2)  =emi_in(i,5)*random_factor(i,j)
       emiss_ab(i,j,p_e_pm_10)=emi_in(i,6)*random_factor(i,j)
+      IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+         emiss_ab(i,j,p_e_co)=emi_in(i,11)*random_factor(i,j)
+      ENDIF
      enddo
     enddo
 

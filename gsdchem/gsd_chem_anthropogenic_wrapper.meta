@@ -177,6 +177,14 @@
   type = integer
   intent = in
   optional = F
+[ntco]
+  standard_name = index_for_co
+  long_name = tracer index for co
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
 [gq0]
   standard_name = tracer_concentration_updated_by_physics
   long_name = tracer concentration updated by physics

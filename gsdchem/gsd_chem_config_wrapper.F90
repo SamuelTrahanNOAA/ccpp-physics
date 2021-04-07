@@ -17,7 +17,7 @@ contains
       subroutine gsd_chem_config_wrapper_init(ntso2,ntsulf,ntdms,ntmsa,ntco, &
            ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,   &
            ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,errmsg,errflg)
-        use gsd_chem_config
+        use gsd_chem_config, config_chem_opt=>chem_opt
         implicit none
         integer, intent(in) :: ntso2,ntsulf,ntdms,ntmsa,ntco,ntpp25,ntbc1, &
              ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,    &
@@ -30,6 +30,29 @@ contains
 
         print *,'gsd_chem_config_wrapper_init'
 
+        config_chem_opt = chem_opt
+
+        num_chem=20
+
+        if(chem_opt == CHEM_OPT_GOCART_CO) then
+           num_chem = num_chem+1
+
+           num_ebu = 8
+           num_ebu_in = 8
+           num_emis_ant = 8
+
+           p_ebu_co = 8
+           p_ebu_in_co = 8
+        else
+           num_ebu = 7
+           num_ebu_in = 7
+           num_emis_ant = 7
+
+           ! CHEM_OPT_GOCART_RACM
+           p_ebu_co = 5
+           p_ebu_in_co = 5
+        endif
+
         call set_and_check(p_so2,ntso2,'The so2 tracer is mandatory.')
         call set_and_check(p_sulf,ntsulf,'The sulf tracer is mandatory.')
         call set_and_check(p_dms,ntdms,'The dms tracer is mandatory.')
@@ -37,22 +60,22 @@ contains
         if(chem_opt == CHEM_OPT_GOCART_CO) then
            call set_and_check(p_co,ntco,'The co tracer is mandatory when chem_opt==CHEM_OPT_GOCART_CO')
         endif
-        call set_and_check(p_pp25,ntpp25,'The pp25 tracer is mandatory.')
+        call set_and_check(p_p25,ntpp25,'The pp25 tracer is mandatory.')
         call set_and_check(p_bc1,ntbc1,'The bc1 tracer is mandatory.')
         call set_and_check(p_bc2,ntbc2,'The bc2 tracer is mandatory.')
         call set_and_check(p_oc1,ntoc1,'The oc1 tracer is mandatory.')
         call set_and_check(p_oc2,ntoc2,'The oc2 tracer is mandatory.')
-        call set_and_check(p_dust1,ntdust1,'The dust1 tracer is mandatory.')
-        call set_and_check(p_dust2,ntdust2,'The dust2 tracer is mandatory.')
-        call set_and_check(p_dust3,ntdust3,'The dust3 tracer is mandatory.')
-        call set_and_check(p_dust4,ntdust4,'The dust4 tracer is mandatory.')
-        call set_and_check(p_dust5,ntdust5,'The dust5 tracer is mandatory.')
-        call set_and_check(p_ss1,ntss1,'The ss1 tracer is mandatory.')
-        call set_and_check(p_ss2,ntss2,'The ss2 tracer is mandatory.')
-        call set_and_check(p_ss3,ntss3,'The ss3 tracer is mandatory.')
-        call set_and_check(p_ss4,ntss4,'The ss4 tracer is mandatory.')
-        call set_and_check(p_ss5,ntss5,'The ss5 tracer is mandatory.')
-        call set_and_check(p_pp10,ntpp10,'The pp10 tracer is mandatory.')
+        call set_and_check(p_dust_1,ntdust1,'The dust1 tracer is mandatory.')
+        call set_and_check(p_dust_2,ntdust2,'The dust2 tracer is mandatory.')
+        call set_and_check(p_dust_3,ntdust3,'The dust3 tracer is mandatory.')
+        call set_and_check(p_dust_4,ntdust4,'The dust4 tracer is mandatory.')
+        call set_and_check(p_dust_5,ntdust5,'The dust5 tracer is mandatory.')
+        call set_and_check(p_seas_1,ntss1,'The ss1 tracer is mandatory.')
+        call set_and_check(p_seas_2,ntss2,'The ss2 tracer is mandatory.')
+        call set_and_check(p_seas_3,ntss3,'The ss3 tracer is mandatory.')
+        call set_and_check(p_seas_4,ntss4,'The ss4 tracer is mandatory.')
+        call set_and_check(p_seas_5,ntss5,'The ss5 tracer is mandatory.')
+        call set_and_check(p_p10,ntpp10,'The pp10 tracer is mandatory.')
 
       contains
         subroutine set_and_check(p_index,nt_index,mandatory)
@@ -98,4 +121,4 @@ contains
       subroutine gsd_chem_config_wrapper_run()
       end subroutine gsd_chem_config_wrapper_run
 !> @}
-    subroutine gsd_chem_config_wrapper_run()
+    end module gsd_chem_config_wrapper

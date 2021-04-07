@@ -54,10 +54,12 @@ module gsd_chem_config
 
   ! --
   integer, parameter :: call_chemistry     = 1
-  integer, parameter :: num_ebu            = 7
-  integer, parameter :: num_ebu_in         = 7
-  integer, parameter :: num_moist=3, num_chem=20, num_emis_seas=5, num_emis_dust=5
-  integer, parameter :: num_emis_ant = 7
+  integer, parameter :: num_moist=3, num_emis_seas=5, num_emis_dust=5
+  ! These are initialized in gsd_chem_config_wrapper.F90
+  integer :: num_ebu            = 7
+  integer :: num_ebu_in         = 7
+  integer :: num_chem           = 20
+  integer :: num_emis_ant       = 7
 
   integer, parameter :: SEAS_OPT_DEFAULT = 1
 
@@ -181,6 +183,9 @@ module gsd_chem_config
   INTEGER, PARAMETER :: cb05_sorg_aq_kpp = 131
   INTEGER, PARAMETER :: cb05_sorg_vbs_aq_kpp = 132
 
+  integer :: p_ebu_co = -999 ! initialized in gsd_chem_config_wrapper.F90
+  integer :: p_ebu_in_co = -999 ! initialized in gsd_chem_config_wrapper.F90
+
   !-- plumerise 
   integer, parameter :: p_e_bc  =1
   integer, parameter :: p_e_oc  =2
@@ -197,7 +202,7 @@ module gsd_chem_config
   integer, parameter :: p_ebu_so2=5
   integer, parameter :: p_ebu_pm10=6
   integer, parameter :: p_ebu_dms=7
-  integer, parameter :: p_ebu_co=8
+  !integer, parameter :: p_ebu_co=8 ! initialized in gsd_chem_config_wrapper.F90
   integer, parameter :: p_ebu_in_bc  =1
   integer, parameter :: p_ebu_in_oc  =2
   integer, parameter :: p_ebu_in_sulf=3
@@ -205,13 +210,13 @@ module gsd_chem_config
   integer, parameter :: p_ebu_in_so2=5
   integer, parameter :: p_ebu_in_pm10=6
   integer, parameter :: p_ebu_in_dms=7
-  integer, parameter :: p_ebu_in_co=8
+  !integer, parameter :: p_ebu_in_co=8 ! initialized in gsd_chem_config_wrapper.F90
 
 
   !-- gocartracm
   integer, parameter :: p_ebu_no = 3
   integer, parameter :: p_ebu_no2=4
-  integer, parameter :: p_ebu_co =5
+  !integer, parameter :: p_ebu_co =5 ! initialized in gsd_chem_config_wrapper.F90
   integer, parameter :: p_ebu_eth=6
   integer, parameter :: p_ebu_hc3=7
   integer, parameter :: p_ebu_hc5=8
@@ -224,7 +229,7 @@ module gsd_chem_config
   integer, parameter :: p_ebu_hcho=15
   integer, parameter :: p_ebu_in_no = 3
   integer, parameter :: p_ebu_in_no2=4
-  integer, parameter :: p_ebu_in_co =5
+  !integer, parameter :: p_ebu_in_co =5 ! initialized in gsd_chem_config_wrapper.F90
   integer, parameter :: p_ebu_in_eth=6
   integer, parameter :: p_ebu_in_hc3=7
   integer, parameter :: p_ebu_in_hc5=8

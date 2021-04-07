@@ -44,7 +44,7 @@ contains
                    pr3d, ph3d,phl3d, prl3d, tk3d, us3d, vs3d, spechum,           &
                    w,vegtype,fire_GBBEPx,fire_MODIS,ca_sgs_gbbepx_frp,           &
                    ntrac,ntso2,ntpp25,ntbc1,ntoc1,ntpp10,do_ca,ca_sgs_emis,      &
-                   ca_sgs,gq0,qgrs,ebu,abem,pert_scale_plume,                    &
+                   ca_sgs,gq0,qgrs,ebu,abem,pert_scale_plume,ntco,               &
                    biomass_burn_opt_in,plumerise_flag_in,plumerisefire_frq_in,   &
                    emis_amp_plume, do_sppt_emis, sppt_wts, errmsg,errflg)
 
@@ -52,7 +52,7 @@ contains
 
 
     integer,        intent(in) :: im,kte,kme,ktau
-    integer,        intent(in) :: ntrac,ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer,        intent(in) :: ntrac,ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     real(kind_phys),intent(in) :: dt, emis_amp_plume, pert_scale_plume
 
     integer, parameter :: ids=1,jds=1,jde=1, kds=1
@@ -63,7 +63,7 @@ contains
     real(kind_phys), optional, intent(in) :: sppt_wts(:,:)
     integer, dimension(im), intent(in) :: vegtype    
     integer, dimension(im), intent(out) :: vegtype_cpl
-    real(kind_phys), dimension(im,    5), intent(in) :: fire_GBBEPx
+    real(kind_phys), dimension(:,:), intent(in) :: fire_GBBEPx
     real(kind_phys), dimension(im,   13), intent(in) :: fire_MODIS
     real(kind_phys), intent(out) :: ca_sgs_gbbepx_frp(:)
     real(kind_phys), dimension(im,kme), intent(in) :: ph3d, pr3d
@@ -106,7 +106,7 @@ contains
     real(kind_phys) :: factor, factor2, factor3, random_factor(ims:im)
     integer :: nbegin
     integer :: i, j, jp, k, kp, n
-  
+    character(len=30) :: option  
 
     errmsg = ''
     errflg = 0
@@ -230,7 +230,7 @@ contains
             chem(i,k,j,p_so2) = chem(i,k,j,p_so2) + factor2 * ebu_in(i,j,p_ebu_in_so2 )
 
             IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
-              chem(i,k,j,p_co) = chem(i,k,j,p_co) + factor2 * ebu(i,k,j,p_ebu_co )
+              chem(i,k,j,p_co) = chem(i,k,j,p_co) + factor2 * ebu_in(i,j,p_ebu_in_co  )
             ENDIF
 
           end do
@@ -273,6 +273,10 @@ contains
      enddo
     enddo
 
+    if(chem_opt == CHEM_OPT_GOCART_CO) then
+       gq0(:,:,ntpp10 )=ppm2ugkg(p_p10   ) * max(epsilc,chem(:,:,1,p_p10))
+    endif
+
     do k=kts,kte
      do i=its,ite
        qgrs(i,k,ntso2 )=gq0(i,k,ntso2  )
@@ -282,6 +286,10 @@ contains
        qgrs(i,k,ntpp10)=gq0(i,k,ntpp10 )
      enddo
     enddo
+
+    if(chem_opt == CHEM_OPT_GOCART_CO) then
+       qgrs(:,:,ntco  )=gq0(:,:,ntco   )
+    endif
 
     abem(:,4)=ugkg*ebu_in  (:,kts,p_ebu_in_bc )*random_factor(:)
     abem(:,5)=ugkg*ebu_in  (:,kts,p_ebu_in_oc )*random_factor(:)
@@ -321,7 +329,7 @@ contains
     integer, dimension(ims:ime), intent(in) :: vegtype
     integer, intent(in) :: ntrac
     integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
-    real(kind=kind_phys), dimension(ims:ime,     5),   intent(in) :: fire_GBBEPx
+    real(kind=kind_phys), dimension(:,:),   intent(in) :: fire_GBBEPx
     real(kind=kind_phys), dimension(ims:ime,    13),   intent(in) :: fire_MODIS
     real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) ::     &
          pr3d,ph3d
@@ -497,6 +505,9 @@ contains
           emiss_abu(i,j,p_e_so2)  =fire_GBBEPx(i,4)
           plume(i,j,1)            =fire_GBBEPx(i,5)
           ca_sgs_gbbepx_frp_with_j(i,j) = fire_GBBEPx(i,5)
+          if(chem_opt==CHEM_OPT_GOCART_CO) then
+            emiss_abu(i,j,p_e_co) =fire_GBBEPx(i,6)
+          endif
          enddo
         enddo
 !        print*,'hli GBBEPx plume',maxval(plume(:,:,1))

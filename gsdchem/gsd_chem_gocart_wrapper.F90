@@ -44,7 +44,7 @@ contains
     subroutine gsd_chem_gocart_wrapper_run(im, kte, kme, ktau, dt, garea,   &
                    rlat, rlon, julian, xcosz,                               &
                    pr3d, ph3d, prl3d, tk3d, spechum, idat, emi2_in, ntrac,  &
-                   ntso2, ntsulf, ntDMS, ntmsa, ntpp25,                     &
+                   ntso2, ntsulf, ntDMS, ntmsa, ntpp25, ntco,               &
                    ntbc1, ntbc2, ntoc1, ntoc2, ntpp10,                      &
                    chem_in_opt,chem_opt_in,                                 &
                    gq0, qgrs, tile_num, errmsg, errflg) 
@@ -54,7 +54,7 @@ contains
 
     integer,        intent(in) :: im,kte,kme,ktau,idat(8),tile_num
     integer,        intent(in) :: ntrac
-    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
     real(kind_phys),intent(in) :: dt,julian
 
@@ -149,7 +149,7 @@ contains
         xlat,xlong,dxy,                           &
         rri,t_phy,p_phy,rho_phy,dz8w,p8w,                   &
         t8w,                                               &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                                &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                           &
         ntbc1,ntbc2,ntoc1,ntoc2,ntpp10,                                        &
         ntrac,gq0,                                                      &
         num_chem, num_moist,                                 &
@@ -227,6 +227,10 @@ contains
      enddo
     enddo
 
+    if(chem_opt == CHEM_OPT_GOCART_CO) then
+       gq0(:,:,ntco   )=ppm2ugkg(p_co    ) * max(epsilc,chem(:,:,1,p_co))
+    endif
+
     do k=kts,kte
      do i=its,ite
        qgrs(i,k,ntso2  )=gq0(i,k,ntso2  )
@@ -242,6 +246,11 @@ contains
      enddo
     enddo
 
+    if(chem_opt == CHEM_OPT_GOCART_CO) then
+       qgrs(:,:,ntco   )=gq0(:,:,ntco   )
+    endif
+
+
 !
    end subroutine gsd_chem_gocart_wrapper_run
 !> @}
@@ -254,7 +263,7 @@ contains
         xlat,xlong,dxy,                          &
         rri,t_phy,p_phy,rho_phy,dz8w,p8w,                  &
         t8w,                                              &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                               &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                          &
         ntbc1,ntbc2,ntoc1,ntoc2,ntpp10,                                       &
         ntrac,gq0,                                                     &
         num_chem, num_moist,                                &
@@ -274,7 +283,7 @@ contains
 
     !FV3 input variables
     integer, intent(in) :: ntrac
-    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
     real(kind=kind_phys), dimension(ims:ime), intent(in) :: garea, rlat, rlon, xcosz
     real(kind=kind_phys), dimension(ims:ime, 64, 3),   intent(in) :: emi2_in
@@ -440,6 +449,11 @@ contains
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
      enddo
     enddo
+
+    if(chem_opt == CHEM_OPT_GOCART_CO) then
+       chem(:,:,jts,p_co    )=max(epsilc,gq0(:,:,ntco   )/ppm2ugkg(p_co))
+    endif
+
 
     if (.NOT. readrestart) then
       if (chem_in_opt == 0 ) then

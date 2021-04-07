@@ -42,7 +42,7 @@ contains
 !> @{
     subroutine gsd_chem_rad_wrapper_run(im, kte, kme, ktau, dt,         &
                    ph3d,prl3d, tk3d, spechum,                           &
-                   ntrac,ntso2,ntsulf,ntDMS,ntmsa,ntpp25,               &
+                   ntrac,ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,          &
                    ntbc1,ntbc2,ntoc1,ntoc2,                             &
                    ntss1,ntss2,ntss3,ntss4,ntss5,                       &
                    ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,      &
@@ -57,7 +57,7 @@ contains
     integer,        intent(in) :: im,kte,kme,ktau
     integer,        intent(in) :: ntrac,ntss1,ntss2,ntss3,ntss4,ntss5
     integer,        intent(in) :: ntdust1,ntdust2,ntdust3,ntdust4,ntdust5
-    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
     real(kind_phys),intent(in) :: dt
 
@@ -152,7 +152,7 @@ contains
 !>- get ready for chemistry run
     call gsd_chem_prep_rad(                                             &
         ktau,dtstep,ph3d,tk3d,prl3d,spechum,rri,dz8w,                   &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                                &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                           &
         ntbc1,ntbc2,ntoc1,ntoc2,                                        &
         ntss1,ntss2,ntss3,ntss4,ntss5,                                  &
         ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,                 &
@@ -234,7 +234,7 @@ contains
 !> @}
    subroutine gsd_chem_prep_rad(                                       &
         ktau,dtstep,ph3d,tk3d,prl3d,spechum,rri,dz8w,                  &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                               &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                          &
         ntbc1,ntbc2,ntoc1,ntoc2,                                       &
         ntss1,ntss2,ntss3,ntss4,ntss5,                                 &
         ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,                &
@@ -249,7 +249,7 @@ contains
     !FV3 input variables
     integer, intent(in) :: ntrac,ntss1,ntss2,ntss3,ntss4,ntss5
     integer, intent(in) :: ntdust1,ntdust2,ntdust3,ntdust4,ntdust5
-    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
     real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) :: ph3d
     real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) :: tk3d,prl3d,spechum
@@ -332,6 +332,9 @@ contains
       enddo
     enddo
 
+    if(chem_opt == CHEM_OPT_GOCART_CO) then
+       chem(:,:,jts,p_co    )=max(epsilc,gq0(:,:,ntco   )/ppm2ugkg(p_co))
+    endif
  
     do k=kms,kte
      do i=ims,ime

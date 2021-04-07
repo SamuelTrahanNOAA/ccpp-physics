@@ -46,7 +46,7 @@ contains
                    rain_cpl, rainc_cpl,                                 &
                    pr3d, ph3d,phl3d, prl3d, tk3d, us3d, vs3d, spechum,  &
                    w, dqdt, ntrac,ntchmdiag,                            &
-                   ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                     &
+                   ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                &
                    ntbc1,ntbc2,ntoc1,ntoc2,                             &
                    ntss1,ntss2,ntss3,ntss4,ntss5,                       &
                    ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,      &
@@ -59,7 +59,7 @@ contains
     integer,        intent(in) :: im,kte,kme,ktau,ntchmdiag
     integer,        intent(in) :: ntrac,ntss1,ntss2,ntss3,ntss4,ntss5
     integer,        intent(in) :: ntdust1,ntdust2,ntdust3,ntdust4,ntdust5
-    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
     real(kind_phys),intent(in) :: dt
 
@@ -143,7 +143,7 @@ contains
         pr3d,ph3d,phl3d,tk3d,prl3d,us3d,vs3d,spechum,w, dqdt,           &
         rri,t_phy,u_phy,v_phy,p_phy,rho_phy,dz8w,p8w,                   &
         t8w,dqdti,z_at_w,vvel,                                          &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                                &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                           &
         ntbc1,ntbc2,ntoc1,ntoc2,                                        &
         ntss1,ntss2,ntss3,ntss4,ntss5,                                  &
         ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,                 &
@@ -199,6 +199,10 @@ contains
      enddo
     enddo
 
+    if(chem_opt == CHEM_OPT_GOCART_CO) then
+       gq0(:,:,ntco   )=ppm2ugkg(p_co    ) * max(epsilc,chem(:,:,1,p_co))       
+    endif
+
     do k=kts,kte
      do i=its,ite
        qgrs(i,k,ntso2  )=gq0(i,k,ntso2  )
@@ -224,6 +228,10 @@ contains
      enddo
     enddo
 
+    if(chem_opt == CHEM_OPT_GOCART_CO) then
+       qgrs(:,:,ntco   )=gq0(:,:,ntco   )
+    endif
+
     ! -- output large-scale wet deposition
     call gocart_diag_store(3, var_rmv, trdf)
 
@@ -237,7 +245,7 @@ contains
         pr3d,ph3d,phl3d,tk3d,prl3d,us3d,vs3d,spechum,w,dqdt,           &
         rri,t_phy,u_phy,v_phy,p_phy,rho_phy,dz8w,p8w,                  &
         t8w,dqdti,z_at_w,vvel,                                         &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                               &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                          &
         ntbc1,ntbc2,ntoc1,ntoc2,                                       &
         ntss1,ntss2,ntss3,ntss4,ntss5,                                 &
         ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,                &
@@ -254,7 +262,7 @@ contains
     !FV3 input variables
     integer, intent(in) :: ntrac,ntss1,ntss2,ntss3,ntss4,ntss5
     integer, intent(in) :: ntdust1,ntdust2,ntdust3,ntdust4,ntdust5
-    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
     real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) :: pr3d,ph3d
     real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) ::       &
@@ -405,6 +413,10 @@ contains
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
      enddo
     enddo
+
+    if(chem_opt == CHEM_OPT_GOCART_CO) then
+       chem(:,:,jts,p_co    )=max(epsilc,gq0(:,:,ntco   )/ppm2ugkg(p_co))
+    endif
 
 
   end subroutine gsd_chem_prep_lsdep

@@ -1,6 +1,7 @@
 module dep_simple_mod
 
-  use gsd_chem_config, GOCART_SIMPLE => CHEM_OPT_GOCART, chem_opt=>chem_opt, CHEM_OPT_GOCART_CO
+  use gsd_chem_config, GOCART_SIMPLE => CHEM_OPT_GOCART, chem_opt=>chem_opt, &
+       CHEM_OPT_GOCART_CO=>CHEM_OPT_GOCART_CO
 !  use chem_tracers_mod, config_flags => chem_config
 
 ! USE module_data_sorgam
