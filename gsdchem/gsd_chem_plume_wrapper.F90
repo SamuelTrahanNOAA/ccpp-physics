@@ -170,12 +170,11 @@ contains
     ! compute wild-fire plumes
     if (call_plume) then
 
-      IF (chem_opt==CHEM_OPT_GOCART) THEN
-         option='GOCART'
-      ELSEIF (chem_opt==CHEM_OPT_GOCART_CO) then
+      IF (chem_opt==CHEM_OPT_GOCART_CO) then
          option='GOCART_CO'
       ELSE
-         option='NONE'
+         print *,'chem opt gocart'
+         option='GOCART'
       ENDIF
 
       call plumerise_driver (ktau,dtstep,num_chem,num_ebu,num_ebu_in,   &

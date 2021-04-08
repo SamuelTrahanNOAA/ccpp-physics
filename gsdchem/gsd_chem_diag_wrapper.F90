@@ -19,7 +19,13 @@ contains
 
 !> \brief Brief description of the subroutine
 !!
-      subroutine gsd_chem_diag_wrapper_init()
+      subroutine gsd_chem_diag_wrapper_init(errmsg,errflg)
+        character(len=*), intent(out) :: errmsg
+        integer,          intent(out) :: errflg
+        errmsg=''
+        errflg=0
+        print *,'got to gsd_chem_diag_wrapper_init'
+        write(0,*) 'got to gsd_chem_diag_wrapper_init'
       end subroutine gsd_chem_diag_wrapper_init
 
 !> \brief Brief description of the subroutine

@@ -14,6 +14,8 @@ contains
 
 !> \brief Brief description of the subroutine
 !!
+!! \section arg_table_gsd_chem_config_wrapper_init Argument Table
+!!
       subroutine gsd_chem_config_wrapper_init(ntso2,ntsulf,ntdms,ntmsa,ntco, &
            ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,   &
            ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,errmsg,errflg)
@@ -28,6 +30,7 @@ contains
         errmsg = ''
         errflg = 0
 
+        write(0,*) 'gsd_chem_config_wrapper_init'
         print *,'gsd_chem_config_wrapper_init'
 
         config_chem_opt = chem_opt
@@ -118,7 +121,19 @@ contains
 !!
 !>\section gsd_chem_config_wrapper GSD Chemistry Scheme General Algorithm
 !> @{
-      subroutine gsd_chem_config_wrapper_run()
+      subroutine gsd_chem_config_wrapper_run(ntso2,ntsulf,ntdms,ntmsa,ntco,   &
+           ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,    &
+           ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,errmsg,errflg)
+        implicit none
+        integer, intent(in) :: ntso2,ntsulf,ntdms,ntmsa,ntco,ntpp25,ntbc1, &
+             ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,    &
+             ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt
+        character(len=*), intent(out) :: errmsg
+        integer,          intent(out) :: errflg
+        
+        call gsd_chem_config_wrapper_init(ntso2,ntsulf,ntdms,ntmsa,ntco,      &
+           ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,    &
+           ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,errmsg,errflg)
       end subroutine gsd_chem_config_wrapper_run
 !> @}
     end module gsd_chem_config_wrapper

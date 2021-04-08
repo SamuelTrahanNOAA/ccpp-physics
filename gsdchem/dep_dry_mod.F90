@@ -181,7 +181,7 @@ contains
 !
 !      CALL wrf_debug(15,'DOING DRY DEP VELOCITIES WITH WESELY METHOD')
 
-      IF( chem_opt /= GOCART_SIMPLE .OR. chem_opt /= CHEM_OPT_GOCART_CO ) THEN
+      IF( chem_opt /= GOCART_SIMPLE .AND. chem_opt /= CHEM_OPT_GOCART_CO ) THEN
          call wesely_driver(ktau,dtstep,                                 &
               current_month,                                              &
               gmt,julday,t_phy,moist,p8w,t8w,raincv,                      &
