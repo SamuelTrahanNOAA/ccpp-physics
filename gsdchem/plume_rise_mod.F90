@@ -39,20 +39,20 @@ contains
                                   ids,ide, jds,jde, kds,kde,           &
                                   ims,ime, jms,jme, kms,kme,           &
                                   its,ite, jts,jte, kts,kte
-   REAL(kind=kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_ebu ),              &
+   REAL(kind=kind_phys), DIMENSION( :, :, :, : ),              &
          INTENT(INOUT ) ::                                   ebu
-   REAL(kind=kind_phys), DIMENSION( ims:ime, jms:jme, num_ebu_in ),                    &
+   REAL(kind=kind_phys), DIMENSION( :, :, : ),                    &
          INTENT(INOUT ) ::                                   ebu_in
-   REAL(kind=kind_phys), DIMENSION( ims:ime, jms:jme, num_frp_plume ),                 &
+   REAL(kind=kind_phys), DIMENSION( :, :, : ),                 &
          INTENT(INOUT ) ::                                   plume_frp
-   REAL(kind=kind_phys), DIMENSION( ims:ime, jms:jme ),INTENT(IN ) ::     &
+   REAL(kind=kind_phys), DIMENSION( :, : ),INTENT(IN ) ::     &
            mean_fct_agtf,mean_fct_agef,mean_fct_agsv,mean_fct_aggr,       &
            firesize_agtf,firesize_agef,firesize_agsv,firesize_aggr
 
 !
 !
 !
-   REAL(kind=kind_phys), DIMENSION( ims:ime , kms:kme , jms:jme ),                     &
+   REAL(kind=kind_phys), DIMENSION( : , : , : ),                     &
          INTENT(IN   ) ::                                              &
                                                       t_phy,           &
                  z_at_w,vvel,u_phy,v_phy,rho_phy,p_phy,q_vap

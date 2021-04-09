@@ -68,33 +68,33 @@ contains
                                   its,ite, jts,jte, kts,kte
    INTEGER,      INTENT(IN   ) ::                               &
                                   ktau
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),        &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),        &
          INTENT(IN ) ::                                   moist
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),         &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),         &
          INTENT(INOUT ) ::                                 chem
 
    INTEGER,      INTENT(IN   ) :: kemit
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kemit, jms:jme ),            &
+   REAL(kind_phys), DIMENSION( :, :, : ),            &
          INTENT(IN ) ::                                                    &
           e_co
 
 
 
 
-   REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme )         ,    &
+   REAL(kind_phys),  DIMENSION( : , : , : )         ,    &
           INTENT(IN   ) ::                                      &
                                                         alt,    &
                                                         t8w,    &
                                                       dz8w,     &
                                               p8w,z_at_w ,  &
                                               exch_h,rho_phy,z
- REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme )         ,    &
+ REAL(kind_phys),  DIMENSION( : , : , : )         ,    &
           INTENT(INOUT) ::                                      &
                h2oaj,h2oai,nu3,ac3,cor3,asulf,ahno3,anh3
-   INTEGER,DIMENSION( ims:ime , jms:jme )                  ,    &
+   INTEGER,DIMENSION( : , : )                  ,    &
           INTENT(IN   ) ::                                      &
                                                      ivgtyp
-   REAL(kind_phys),  DIMENSION( ims:ime , jms:jme )                   ,    &
+   REAL(kind_phys),  DIMENSION( : , : )                   ,    &
           INTENT(INOUT) ::                                      &
                                                      tsk,       &
                                                      gsw,       &
@@ -108,12 +108,12 @@ contains
                                                    xlat,        &
                                                    xlong,       &
                                                     znt,rmol
-   REAL(kind_phys), DIMENSION( ims:ime, jms:jme, num_chem ),         &
+   REAL(kind_phys), DIMENSION( :, :, : ),         &
          INTENT(OUT ) ::                                   ddep
-   REAL(kind_phys),  DIMENSION( ims:ime , jms:jme )                   ,    &
+   REAL(kind_phys),  DIMENSION( : , : )                   ,    &
           INTENT(OUT) ::                                      &
                                                      dep_vel_o3
-       REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),              &
+       REAL(kind_phys),  DIMENSION( : , : , : ),              &
                INTENT(IN   ) ::                                      &
                                                            p_phy,    &
                                                            t_phy
@@ -211,7 +211,13 @@ contains
                ims,ime, jms,jme, kms,kme,                      &
                its,ite, jts,jte, kts,kte                       )
 
-         IF (chem_opt == CHEM_OPT_GOCART_CO) ddvel(:,:,p_co)=0.
+         IF (chem_opt == CHEM_OPT_GOCART_CO) then
+           do j=jts,jte
+             do i=its,ite
+               ddvel(i,j,p_co)=0.
+             enddo
+           enddo
+         ENDIF
 
        ELSE if (chem_opt == 501 ) then
 ! for caesium .1cm/s

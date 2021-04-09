@@ -60,10 +60,10 @@ contains
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
     real(kind_phys), dimension(:,:), intent(in) :: emi_in
-    real(kind_phys), dimension(im,kme), intent(in) :: ph3d, pr3d
-    real(kind_phys), dimension(im,kte), intent(in) :: phl3d, prl3d, tk3d, spechum
-    real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0, qgrs
-    real(kind_phys), dimension(im,7        ), intent(inout) :: abem
+    real(kind_phys), dimension(:,:), intent(in) :: ph3d, pr3d
+    real(kind_phys), dimension(:,:), intent(in) :: phl3d, prl3d, tk3d, spechum
+    real(kind_phys), dimension(:,:,:), intent(inout) :: gq0, qgrs
+    real(kind_phys), dimension(:,:), intent(inout) :: abem
     integer,           intent(in) :: chem_opt_in, kemit_in
     character(len=*), intent(out) :: errmsg
     integer,          intent(out) :: errflg
@@ -179,16 +179,16 @@ contains
     real(kind=kind_phys), intent(in) :: dtstep
 
     !Stochastic physics variables
-    real(kind_phys), intent(in) :: random_factor(ims:ime,jms:jme)
+    real(kind_phys), intent(in) :: random_factor(:,:)
 
     !FV3 input variables
     integer, intent(in) :: ntrac
     integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
     integer,        intent(in) :: ntsulf
     real(kind=kind_phys), dimension(:,:),   intent(in) :: emi_in
-    real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) :: pr3d,ph3d
-    real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) :: phl3d,tk3d,prl3d,spechum
-    real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
+    real(kind=kind_phys), dimension(:, :), intent(in) :: pr3d,ph3d
+    real(kind=kind_phys), dimension(:, :), intent(in) :: phl3d,tk3d,prl3d,spechum
+    real(kind=kind_phys), dimension(:, :,:), intent(in) :: gq0
 
 
     !GSD Chem variables
@@ -197,15 +197,15 @@ contains
                            ims,ime, jms,jme, kms,kme,                      &
                            its,ite, jts,jte, kts,kte
 
-    real(kind_phys), dimension(num_chem), intent(in) :: ppm2ugkg
+    real(kind_phys), dimension(:), intent(in) :: ppm2ugkg
 
-    real(kind_phys), dimension(ims:ime, kms:kemit, jms:jme, num_emis_ant), intent(inout) :: emis_ant
+    real(kind_phys), dimension(:, :, :, :), intent(inout) :: emis_ant
     
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) ::              & 
+    real(kind_phys), dimension(:, :, :), intent(out) ::              & 
          rri, t_phy, p_phy, rho_phy, dz8w, p8w
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_chem),  intent(out) :: chem
+    real(kind_phys), dimension(:, :, :, :),  intent(out) :: chem
 
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) :: z_at_w
+    real(kind_phys), dimension(:, :, :), intent(out) :: z_at_w
     real(kind_phys), dimension(ims:ime, jms:jme, num_ebu_in) :: emiss_ab
     real(kind_phys), parameter :: frac_so2_ant = 0.5_kind_phys  ! antropogenic so2 fraction
 

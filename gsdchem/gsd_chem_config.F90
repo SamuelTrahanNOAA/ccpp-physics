@@ -58,7 +58,7 @@ module gsd_chem_config
   ! These are initialized in gsd_chem_config_wrapper.F90
   integer :: num_ebu            = 7
   integer :: num_ebu_in         = 7
-  integer :: num_chem           = 20
+  integer :: num_chem           = -999 ! was 20
   integer :: num_emis_ant       = 7
 
   integer, parameter :: SEAS_OPT_DEFAULT = 1

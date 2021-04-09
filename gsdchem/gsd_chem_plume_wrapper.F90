@@ -64,14 +64,14 @@ contains
     integer, dimension(im), intent(in) :: vegtype    
     integer, dimension(im), intent(out) :: vegtype_cpl
     real(kind_phys), dimension(:,:), intent(in) :: fire_GBBEPx
-    real(kind_phys), dimension(im,   13), intent(in) :: fire_MODIS
+    real(kind_phys), dimension(:,:), intent(in) :: fire_MODIS
     real(kind_phys), intent(out) :: ca_sgs_gbbepx_frp(:)
-    real(kind_phys), dimension(im,kme), intent(in) :: ph3d, pr3d
-    real(kind_phys), dimension(im,kte), intent(in) :: phl3d, prl3d, tk3d,        &
+    real(kind_phys), dimension(:,:), intent(in) :: ph3d, pr3d
+    real(kind_phys), dimension(:,:), intent(in) :: phl3d, prl3d, tk3d,        &
                 us3d, vs3d, spechum, w
-    real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0, qgrs
-    real(kind_phys), dimension(im,7        ), intent(inout) :: abem
-    real(kind_phys), dimension(ims:im, kms:kme, jms:jme, 1:num_ebu), intent(inout) :: ebu
+    real(kind_phys), dimension(:,:,:), intent(inout) :: gq0, qgrs
+    real(kind_phys), dimension(:,:), intent(inout) :: abem
+    real(kind_phys), dimension(:, :, :, :), intent(inout) :: ebu
     integer,        intent(in) :: biomass_burn_opt_in, plumerise_flag_in, plumerisefire_frq_in
     character(len=*), intent(out) :: errmsg
     integer,          intent(out) :: errflg
@@ -325,16 +325,16 @@ contains
     real(kind=kind_phys), intent(in) :: dtstep
 
     !FV3 input variables
-    integer, dimension(ims:ime), intent(in) :: vegtype
+    integer, dimension(:), intent(in) :: vegtype
     integer, intent(in) :: ntrac
     integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
     real(kind=kind_phys), dimension(:,:),   intent(in) :: fire_GBBEPx
-    real(kind=kind_phys), dimension(ims:ime,    13),   intent(in) :: fire_MODIS
-    real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) ::     &
+    real(kind=kind_phys), dimension(:,:),   intent(in) :: fire_MODIS
+    real(kind=kind_phys), dimension(:, :), intent(in) ::     &
          pr3d,ph3d
-    real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) ::       &
+    real(kind=kind_phys), dimension(:, :), intent(in) ::       &
          phl3d,tk3d,prl3d,us3d,vs3d,spechum,w
-    real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
+    real(kind=kind_phys), dimension(:, :,:), intent(in) :: gq0
 
 
     !GSD Chem variables
@@ -344,20 +344,20 @@ contains
                            ims,ime, jms,jme, kms,kme,                      &
                            its,ite, jts,jte, kts,kte
 
-    real(kind_phys), dimension(num_chem), intent(in) :: ppm2ugkg
-    real(kind_phys), dimension(ims:ime, jms:jme), intent(out) :: ca_sgs_gbbepx_frp_with_j
-    real(kind_phys), dimension(ims:ime, jms:jme, num_ebu_in),intent(out) :: ebu_in
+    real(kind_phys), dimension(:), intent(in) :: ppm2ugkg
+    real(kind_phys), dimension(:, :), intent(out) :: ca_sgs_gbbepx_frp_with_j
+    real(kind_phys), dimension(:, :, :),intent(out) :: ebu_in
     
-    integer,dimension(ims:ime, jms:jme), intent(out) :: ivgtyp
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) ::              & 
+    integer,dimension(:, :), intent(out) :: ivgtyp
+    real(kind_phys), dimension(:, :, :), intent(out) ::              & 
          rri, t_phy, u_phy, v_phy, p_phy, rho_phy, dz8w, p8w, vvel
          
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_moist), intent(out) :: moist
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_chem),  intent(out) :: chem
+    real(kind_phys), dimension(:, :, :, :), intent(out) :: moist
+    real(kind_phys), dimension(:, :, :, :),  intent(out) :: chem
 
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) :: z_at_w
-    real(kind_phys), dimension(ims:ime, jms:jme, num_frp_plume), intent(out) :: plumedist
-    real(kind_phys), dimension(ims:ime, jms:jme   ), intent(out) ::                    &
+    real(kind_phys), dimension(:, :, :), intent(out) :: z_at_w
+    real(kind_phys), dimension(:, :, :), intent(out) :: plumedist
+    real(kind_phys), dimension(:, :   ), intent(out) ::                    &
                    mean_fct_agtf,mean_fct_agef,mean_fct_agsv,mean_fct_aggr,            &
                    firesize_agtf,firesize_agef,firesize_agsv,firesize_aggr       
     real(kind_phys), dimension(ims:ime, jms:jme, num_ebu_in) :: emiss_abu

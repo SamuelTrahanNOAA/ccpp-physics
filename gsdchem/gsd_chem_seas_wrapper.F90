@@ -61,13 +61,13 @@ contains
     integer, parameter :: ims=1,jms=1,jme=1, kms=1
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
-    integer, dimension(im), intent(in) :: land     
-    real(kind_phys), dimension(im), intent(in) :: u10m, v10m, ustar,               &
+    integer, dimension(:), intent(in) :: land     
+    real(kind_phys), dimension(:), intent(in) :: u10m, v10m, ustar,               &
                 garea, rlat,rlon, tskin
-    real(kind_phys), dimension(im,kme), intent(in) :: ph3d, pr3d
-    real(kind_phys), dimension(im,kte), intent(in) :: prl3d, tk3d, us3d, vs3d, spechum
-    real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0,qgrs
-    real(kind_phys), dimension(im, nseasalt), intent(inout) :: ssem
+    real(kind_phys), dimension(:,:), intent(in) :: ph3d, pr3d
+    real(kind_phys), dimension(:,:), intent(in) :: prl3d, tk3d, us3d, vs3d, spechum
+    real(kind_phys), dimension(:,:,:), intent(inout) :: gq0,qgrs
+    real(kind_phys), dimension(:,:), intent(inout) :: ssem
     integer,        intent(in) :: seas_opt_in
     character(len=*), intent(out) :: errmsg
     integer,          intent(out) :: errflg
@@ -184,14 +184,14 @@ contains
     !Chem input configuration
 
     !FV3 input variables
-    integer, dimension(ims:ime), intent(in) :: land
+    integer, dimension(:), intent(in) :: land
     integer, intent(in) :: ntrac,ntss1,ntss2,ntss3,ntss4,ntss5
-    real(kind=kind_phys), dimension(ims:ime), intent(in) ::                & 
+    real(kind=kind_phys), dimension(:), intent(in) ::                & 
          u10m, v10m, ustar, garea, rlat, rlon, ts2d
-    real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) :: pr3d,ph3d
-    real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) ::       &
+    real(kind=kind_phys), dimension(:, :), intent(in) :: pr3d,ph3d
+    real(kind=kind_phys), dimension(:, :), intent(in) ::       &
          tk3d,prl3d,us3d,vs3d,spechum
-    real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
+    real(kind=kind_phys), dimension(:,:,:), intent(in) :: gq0
 
 
     !GSD Chem variables
@@ -200,14 +200,14 @@ contains
                            ims,ime, jms,jme, kms,kme,                       &
                            its,ite, jts,jte, kts,kte
 
-    real(kind_phys), dimension(num_chem), intent(in) :: ppm2ugkg
+    real(kind_phys), dimension(:), intent(in) :: ppm2ugkg
 
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) ::              & 
+    real(kind_phys), dimension(:, :, :), intent(out) ::              & 
          rri, t_phy, u_phy, v_phy, rho_phy, dz8w, p8w
-    real(kind_phys), dimension(ims:ime, jms:jme),          intent(out) ::              &
+    real(kind_phys), dimension(:, :),          intent(out) ::              &
          u10, v10, ust, tsk, xland, xlat, xlong, dxy
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_moist), intent(out) :: moist
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_chem),  intent(out) :: chem
+    real(kind_phys), dimension(:, :, :, :), intent(out) :: moist
+    real(kind_phys), dimension(:, :, :, :),  intent(out) :: chem
 
 
     ! -- local variables

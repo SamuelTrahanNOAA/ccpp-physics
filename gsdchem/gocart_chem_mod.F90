@@ -30,18 +30,19 @@ contains
                                   ids,ide, jds,jde, kds,kde,        &
                                   ims,ime, jms,jme, kms,kme,        &
                                   its,ite, jts,jte, kts,kte
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),                &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                &
          INTENT(IN ) ::                                   moist
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),                 &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                 &
          INTENT(INOUT ) ::                                      chem
-   REAL(kind_phys),  DIMENSION( ims:ime , jms:jme ),                        &
+   REAL(kind_phys),  DIMENSION( : , : ),                        &
           INTENT(IN   ) ::                                                 &
-              area,xlat,xlong,ttday,tcosz,xcosz
-   REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),                        &
+              area,xlat,xlong,ttday,tcosz
+   REAL(kind_phys), intent(in) :: xcosz(:)
+   REAL(kind_phys),  DIMENSION( : , : , : ),                        &
           INTENT(IN   ) ::                     t_phy,               &
                               backg_oh,backg_h2o2,backg_no3,dz8w,p8w,      &
                                               rho_phy
-   REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),                        &
+   REAL(kind_phys),  DIMENSION( : , : , : ),                        &
           INTENT(OUT   ) ::                     oh_t,h2o2_t,no3_t
 
   REAL(kind_phys), INTENT(IN   ) :: dt,g,gmt,dtlt
@@ -94,7 +95,7 @@ contains
         CALL szangle(1, 1, julday, gmtp, sza, cosszax,xlonn,rlat)
         cossza(1,1)=cosszax(1,1)
         !--use physics inst cosine zenith --hli 03/06/2020
-!        cossza(1,1)=xcosz(i,j)
+!        cossza(1,1)=xcosz(i)
 !
        do k=kts,kte 
        chldms_oh=0.
@@ -247,17 +248,17 @@ SUBROUTINE chmdrv_su( imx,jmx,lmx,&
   INTEGER, INTENT(IN) :: nmx,imx,jmx,lmx
   integer :: ndt1
   real(kind_phys), intent(in) :: dt1
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(IN) :: tmp, airden, airmas
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(IN) :: oh, xno3, cldf
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(INOUT) :: h2o2
-!  REAL(kind_phys), INTENT(IN)    :: drydf(imx,jmx,nmx)
-  REAL(kind_phys), INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind_phys), INTENT(INOUT) :: tdry(imx,jmx,nmx)
-  real(kind_phys), DIMENSION (imx,jmx),INTENT(IN) :: cossza
-!  REAL(kind_phys), DIMENSION(imx,jmx),     INTENT(INOUT) :: depso2, depso4, depmsa
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(INOUT) :: chldms_oh, chldms_no3
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(INOUT) :: chldms_x, chpso2, chpmsa
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(INOUT) :: chpso4, chlso2_oh, chlso2_aq
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(IN) :: tmp, airden, airmas
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(IN) :: oh, xno3, cldf
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(INOUT) :: h2o2
+!  REAL(kind_phys), INTENT(IN)    :: drydf(:,:,:)
+  REAL(kind_phys), INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind_phys), INTENT(INOUT) :: tdry(:,:,:)
+  real(kind_phys), DIMENSION (:,:),INTENT(IN) :: cossza
+!  REAL(kind_phys), DIMENSION(:,:),     INTENT(INOUT) :: depso2, depso4, depmsa
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(INOUT) :: chldms_oh, chldms_no3
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(INOUT) :: chldms_x, chpso2, chpmsa
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(INOUT) :: chpso4, chlso2_oh, chlso2_aq
 
   REAL(kind_phys), DIMENSION(imx,jmx,lmx) :: pso2_dms, pmsa_dms, pso4_so2
 
@@ -322,13 +323,13 @@ SUBROUTINE chem_dms( imx,jmx,lmx,&
   IMPLICIT NONE
 
   INTEGER, INTENT(IN) :: nmx, ndt1,imx,jmx,lmx
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(IN) :: tmp, airden, airmas
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(IN) :: oh, xno3
-  REAL(kind_phys), INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(INOUT) :: chldms_oh, chldms_no3
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(INOUT) :: chldms_x, chpso2, chpmsa
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(OUT)   :: pso2_dms, pmsa_dms
-  real(kind_phys), DIMENSION (imx,jmx),INTENT(IN) :: cossza
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(IN) :: tmp, airden, airmas
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(IN) :: oh, xno3
+  REAL(kind_phys), INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(INOUT) :: chldms_oh, chldms_no3
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(INOUT) :: chldms_x, chpso2, chpmsa
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(OUT)   :: pso2_dms, pmsa_dms
+  real(kind_phys), DIMENSION (:,:),INTENT(IN) :: cossza
 
   REAL(kind_phys), PARAMETER :: fx = 1.0 
   REAL(kind_phys), PARAMETER :: a = 0.75
@@ -493,18 +494,18 @@ SUBROUTINE chem_so2( imx,jmx,lmx,&
   IMPLICIT NONE
 
   INTEGER, INTENT(IN) ::  nmx, ndt1,imx,jmx,lmx
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(IN) :: tmp, airden, airmas
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(IN) :: cldf, oh
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(INOUT) :: h2o2
-  real(kind_phys), DIMENSION (imx,jmx),INTENT(IN) :: cossza
-!  REAL(kind_phys), INTENT(IN)    :: drydf(imx,jmx,nmx)
-  REAL(kind_phys), INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind_phys), INTENT(INOUT) :: tdry(imx,jmx,nmx)
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(IN) :: tmp, airden, airmas
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(IN) :: cldf, oh
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(INOUT) :: h2o2
+  real(kind_phys), DIMENSION (:,:),INTENT(IN) :: cossza
+!  REAL(kind_phys), INTENT(IN)    :: drydf(:,:,:)
+  REAL(kind_phys), INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind_phys), INTENT(INOUT) :: tdry(:,:,:)
 
-!  REAL(kind_phys), DIMENSION(imx,jmx),     INTENT(INOUT) :: depso2
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(INOUT) :: chpso4, chlso2_oh, chlso2_aq
-  REAL(kind_phys), INTENT(IN)  :: pso2_dms(imx,jmx,lmx)
-  REAL(kind_phys), INTENT(OUT) :: pso4_so2(imx,jmx,lmx)
+!  REAL(kind_phys), DIMENSION(:,:),     INTENT(INOUT) :: depso2
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(INOUT) :: chpso4, chlso2_oh, chlso2_aq
+  REAL(kind_phys), INTENT(IN)  :: pso2_dms(:,:,:)
+  REAL(kind_phys), INTENT(OUT) :: pso4_so2(:,:,:)
 
   REAL(kind_phys) ::  k0, kk, m, l1, l2, ld
   ! Factor to convert AIRDEN from kgair/m3 to molecules/cm3: 
@@ -645,14 +646,14 @@ SUBROUTINE chem_so4( imx,jmx,lmx,&
   IMPLICIT NONE
 
   INTEGER, INTENT(IN) :: nmx, ndt1,imx,jmx,lmx
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(IN) :: airmas
-!  REAL(kind_phys), INTENT(IN)    :: drydf(imx,jmx,nmx)
-  REAL(kind_phys), INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind_phys), INTENT(INOUT) :: tdry(imx,jmx,nmx)
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(IN) :: airmas
+!  REAL(kind_phys), INTENT(IN)    :: drydf(:,:,:)
+  REAL(kind_phys), INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind_phys), INTENT(INOUT) :: tdry(:,:,:)
 
-!  REAL(kind_phys), DIMENSION(imx,jmx), INTENT(INOUT) :: depso4
-  REAL(kind_phys), INTENT(IN) :: pso4_so2(imx,jmx,lmx)
-  real(kind_phys), DIMENSION (imx,jmx),INTENT(IN) :: cossza
+!  REAL(kind_phys), DIMENSION(:,:), INTENT(INOUT) :: depso4
+  REAL(kind_phys), INTENT(IN) :: pso4_so2(:,:,:)
+  real(kind_phys), DIMENSION (:,:),INTENT(IN) :: cossza
 
   INTEGER :: i, j, l
   REAL(kind_phys) :: so40, rk, rkt, so4 
@@ -717,13 +718,13 @@ SUBROUTINE chem_msa( imx,jmx,lmx,&
   IMPLICIT NONE
 
   INTEGER, INTENT(IN) :: nmx, ndt1,imx,jmx,lmx
-  REAL(kind_phys), DIMENSION(imx,jmx,lmx), INTENT(IN) :: airmas
-  REAL(kind_phys), DIMENSION(imx,jmx), INTENT(IN) :: cossza
-!  REAL, INTENT(IN)    :: drydf(imx,jmx,nmx)
-  REAL(kind_phys), INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind_phys), INTENT(INOUT) :: tdry(imx,jmx,nmx)
-!  REAL, DIMENSION(imx,jmx), INTENT(INOUT) :: depmsa
-  REAL(kind_phys), INTENT(IN) :: pmsa_dms(imx,jmx,lmx)
+  REAL(kind_phys), DIMENSION(:,:,:), INTENT(IN) :: airmas
+  REAL(kind_phys), DIMENSION(:,:), INTENT(IN) :: cossza
+!  REAL, INTENT(IN)    :: drydf(:,:,:)
+  REAL(kind_phys), INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind_phys), INTENT(INOUT) :: tdry(:,:,:)
+!  REAL, DIMENSION(:,:), INTENT(INOUT) :: depmsa
+  REAL(kind_phys), INTENT(IN) :: pmsa_dms(:,:,:)
 
   REAL(kind_phys) :: msa0, msa, rk, rkt
   INTEGER :: i, j, l
@@ -787,7 +788,7 @@ SUBROUTINE szangle(imx, jmx, doy, xhour, sza, cossza,xlon,rlat)
   INTEGER, INTENT(IN)    :: imx, jmx
   INTEGER, INTENT(IN)    :: doy
   REAL(kind_phys),    INTENT(IN)    :: xhour
-  REAL(kind_phys),    INTENT(OUT)   :: sza(imx,jmx), cossza(imx,jmx)
+  REAL(kind_phys),    INTENT(OUT)   :: sza(:,:), cossza(:,:)
 
   REAL(kind_phys)    :: a0, a1, a2, a3, b1, b2, b3, r, dec, timloc, ahr,xlon,rlat
   real(kind_phys), parameter :: pi=3.14

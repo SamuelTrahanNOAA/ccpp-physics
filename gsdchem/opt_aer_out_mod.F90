@@ -27,18 +27,18 @@ CONTAINS
                                        ims,ime, jms,jme, kms,kme, &
                                        its,ite, jts,jte, kts,kte, &
                                        num_ext_coef,num_bscat_coef,num_asym_par
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 1:num_ext_coef ), INTENT (OUT) :: ext_coeff
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 1:num_bscat_coef ), INTENT (OUT) :: bscat_coeff
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 1:num_asym_par ), INTENT (OUT) :: asym_par
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 4 ),        &
+   REAL(kind_phys), DIMENSION( :, :, :, : ), INTENT (OUT) :: ext_coeff
+   REAL(kind_phys), DIMENSION( :, :, :, : ), INTENT (OUT) :: bscat_coeff
+   REAL(kind_phys), DIMENSION( :, :, :, : ), INTENT (OUT) :: asym_par
+   REAL(kind_phys), DIMENSION( :, :, :, : ),        &
          INTENT(IN    ) :: tauaersw,gaersw,waersw
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 16 ),        &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),        &
          INTENT(IN    ) :: tauaerlw
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme ),            &
+   REAL(kind_phys), DIMENSION( :, :, : ),            &
          INTENT(IN    ) :: dz8w
    real(kind_phys) :: ang,slope,slopeg,slopessa,onemang    
    integer :: i,j,k
-   real(kind_phys), dimension (ims:ime,jms:jme), intent(INOUT) :: aodi
+   real(kind_phys), dimension (:,:), intent(INOUT) :: aodi
    real(kind_phys), dimension (ims:ime,jms:jme)  :: aod
 
 

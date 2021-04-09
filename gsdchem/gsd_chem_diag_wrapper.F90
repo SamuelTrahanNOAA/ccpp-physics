@@ -19,7 +19,7 @@ contains
 
 !> \brief Brief description of the subroutine
 !!
-      subroutine gsd_chem_diag_wrapper_init
+      subroutine gsd_chem_diag_wrapper_init()
       end subroutine gsd_chem_diag_wrapper_init
 
 !> \brief Brief description of the subroutine
@@ -56,11 +56,11 @@ contains
     integer, parameter :: ims=1,jms=1,jme=1, kms=1
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
-    real(kind_phys), dimension(im,kme), intent(in) :: pr3d
-    real(kind_phys), dimension(im,ntchmdiag), intent(inout) :: wetdpc
-    real(kind_phys), dimension(im,ntchm), intent(in) :: wetdpc_deep, wetdpc_mid, wetdpc_shal
-    real(kind_phys), dimension(im,kte,ntrac), intent(in) :: gq0
-    real(kind_phys), dimension(im,6        ), intent(inout) :: aecm
+    real(kind_phys), dimension(:,:), intent(in) :: pr3d
+    real(kind_phys), dimension(:,:), intent(inout) :: wetdpc
+    real(kind_phys), dimension(:,:), intent(in) :: wetdpc_deep, wetdpc_mid, wetdpc_shal
+    real(kind_phys), dimension(:,:,:), intent(in) :: gq0
+    real(kind_phys), dimension(:,:), intent(inout) :: aecm
     integer,        intent(in) :: chem_opt_in
     character(len=*), intent(out) :: errmsg
     integer,          intent(out) :: errflg

@@ -30,19 +30,19 @@ SUBROUTINE gocart_settling_driver(dt,t_phy,moist,                     &
                                   ids,ide, jds,jde, kds,kde,               &
                                   ims,ime, jms,jme, kms,kme,               &
                                   its,ite, jts,jte, kts,kte
-  REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),                &
+  REAL(kind_phys), DIMENSION( :, :, :, : ),                &
          INTENT(IN ) ::                                   moist
-  REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),                 &
+  REAL(kind_phys), DIMENSION( :, :, :, : ),                 &
          INTENT(INOUT ) ::                                   chem
-  REAL(kind_phys), DIMENSION( ims:ime, jms:jme ),                 &
+  REAL(kind_phys), DIMENSION( :, : ),                 &
          INTENT(IN ) :: dusthelp,seashelp
-  REAL(kind_phys), DIMENSION( ims:ime , kms:kme , jms:jme ),                        &
+  REAL(kind_phys), DIMENSION( : , : , : ),                        &
           INTENT(IN   ) ::  t_phy,p_phy,dz8w,p8w,rho_phy
-  REAL(kind_phys), DIMENSION( ims:ime ,  jms:jme ),                        &
+  REAL(kind_phys), DIMENSION( : ,  : ),                        &
           INTENT(IN   ) ::  area
   REAL(kind_phys), INTENT(IN   ) :: dt,g
 
-  REAL(kind_phys), DIMENSION( ims:ime, jms:jme, num_chem ), INTENT(OUT  ) :: sedim
+  REAL(kind_phys), DIMENSION( :, :, : ), INTENT(OUT  ) :: sedim
 
   integer :: nv,i,j,k,kk,lmx,iseas,idust
   real(kind_phys), DIMENSION (1,1,kte-kts+1) :: tmp,airden,airmas,p_mid,delz,rh
@@ -56,8 +56,8 @@ SUBROUTINE gocart_settling_driver(dt,t_phy,moist,                     &
 ! real(kind_phys), DIMENSION (5), PARAMETER :: reff_dust(5)=(/0.73D-6,1.4D-6,2.4D-6,4.5D-6,8.0D-6/)
 ! real(kind_phys), DIMENSION (4), PARAMETER :: den_seas(4)=(/2200.,2200.,2200.,2290./)
 ! real(kind_phys), DIMENSION (4), PARAMETER :: reff_seas(4)=(/0.30D-6,1.00D-6,3.25D-6,7.50D-6/)
-  real(kind_phys), DIMENSION (5) :: bstl_dust
-  real(kind_phys), DIMENSION (5) :: bstl_seas
+  real(kind_phys), DIMENSION (1,1,5) :: bstl_dust
+  real(kind_phys), DIMENSION (1,1,5) :: bstl_seas
   real(kind_phys) conver,converi
   real(kind_phys),parameter::max_default=0.
 
@@ -74,8 +74,8 @@ SUBROUTINE gocart_settling_driver(dt,t_phy,moist,                     &
 !
        do j=jts,jte
        do i=its,ite
-          bstl_dust(:)=0.
-          bstl_seas(:)=0.
+          bstl_dust(:,:,:)=0.
+          bstl_seas(:,:,:)=0.
 !
 ! initialize met stuff
 !
@@ -210,8 +210,8 @@ SUBROUTINE gocart_settling_driver(dt,t_phy,moist,                     &
 ! initialize some met stuff
 !
           kk=0
-          bstl_dust(:)=0.
-          bstl_seas(:)=0.
+          bstl_dust(:,:,:)=0.
+          bstl_seas(:,:,:)=0.
           do k=kts,kte 
           kk=kk+1
           p_mid(1,1,kk)=.01*p_phy(i,kte-k+kts,j) 
@@ -362,12 +362,12 @@ END SUBROUTINE gocart_settling_driver
   INTEGER, INTENT(IN) :: imx, jmx, lmx, nmx,iseas,idust
   INTEGER :: ntdt
   REAL(kind_phys), INTENT(IN) :: dt,g0,dyn_visc
-  REAL(kind_phys),    INTENT(IN) :: tmp(imx,jmx,lmx), delz(imx,jmx,lmx),  &
-                         airmas(imx,jmx,lmx), rh(imx,jmx,lmx), &
-                         den(nmx), reff(nmx),p_mid(imx,jmx,lmx),&
-                         airden(imx,jmx,lmx)
-  REAL(kind_phys), INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind_phys), INTENT(OUT)   :: bstl(imx,jmx,nmx)
+  REAL(kind_phys),    INTENT(IN) :: tmp(:,:,:), delz(:,:,:),  &
+                         airmas(:,:,:), rh(:,:,:), &
+                         den(:), reff(:),p_mid(:,:,:),&
+                         airden(:,:,:)
+  REAL(kind_phys), INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind_phys), INTENT(OUT)   :: bstl(:,:,:)
 
   REAL(kind_phys)    :: tc1(imx,jmx,lmx,nmx), dt_settl(nmx), rcm(nmx), rho(nmx)
   INTEGER :: ndt_settl(nmx)

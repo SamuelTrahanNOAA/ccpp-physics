@@ -63,11 +63,11 @@ contains
     integer, parameter :: ims=1,jms=1,jme=1, kms=1
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
-    real(kind_phys), dimension(im), intent(in) :: garea
-    real(kind_phys), dimension(im,kme), intent(in) :: ph3d, pr3d
-    real(kind_phys), dimension(im,kte), intent(in) :: prl3d, tk3d, spechum
-    real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0, qgrs
-    real(kind_phys), dimension(im,ntchmdiag), intent(inout) :: sedimio
+    real(kind_phys), dimension(:), intent(in) :: garea
+    real(kind_phys), dimension(:,:), intent(in) :: ph3d, pr3d
+    real(kind_phys), dimension(:,:), intent(in) :: prl3d, tk3d, spechum
+    real(kind_phys), dimension(:,:,:), intent(inout) :: gq0, qgrs
+    real(kind_phys), dimension(:,:), intent(inout) :: sedimio
     integer,        intent(in) :: dust_opt_in, seas_opt_in
     character(len=*), intent(out) :: errmsg
     integer,          intent(out) :: errflg
@@ -205,10 +205,10 @@ contains
     integer, intent(in) :: ntdust1,ntdust2,ntdust3,ntdust4,ntdust5
     integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
-    real(kind=kind_phys), dimension(ims:ime), intent(in) :: garea
-    real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) :: pr3d,ph3d
-    real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) :: tk3d,prl3d,spechum
-    real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
+    real(kind=kind_phys), dimension(:), intent(in) :: garea
+    real(kind=kind_phys), dimension(:, :), intent(in) :: pr3d,ph3d
+    real(kind=kind_phys), dimension(:, :), intent(in) :: tk3d,prl3d,spechum
+    real(kind=kind_phys), dimension(:, :,:), intent(in) :: gq0
 
 
     !GSD Chem variables
@@ -217,12 +217,12 @@ contains
                            ims,ime, jms,jme, kms,kme,                      &
                            its,ite, jts,jte, kts,kte
 
-    real(kind_phys), dimension(num_chem), intent(in) :: ppm2ugkg
+    real(kind_phys), dimension(:), intent(in) :: ppm2ugkg
     
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) :: t_phy, p_phy, rho_phy, dz8w, p8w
-    real(kind_phys), dimension(ims:ime, jms:jme),          intent(out) :: dxy
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_moist), intent(out) :: moist
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_chem),  intent(out) :: chem
+    real(kind_phys), dimension(:, :, :), intent(out) :: t_phy, p_phy, rho_phy, dz8w, p8w
+    real(kind_phys), dimension(:, :),          intent(out) :: dxy
+    real(kind_phys), dimension(:, :, :, :), intent(out) :: moist
+    real(kind_phys), dimension(:, :, :, :),  intent(out) :: chem
 
     ! -- local variables
     integer i,ip,j,jp,k,kp,kk,kkp,l,ll,n

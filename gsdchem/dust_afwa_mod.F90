@@ -31,25 +31,25 @@ contains
                                   ims,ime, jms,jme, kms,kme,               &
                                   its,ite, jts,jte, kts,kte,               &
                    num_emis_dust,num_moist,num_chem,num_soil_layers
-   INTEGER,DIMENSION( ims:ime , jms:jme )                  ,               &
+   INTEGER,DIMENSION( : , : )                  ,               &
           INTENT(IN   ) ::                                                 &
                                                      ivgtyp,               &
                                                      isltyp
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),                &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                &
          INTENT(IN ) ::                              moist
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),                 &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                 &
          INTENT(INOUT ) ::                           chem
-   REAL(kind_phys), DIMENSION( ims:ime, 1, jms:jme,num_emis_dust),                    &
+   REAL(kind_phys), DIMENSION( :, :, :, :),                    &
          INTENT(INOUT ) ::                                                 &
          emis_dust
-   REAL(kind_phys), DIMENSION( ims:ime, 1, jms:jme,num_emis_dust),                    &
+   REAL(kind_phys), DIMENSION( :, :, :, :),                    &
          INTENT(INOUT ) ::                                                 &
          srce_dust
-   REAL(kind_phys), DIMENSION( ims:ime, num_soil_layers, jms:jme ) ,     &
+   REAL(kind_phys), DIMENSION( :, :, : ) ,     &
          INTENT(INOUT) ::                            smois
-   REAL(kind_phys), DIMENSION( ims:ime , jms:jme, ndcls )             ,               &
+   REAL(kind_phys), DIMENSION( : , :, : )             ,               &
          INTENT(IN   ) ::                            erod
-   REAL(kind_phys), DIMENSION( ims:ime , jms:jme )                    ,               &
+   REAL(kind_phys), DIMENSION( : , : )                    ,               &
          INTENT(IN   ) ::                                                  &
                                                      u10,                  &
                                                      v10,                  &
@@ -62,7 +62,7 @@ contains
                                                      znt,                  &
                                                      clay,                 &
                                                      sand,dustin
-   REAL(kind_phys), DIMENSION( ims:ime , kms:kme , jms:jme ),                         &
+   REAL(kind_phys), DIMENSION( : , : , : ),                         &
          INTENT(IN   ) ::                                                  &
                                                      alt,                  &
                                                      t_phy,                &
@@ -77,8 +77,10 @@ contains
   real(kind_phys), DIMENSION (1,1) :: erodtot
   REAL(kind_phys), DIMENSION (1,1) :: gravsm
   REAL(kind_phys), DIMENSION (1,1) :: drylimit
-  real(kind_phys), DIMENSION (5)   :: tc,bems
-  real(kind_phys), dimension (1,1) :: airden,airmas,ustar
+  real(kind_phys), DIMENSION (1,1,1,5)   :: tc
+  real(kind_phys), DIMENSION (1,1,5)   :: bems
+  real(kind_phys), dimension (1,1,1) :: airden,airmas
+  real(kind_phys), dimension (1,1) :: ustar
   real(kind_phys), dimension (1) :: dxy
   real(kind_phys), dimension (3) :: massfrac
   real(kind_phys) :: conver,converi
@@ -106,16 +108,16 @@ contains
 
 ! Total concentration at lowest model level. This is still hardcoded for 5 bins.
 
-      tc(1)=chem(i,kts,j,p_dust_1)*conver
-      tc(2)=chem(i,kts,j,p_dust_2)*conver
-      tc(3)=chem(i,kts,j,p_dust_3)*conver
-      tc(4)=chem(i,kts,j,p_dust_4)*conver
-      tc(5)=chem(i,kts,j,p_dust_5)*conver
+      tc(1,1,1,1)=chem(i,kts,j,p_dust_1)*conver
+      tc(1,1,1,2)=chem(i,kts,j,p_dust_2)*conver
+      tc(1,1,1,3)=chem(i,kts,j,p_dust_3)*conver
+      tc(1,1,1,4)=chem(i,kts,j,p_dust_4)*conver
+      tc(1,1,1,5)=chem(i,kts,j,p_dust_5)*conver
 
 ! Air mass and density at lowest model level.
 
-      airmas(1,1)=-(p8w(i,kts+1,j)-p8w(i,kts,j))*area(i,j)/g
-      airden(1,1)=rho_phy(i,kts,j)
+      airmas(1,1,1)=-(p8w(i,kts+1,j)-p8w(i,kts,j))*area(i,j)/g
+      airden(1,1,1)=rho_phy(i,kts,j)
       ustar(1,1)=ust(i,j)
       dxy(1)=area(i,j)
  
@@ -161,19 +163,19 @@ contains
                        erodtot, ilwi, dxy, gravsm, airden, airmas, &
                        bems, g, drylimit, dust_alpha, dust_gamma)
 
-     chem(i,kts,j,p_dust_1)=tc(1)*converi
-     chem(i,kts,j,p_dust_2)=tc(2)*converi
-     chem(i,kts,j,p_dust_3)=tc(3)*converi
-     chem(i,kts,j,p_dust_4)=tc(4)*converi
-     chem(i,kts,j,p_dust_5)=tc(5)*converi
+     chem(i,kts,j,p_dust_1)=tc(1,1,1,1)*converi
+     chem(i,kts,j,p_dust_2)=tc(1,1,1,2)*converi
+     chem(i,kts,j,p_dust_3)=tc(1,1,1,3)*converi
+     chem(i,kts,j,p_dust_4)=tc(1,1,1,4)*converi
+     chem(i,kts,j,p_dust_5)=tc(1,1,1,5)*converi
 
 ! For output diagnostics
 
-      emis_dust(i,1,j,p_edust1)=bems(1)
-      emis_dust(i,1,j,p_edust2)=bems(2)
-      emis_dust(i,1,j,p_edust3)=bems(3)
-      emis_dust(i,1,j,p_edust4)=bems(4)
-      emis_dust(i,1,j,p_edust5)=bems(5)
+      emis_dust(i,1,j,p_edust1)=bems(1,1,1)
+      emis_dust(i,1,j,p_edust2)=bems(1,1,2)
+      emis_dust(i,1,j,p_edust3)=bems(1,1,3)
+      emis_dust(i,1,j,p_edust4)=bems(1,1,4)
+      emis_dust(i,1,j,p_edust5)=bems(1,1,5)
     endif
   enddo
   enddo
@@ -248,15 +250,15 @@ end subroutine gocart_dust_afwa_driver
 ! ****************************************************************************
 
   INTEGER, INTENT(IN)   :: nmx,imx,jmx,lmx,smx
-  INTEGER, INTENT(IN)   :: ilwi(imx,jmx)
-  REAL(kind_phys), INTENT(IN)    :: erod(imx,jmx)
-  REAL(kind_phys), INTENT(IN)    :: ustar(imx,jmx)
-  REAL(kind_phys), INTENT(IN)    :: gravsm(imx,jmx)
-  REAL(kind_phys), INTENT(IN)    :: drylimit(imx,jmx) 
-  REAL(kind_phys), INTENT(IN)    :: dxy(jmx)
-  REAL(kind_phys), INTENT(IN)    :: airden(imx,jmx,lmx), airmas(imx,jmx,lmx)
-  REAL(kind_phys), INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind_phys), INTENT(OUT)   :: bems(imx,jmx,nmx) 
+  INTEGER, INTENT(IN)   :: ilwi(:,:)
+  REAL(kind_phys), INTENT(IN)    :: erod(:,:)
+  REAL(kind_phys), INTENT(IN)    :: ustar(:,:)
+  REAL(kind_phys), INTENT(IN)    :: gravsm(:,:)
+  REAL(kind_phys), INTENT(IN)    :: drylimit(:,:) 
+  REAL(kind_phys), INTENT(IN)    :: dxy(:)
+  REAL(kind_phys), INTENT(IN)    :: airden(:,:,:), airmas(:,:,:)
+  REAL(kind_phys), INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind_phys), INTENT(OUT)   :: bems(:,:,:) 
   REAL(kind_phys), INTENT(IN)    :: g0,dt1
 
   REAL(kind_phys)    :: den(smx), diam(smx)

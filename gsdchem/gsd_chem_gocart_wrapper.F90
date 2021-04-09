@@ -52,7 +52,7 @@ contains
     implicit none
 
 
-    integer,        intent(in) :: im,kte,kme,ktau,idat(8),tile_num
+    integer,        intent(in) :: im,kte,kme,ktau,idat(:),tile_num
     integer,        intent(in) :: ntrac
     integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
@@ -62,11 +62,11 @@ contains
     integer, parameter :: ims=1,jms=1,jme=1, kms=1
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
-    real(kind_phys), dimension(im,64, 3), intent(in) :: emi2_in
-    real(kind_phys), dimension(im), intent(in) :: garea, rlat,rlon, xcosz
-    real(kind_phys), dimension(im,kme), intent(in) :: ph3d, pr3d
-    real(kind_phys), dimension(im,kte), intent(in) :: prl3d, tk3d, spechum
-    real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0, qgrs
+    real(kind_phys), dimension(:,:,:), intent(in) :: emi2_in
+    real(kind_phys), dimension(:), intent(in) :: garea, rlat,rlon, xcosz
+    real(kind_phys), dimension(:,:), intent(in) :: ph3d, pr3d
+    real(kind_phys), dimension(:,:), intent(in) :: prl3d, tk3d, spechum
+    real(kind_phys), dimension(:,:,:), intent(inout) :: gq0, qgrs
     integer,           intent(in) :: chem_in_opt
     integer,           intent(in) :: chem_opt_in
     character(len=*), intent(out) :: errmsg
@@ -285,12 +285,13 @@ contains
     integer, intent(in) :: ntrac
     integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
-    real(kind=kind_phys), dimension(ims:ime), intent(in) :: garea, rlat, rlon, xcosz
-    real(kind=kind_phys), dimension(ims:ime, 64, 3),   intent(in) :: emi2_in
-    real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) :: pr3d,ph3d
-    real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) ::       &
+    real(kind=kind_phys), dimension(:), intent(in) :: garea, rlat, rlon
+    real(kind=kind_phys), dimension(:), intent(in) :: xcosz
+    real(kind=kind_phys), dimension(:,:,:),   intent(in) :: emi2_in
+    real(kind=kind_phys), dimension(:, :), intent(in) :: pr3d,ph3d
+    real(kind=kind_phys), dimension(:, :), intent(in) ::       &
          tk3d,prl3d,spechum
-    real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
+    real(kind=kind_phys), dimension(:, :,:), intent(in) :: gq0
 
 
     !GSD Chem variables
@@ -301,18 +302,18 @@ contains
                            ims,ime, jms,jme, kms,kme,                      &
                            its,ite, jts,jte, kts,kte
 
-    real(kind_phys), dimension(num_chem), intent(in) :: ppm2ugkg
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme),    intent(out) ::          &
+    real(kind_phys), dimension(:), intent(in) :: ppm2ugkg
+    real(kind_phys), dimension(:, :, :),    intent(out) ::          &
                            backg_oh,backg_h2o2,backg_no3
 
     
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) ::              & 
+    real(kind_phys), dimension(:, :, :), intent(out) ::              & 
          rri, t_phy, p_phy, rho_phy, dz8w, p8w, t8w
-    real(kind_phys), dimension(ims:ime, jms:jme),          intent(out) ::              &
+    real(kind_phys), dimension(:, :),          intent(out) ::              &
          xlat, xlong, dxy,       &
          ttday, tcosz
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_moist), intent(out) :: moist
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_chem),  intent(out) :: chem
+    real(kind_phys), dimension(:, :, :, :), intent(out) :: moist
+    real(kind_phys), dimension(:, :, :, :),  intent(out) :: chem
 
     real(kind_phys), dimension(ims:ime, kms:kme, jms:jme) :: z_at_w
     real(kind_phys), dimension(nvl_gocart) :: p_gocart

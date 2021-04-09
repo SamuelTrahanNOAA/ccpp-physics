@@ -128,21 +128,21 @@
 !
 ! array that holds all advected chemical species
 !
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),             &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),             &
          INTENT(INOUT ) ::  chem
 !
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme ),                       &
+   REAL(kind_phys), DIMENSION( :, :, : ),                       &
          INTENT(IN ) ::  relhum,dz8w, alt, h2oai, h2oaj
 !
 ! arrays that hold the aerosol optical properties
 !
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 4 ),                       &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                       &
          INTENT(INOUT ) ::                                             &
            tauaersw,gaersw,waersw,bscoefsw
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 16 ),                       &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                       &
          INTENT(INOUT ) ::                                             &
            tauaerlw
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 1:4 ),                  &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                  &
          INTENT(INOUT ) ::                                             &
            l2aer, l3aer, l4aer, l5aer, l6aer, l7aer
 !
@@ -421,18 +421,18 @@
    INTEGER, INTENT(IN   ) :: its,ite, jts,jte, kts,kte, nbin_o
    INTEGER, INTENT(IN   ) :: ims,ime, jms,jme, kms,kme,num_chem
    INTEGER, INTENT(IN   ) :: ids,ide, jds,jde, kds,kde,chem_opt
-        integer, dimension( its:ite, jts:jte ) :: iprt
+        integer, dimension( :, : ) :: iprt
 
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),             &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),             &
          INTENT(IN ) ::  chem
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme ),                       &
+   REAL(kind_phys), DIMENSION( :, :, : ),                       &
          INTENT(IN ) ::  alt,relhum
-   REAL(kind_phys), DIMENSION( its:ite, kts:kte, jts:jte, 1:nbin_o),              &
+   REAL(kind_phys), DIMENSION( :, :, :, :),              &
          INTENT(OUT ) ::                                               &
            radius_wet, number_bin, radius_core
-   COMPLEX, DIMENSION( its:ite, kts:kte, jts:jte,1:nbin_o,nswbands),   &
+   COMPLEX, DIMENSION( :, :, :,:,:),   &
          INTENT(OUT ) :: swrefindx, swrefindx_core, swrefindx_shell
-   COMPLEX, DIMENSION( its:ite, kts:kte, jts:jte,1:nbin_o,nlwbands),   &
+   COMPLEX, DIMENSION( :, :, :,:,:),   &
          INTENT(OUT ) :: lwrefindx, lwrefindx_core, lwrefindx_shell
 !
 ! local variables
@@ -1076,17 +1076,17 @@
    INTEGER, INTENT(IN   ) :: its,ite, jts,jte, kts,kte, nbin_o
    INTEGER, INTENT(IN   ) :: ims,ime, jms,jme, kms,kme,num_chem
    INTEGER, INTENT(IN   ) :: ids,ide, jds,jde, kds,kde
-   integer, dimension( its:ite, jts:jte ) :: iprt
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),             &
+   integer, dimension( :, : ) :: iprt
+   REAL(kind_phys), DIMENSION( :, :, :, : ),             &
          INTENT(IN ) ::  chem
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme ),                       &
+   REAL(kind_phys), DIMENSION( :, :, : ),                       &
          INTENT(IN ) ::  alt, h2oai, h2oaj
-   REAL(kind_phys), DIMENSION( its:ite, kts:kte, jts:jte, 1:nbin_o),              &
+   REAL(kind_phys), DIMENSION( :, :, :, :),              &
    INTENT(OUT ) ::                                               &
            radius_wet, number_bin, radius_core
-COMPLEX, DIMENSION( its:ite, kts:kte, jts:jte,1:nbin_o,nswbands),      &
+COMPLEX, DIMENSION( :, :, :,:,:),      &
          INTENT(OUT ) :: swrefindx, swrefindx_core, swrefindx_shell
-   COMPLEX, DIMENSION( its:ite, kts:kte, jts:jte,1:nbin_o,nlwbands),   &
+   COMPLEX, DIMENSION( :, :, :,:,:),   &
          INTENT(OUT ) :: lwrefindx, lwrefindx_core, lwrefindx_shell
 !
 ! local variables
@@ -1805,15 +1805,15 @@ END subroutine optical_prep_modal_soa_vbs
         integer, intent(in) :: id, iclm, jclm, nbin_a
         real(kind_phys), intent(in) :: curr_secs
 
-        real(kind_phys), dimension (1:nspint,kts:kte),intent(out) :: swsizeaer,swextaer,swwaer,swgaer,swtauaer
-        real(kind_phys), dimension (1:nlwbands,kts:kte),intent(out) :: lwextaer,lwtauaer
-        real(kind_phys), dimension (1:nspint,kts:kte),intent(out) :: l2,l3,l4,l5,l6,l7
-        real(kind_phys), dimension (1:nspint,kts:kte),intent(out) :: swbscoef  !JCB 2007/02/01
-        real(kind_phys), intent(in), dimension(1:nbin_a, kts:kte) :: number_bin_col
-        real(kind_phys), intent(inout), dimension(1:nbin_a,kts:kte) :: radius_wet_col
-        complex, intent(in),dimension(1:nbin_a,kts:kte,nspint) :: swrefindx_col
-        complex, intent(in),dimension(1:nbin_a,kts:kte,nlwbands) :: lwrefindx_col
-        real(kind_phys), intent(in),dimension(kts:kte)   :: dz
+        real(kind_phys), dimension (:,:),intent(out) :: swsizeaer,swextaer,swwaer,swgaer,swtauaer
+        real(kind_phys), dimension (:,:),intent(out) :: lwextaer,lwtauaer
+        real(kind_phys), dimension (:,:),intent(out) :: l2,l3,l4,l5,l6,l7
+        real(kind_phys), dimension (:,:),intent(out) :: swbscoef  !JCB 2007/02/01
+        real(kind_phys), intent(in), dimension(:, :) :: number_bin_col
+        real(kind_phys), intent(inout), dimension(:,:) :: radius_wet_col
+        complex, intent(in),dimension(:,:,:) :: swrefindx_col
+        complex, intent(in),dimension(:,:,:) :: lwrefindx_col
+        real(kind_phys), intent(in),dimension(:)   :: dz
 
         !fitting variables
         integer ltype ! total number of indicies of refraction
@@ -2060,17 +2060,17 @@ END subroutine optical_prep_modal_soa_vbs
                   sb2(n)=4.0*sback*dconjg(sback)/(thesize*thesize) ! JCB 2007/02/01  
                 enddo
 !
-               call fitcurv(rs,qext4,extpsw(1,nr,ni,ns),ncoef,nsiz)
-               call fitcurv(rs,qabs4,abspsw(1,nr,ni,ns),ncoef,nsiz)
-               call fitcurv(rs,qsca4,ascatpsw(1,nr,ni,ns),ncoef,nsiz) ! scattering efficiency
-               call fitcurv(rs,asymm,asmpsw(1,nr,ni,ns),ncoef,nsiz)
-               call fitcurv(rs,sb2,sbackpsw(1,nr,ni,ns),ncoef,nsiz) ! backscattering efficiency             
-               call fitcurv_nolog(rs,p2,pmom2psw(1,nr,ni,ns),ncoef,nsiz)
-               call fitcurv_nolog(rs,p3,pmom3psw(1,nr,ni,ns),ncoef,nsiz)
-               call fitcurv_nolog(rs,p4,pmom4psw(1,nr,ni,ns),ncoef,nsiz)
-               call fitcurv_nolog(rs,p5,pmom5psw(1,nr,ni,ns),ncoef,nsiz)
-               call fitcurv_nolog(rs,p6,pmom6psw(1,nr,ni,ns),ncoef,nsiz)
-               call fitcurv_nolog(rs,p7,pmom7psw(1,nr,ni,ns),ncoef,nsiz)
+               call fitcurv(rs,qext4,extpsw(:,nr,ni,ns),ncoef,nsiz)
+               call fitcurv(rs,qabs4,abspsw(:,nr,ni,ns),ncoef,nsiz)
+               call fitcurv(rs,qsca4,ascatpsw(:,nr,ni,ns),ncoef,nsiz) ! scattering efficiency
+               call fitcurv(rs,asymm,asmpsw(:,nr,ni,ns),ncoef,nsiz)
+               call fitcurv(rs,sb2,sbackpsw(:,nr,ni,ns),ncoef,nsiz) ! backscattering efficiency             
+               call fitcurv_nolog(rs,p2,pmom2psw(:,nr,ni,ns),ncoef,nsiz)
+               call fitcurv_nolog(rs,p3,pmom3psw(:,nr,ni,ns),ncoef,nsiz)
+               call fitcurv_nolog(rs,p4,pmom4psw(:,nr,ni,ns),ncoef,nsiz)
+               call fitcurv_nolog(rs,p5,pmom5psw(:,nr,ni,ns),ncoef,nsiz)
+               call fitcurv_nolog(rs,p6,pmom6psw(:,nr,ni,ns),ncoef,nsiz)
+               call fitcurv_nolog(rs,p7,pmom7psw(:,nr,ni,ns),ncoef,nsiz)
 
   120       continue
   200    continue     ! ns for shortwave
@@ -2159,10 +2159,10 @@ END subroutine optical_prep_modal_soa_vbs
 !
                !if (nr==1.and.ni==1) then
                !endif
-               call fitcurv(rs,qext4,extplw(1,nr,ni,ns),ncoef,nsiz)
-               call fitcurv(rs,qabs4,absplw(1,nr,ni,ns),ncoef,nsiz)
-               call fitcurv(rs,qsca4,ascatplw(1,nr,ni,ns),ncoef,nsiz) ! scattering efficiency
-               call fitcurv(rs,asymm,asmplw(1,nr,ni,ns),ncoef,nsiz)
+               call fitcurv(rs,qext4,extplw(:,nr,ni,ns),ncoef,nsiz)
+               call fitcurv(rs,qabs4,absplw(:,nr,ni,ns),ncoef,nsiz)
+               call fitcurv(rs,qsca4,ascatplw(:,nr,ni,ns),ncoef,nsiz) ! scattering efficiency
+               call fitcurv(rs,asymm,asmplw(:,nr,ni,ns),ncoef,nsiz)
   121       continue
   201    continue     ! ns for longwave
 
@@ -2603,7 +2603,7 @@ END subroutine optical_prep_modal_soa_vbs
 
       integer, intent(in) :: maxm, ncoef
 
-      real(kind_phys), dimension(ncoef) :: coef
+      real(kind_phys), dimension(:) :: coef
       real(kind_phys), dimension(:) :: rs, yin
       real(kind_phys) x(size(rs)),y(size(yin))
 
@@ -2647,7 +2647,7 @@ END subroutine optical_prep_modal_soa_vbs
       integer, intent(in) :: maxm, ncoef
 
       real(kind_phys), dimension(:) :: rs, yin
-      real(kind_phys), dimension(ncoef) :: coef(ncoef)
+      real(kind_phys), dimension(:) :: coef(:)
       real(kind_phys) x(size(rs)),y(size(yin))
 
       integer m
@@ -4548,19 +4548,19 @@ END subroutine optical_prep_modal_soa_vbs
         IMPLICIT NONE
 !   subr arguments
         integer, intent(in) :: lpar
-        real(kind_phys), dimension (nspint, lpar+1),intent(out) :: sizeaer,extaer,waer,gaer,tauaer
-        real(kind_phys), dimension (nspint, lpar+1),intent(out) :: l2,l3,l4,l5,l6,l7
-        real(kind_phys), dimension (nspint, lpar+1),intent(out) :: bscoef  !JCB 2007/02/01
+        real(kind_phys), dimension (:,:),intent(out) :: sizeaer,extaer,waer,gaer,tauaer
+        real(kind_phys), dimension (:,:),intent(out) :: l2,l3,l4,l5,l6,l7
+        real(kind_phys), dimension (:,:),intent(out) :: bscoef  !JCB 2007/02/01
         real(kind_phys), dimension (nspint),save :: wavmid !cm
         data wavmid     &
             / 0.30e-4, 0.40e-4, 0.60e-4 ,0.999e-04 /
 
     integer, intent(in) :: id, iclm, jclm, nbin_a
     real(kind_phys), intent(in) :: curr_secs
-    real(kind_phys), intent(in), dimension(nbin_a, lpar+1) :: number_bin_col
-    real(kind_phys), intent(inout), dimension(nbin_a, lpar+1) :: radius_wet_col, radius_core_col  ! jcb  2007/07/25
-    complex, intent(in) :: refindx_col(nbin_a, lpar+1), refindx_core_col(nbin_a,lpar+1)  ! jcb  2007/07/25, 
-    real(kind_phys), intent(in)    :: dz(lpar)
+    real(kind_phys), intent(in), dimension(:,:) :: number_bin_col
+    real(kind_phys), intent(inout), dimension(:,:) :: radius_wet_col, radius_core_col  ! jcb  2007/07/25
+    complex, intent(in) :: refindx_col(:,:), refindx_core_col(:,:)  ! jcb  2007/07/25, 
+    real(kind_phys), intent(in)    :: dz(:)
     real(kind_phys) thesum, sum ! for normalizing things and testing
 !
       integer m,l,j,nl,ll,nc,klevel

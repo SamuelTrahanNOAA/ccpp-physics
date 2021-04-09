@@ -39,14 +39,14 @@ CONTAINS
                                     ids,ide, jds,jde, kds,kde,               &
                                     ims,ime, jms,jme, kms,kme,               &
                                     its,ite, jts,jte, kts,kte,seas_opt
-     REAL(kind=kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),                &
+     REAL(kind=kind_phys), DIMENSION( :, :, :, : ),                &
            INTENT(IN ) ::                                   moist
-     REAL(kind=kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),                 &
+     REAL(kind=kind_phys), DIMENSION( :, :, :, : ),                 &
            INTENT(INOUT ) ::                                   chem
-     REAL(kind=kind_phys), DIMENSION( ims:ime, 1, jms:jme,num_emis_seas),                    &
+     REAL(kind=kind_phys), DIMENSION( :, :, :,:),                    &
            INTENT(OUT   ) ::                                                 &
            emis_seas
-     REAL(kind=kind_phys),  DIMENSION( ims:ime , jms:jme )                   ,               &
+     REAL(kind=kind_phys),  DIMENSION( : , : )                   ,               &
             INTENT(IN   ) ::                                                 &
                                                        u10,                  &
                                                        v10,                  &
@@ -56,9 +56,9 @@ CONTAINS
                                                        xlong,area,           &
                                                        random_factor
      LOGICAL, INTENT(IN) ::                        use_random_factor
-     REAL(kind=kind_phys),  DIMENSION( ims:ime , jms:jme ),                        &
+     REAL(kind=kind_phys),  DIMENSION( : , : ),                        &
             INTENT(OUT   ) :: seashelp
-     REAL(kind=kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),                        &
+     REAL(kind=kind_phys),  DIMENSION( : , : , : ),                        &
             INTENT(IN   ) ::                                                 &
                                                           alt,               &
                                                         t_phy,               &
@@ -308,11 +308,11 @@ CONTAINS
     IMPLICIT NONE
 
     INTEGER, INTENT(IN)    :: nmx,imx,jmx,lmx,ipr
-    INTEGER, INTENT(IN)    :: ilwi(imx,jmx)
-    REAL(kind=kind_phys),    INTENT(IN)    :: dxy(jmx), w10m(imx,jmx)
-    REAL(kind=kind_phys),    INTENT(IN)    :: airmas(imx,jmx,lmx)
-    REAL(kind=kind_phys),    INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-    REAL(kind=kind_phys),    INTENT(OUT)   :: bems(imx,jmx,nmx)
+    INTEGER, INTENT(IN)    :: ilwi(:,:)
+    REAL(kind=kind_phys),    INTENT(IN)    :: dxy(:), w10m(:,:)
+    REAL(kind=kind_phys),    INTENT(IN)    :: airmas(:,:,:)
+    REAL(kind=kind_phys),    INTENT(INOUT) :: tc(:,:,:,:)
+    REAL(kind=kind_phys),    INTENT(OUT)   :: bems(:,:,:)
 
     REAL(kind=kind_phys) :: c0(5), b0(2)
 !  REAL(kind=kind_phys), PARAMETER :: c_old(5)=(/1.373, 3.41, 0.057, 1.05, 1.190/) 

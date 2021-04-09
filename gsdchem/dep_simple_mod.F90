@@ -105,22 +105,22 @@ SUBROUTINE wesely_driver(  ktau, dtstep, current_month,  &
 !--------------------------------------------------
 ! advected moisture variables
 !--------------------------------------------------
-   REAL, DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ), INTENT(IN ) :: &
+   REAL, DIMENSION( :, :, :, : ), INTENT(IN ) :: &
                                                       moist  
 !--------------------------------------------------
 ! advected chemical species
 !--------------------------------------------------
-   REAL, DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ), INTENT(INOUT ) :: &
+   REAL, DIMENSION( :, :, :, : ), INTENT(INOUT ) :: &
                                                       chem
 !--------------------------------------------------
 ! deposition velocities
 !--------------------------------------------------
-   REAL, DIMENSION( its:ite, jts:jte, num_chem ), INTENT(INOUT ) ::      &
+   REAL, DIMENSION( :, :, : ), INTENT(INOUT ) ::      &
                                                       ddvel                     
 !--------------------------------------------------
 ! input from met model
 !--------------------------------------------------
-   REAL,  DIMENSION( ims:ime , kms:kme , jms:jme ), INTENT(IN   ) ::      &
+   REAL,  DIMENSION( : , : , : ), INTENT(IN   ) ::      &
                                                       t_phy,              &
                                                       p_phy,              &
                                                       dz8w,               &
@@ -129,9 +129,9 @@ SUBROUTINE wesely_driver(  ktau, dtstep, current_month,  &
                                                       p8w,                &
                                                       z_at_w,             &
                                                       rho_phy
-   INTEGER,DIMENSION( ims:ime , jms:jme ), INTENT(IN   ) ::               &
+   INTEGER,DIMENSION( : , : ), INTENT(IN   ) ::               &
                                                      ivgtyp
-   REAL,  DIMENSION( ims:ime , jms:jme ), INTENT(INOUT   ) ::             &
+   REAL,  DIMENSION( : , : ), INTENT(INOUT   ) ::             &
                                                      tsk,                 &
                                                      gsw,                 &
                                                      vegfra,              &
@@ -142,9 +142,9 @@ SUBROUTINE wesely_driver(  ktau, dtstep, current_month,  &
                                                      xlong,               &
                                                      raincv,              &
                                                      znt
-   REAL, intent(inout) ::                            aer_res_def(its:ite,jts:jte)
-   REAL, intent(inout) ::                            aer_res_zcen(its:ite,jts:jte)
-   REAL, INTENT(IN)    ::                            snowh(ims:ime,jms:jme)
+   REAL, intent(inout) ::                            aer_res_def(:,:)
+   REAL, intent(inout) ::                            aer_res_zcen(:,:)
+   REAL, INTENT(IN)    ::                            snowh(:,:)
 
 !--------------------------------------------------
 ! .. Local Scalars
@@ -881,7 +881,7 @@ END SUBROUTINE wesely_driver
         REAL, intent(in)    :: t                            ! surface temp (K)
         REAL, intent(in)    :: p_srf                        ! surface pressure (Pa)
         REAL, intent(in)    :: spec_hum                     ! surface specific humidity (kg/kg)
-        real, intent(out)   :: rcx(numgas)
+        real, intent(out)   :: rcx(:)
         LOGICAL, intent(in) :: highnh3, rainflag, wetflag
 
 !----------------------------------------------------------------------
@@ -1371,8 +1371,8 @@ is_nh3: if( p_nh3 > 1 ) then
 !--------------------------------------------------
 ! .. Array Arguments ..
 !--------------------------------------------------
-        REAL, intent(in)  :: srfres(numgas)
-        REAL, intent(out) :: vgs(numgas)
+        REAL, intent(in)  :: srfres(:)
+        REAL, intent(out) :: vgs(:)
 
 !--------------------------------------------------
 ! .. Local Scalars ..
@@ -1454,7 +1454,7 @@ is_nh3: if( p_nh3 > 1 ) then
 !--------------------------------------------------
 ! .. Array Arguments ..
 !--------------------------------------------------
-        REAL, intent(out) :: vgtemp(nspec)
+        REAL, intent(out) :: vgtemp(:)
 !--------------------------------------------------
 ! .. Local Scalars ..
 !--------------------------------------------------
@@ -1543,7 +1543,7 @@ is_nh3: if( p_nh3 > 1 ) then
 !--------------------------------------------------
 ! .. Array Arguments ..
 !--------------------------------------------------
-        REAL, intent(out) :: depv(numgas)
+        REAL, intent(out) :: depv(:)
 !--------------------------------------------------
 ! .. Local Scalars ..
 !--------------------------------------------------

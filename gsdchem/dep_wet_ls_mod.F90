@@ -153,15 +153,15 @@ contains
                                    ims,ime, jms,jme, kms,kme,               &
                                    its,ite, jts,jte, kts,kte
     real(kind_phys), INTENT(IN ) :: dt
-    REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),                &
+    REAL(kind_phys), DIMENSION( :, :, :, : ),                &
           INTENT(IN ) ::                                   moist
-    REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),                        &
+    REAL(kind_phys),  DIMENSION( : , : , : ),                        &
            INTENT(IN   ) :: rho,dz8w,vvel
-    REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ,1:num_chem),             &
+    REAL(kind_phys),  DIMENSION( : , : , : ,:),             &
            INTENT(INOUT) :: var
-    REAL(kind_phys),  DIMENSION( ims:ime, jms:jme ),                                   &
+    REAL(kind_phys),  DIMENSION( :, : ),                                   &
            INTENT(IN   ) :: rain
-    REAL(kind_phys),  DIMENSION( ims:ime ,  jms:jme,num_chem ),                        &
+    REAL(kind_phys),  DIMENSION( : ,  :, : ),                        &
            INTENT(INOUT   ) :: var_rmv
     REAL(kind_phys),  DIMENSION( its:ite ,  jts:jte ) :: var_sum
     REAL(kind_phys),  DIMENSION( its:ite ,  kts:kte, jts:jte ) :: var_rmvl
@@ -256,13 +256,13 @@ contains
    integer, intent(in) :: i1, i2, j1, j2, k1, k2, n1, n2, num_chem, &
                           ims, ime, jms, jme, kms, kme
    real(kind_phys), intent(in)    :: cdt
-   REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ,1:num_chem),&
+   REAL(kind_phys),  DIMENSION( : , : , : ,:),&
           INTENT(INOUT) :: chem
-   REAL(kind_phys),  DIMENSION( ims:ime ,  jms:jme,num_chem ), &
+   REAL(kind_phys),  DIMENSION( : ,  :, : ), &
           INTENT(INOUT   ) :: var_rmv !! tracer loss flux [kg m-2 s-1]
-   real(kind_phys), dimension(ims:ime, kms:kme, jms:jme),&
+   real(kind_phys), dimension(:, :, :),&
           INTENT(IN)     :: ple, tmpu, rhoa, dqcond
-   real(kind_phys), dimension(ims:ime ,  jms:jme) , &
+   real(kind_phys), dimension(: ,  :) , &
           INTENT(IN)      :: precc, precl    ! cv, ls precip [mm day-1]
 
 ! !OUTPUT PARAMETERS:

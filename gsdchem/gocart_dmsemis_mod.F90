@@ -19,20 +19,20 @@ contains
                                   num_chem,ims,ime, jms,jme, kms,kme,               &
                                   its,ite, jts,jte, kts,kte
 
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),                 &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                 &
          INTENT(INOUT ) ::                                   chem
-   REAL(kind_phys), DIMENSION( ims:ime, jms:jme),                                     &
+   REAL(kind_phys), DIMENSION( :, :),                                     &
          INTENT(IN ) ::    dms_0,tsk
-   REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme )         ,               &
+   REAL(kind_phys),  DIMENSION( : , : , : )         ,               &
           INTENT(IN   ) ::                              alt,               &
                                                       t_phy,               &
                                                       dz8w,                &
                                               p8w,u_phy,v_phy,rho_phy
-   INTEGER,DIMENSION( ims:ime , jms:jme )                  ,               &
+   INTEGER,DIMENSION( : , : )                  ,               &
           INTENT(IN   ) ::                                                 &
                                                      ivgtyp,               &
                                                      isltyp
-   REAL(kind_phys),  DIMENSION( ims:ime , jms:jme )                   ,               &
+   REAL(kind_phys),  DIMENSION( : , : )                   ,               &
           INTENT(IN   ) ::                                                 &
                                                      u10,                  &
                                                      v10,                  &
@@ -105,14 +105,14 @@ SUBROUTINE srcdms(imx, jmx, lmx, nmx, ndt1, tc,airmw, &
   REAL(kind_phys),    PARAMETER :: dms_mw = 62.00
   REAL(kind_phys),    PARAMETER :: tcmw(1)=dms_mw
   INTEGER, INTENT(IN)    :: imx, jmx, lmx, nmx, ndt1
-  REAL(kind_phys),    INTENT(IN)    :: tskin(imx,jmx), dmso(imx,jmx)
-  INTEGER, INTENT(IN)    :: ilwi(imx,jmx)
-  REAL(kind_phys),    INTENT(IN)    :: dxy(jmx), w10m(imx,jmx)
+  REAL(kind_phys),    INTENT(IN)    :: tskin(:,:), dmso(:,:)
+  INTEGER, INTENT(IN)    :: ilwi(:,:)
+  REAL(kind_phys),    INTENT(IN)    :: dxy(:), w10m(:,:)
   REAL(kind_phys),      INTENT(IN)    :: airmw
-  REAL(kind_phys),    INTENT(IN)    :: airmas(imx,jmx,lmx)
-  REAL(kind_phys),    INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind_phys),    INTENT(INOUT) :: emsdms(imx,jmx)
-  REAL(kind_phys),    INTENT(OUT)   :: bems(imx,jmx,nmx)
+  REAL(kind_phys),    INTENT(IN)    :: airmas(:,:,:)
+  REAL(kind_phys),    INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind_phys),    INTENT(INOUT) :: emsdms(:,:)
+  REAL(kind_phys),    INTENT(OUT)   :: bems(:,:,:)
 
   INTEGER :: i,j
   REAL(kind_phys)    :: sst, sc, conc, w10, scco2, akw, erate, dmssrc, c

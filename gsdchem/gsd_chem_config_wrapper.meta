@@ -183,6 +183,14 @@
   type = integer
   intent = in
   optional = F
+[num_ebu]
+  standard_name = buffer_ebu_length
+  long_name = buffer ebu length
+  units = count
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP
@@ -382,6 +390,14 @@
   standard_name = gsd_chem_option
   long_name = gsd chem option
   units = index
+  dimensions = ()
+  type = integer
+  intent = in
+  optional = F
+[num_ebu]
+  standard_name = buffer_ebu_length
+  long_name = buffer ebu length
+  units = count
   dimensions = ()
   type = integer
   intent = in

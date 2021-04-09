@@ -18,12 +18,13 @@ contains
 !!
       subroutine gsd_chem_config_wrapper_init(ntso2,ntsulf,ntdms,ntmsa,ntco, &
            ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,   &
-           ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,errmsg,errflg)
-        use gsd_chem_config, config_chem_opt=>chem_opt
+           ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu,    &
+           errmsg,errflg)
+        use gsd_chem_config, config_chem_opt=>chem_opt, config_num_ebu=>num_ebu
         implicit none
         integer, intent(in) :: ntso2,ntsulf,ntdms,ntmsa,ntco,ntpp25,ntbc1, &
              ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,    &
-             ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt
+             ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu
         character(len=*), intent(out) :: errmsg
         integer,          intent(out) :: errflg
         
@@ -34,21 +35,16 @@ contains
 
         num_chem=20
 
+        config_num_ebu = num_ebu
+        num_ebu_in = num_ebu
+        num_emis_ant = num_ebu
+
         if(chem_opt == CHEM_OPT_GOCART_CO) then
            num_chem = num_chem+1
-
-           num_ebu = 8
-           num_ebu_in = 8
-           num_emis_ant = 8
-
            p_ebu_co = 8
            p_ebu_in_co = 8
         else
-           num_ebu = 7
-           num_ebu_in = 7
-           num_emis_ant = 7
-
-           ! CHEM_OPT_GOCART_RACM
+           ! These are only used by CHEM_OPT_GOCART_RACM:
            p_ebu_co = 5
            p_ebu_in_co = 5
         endif
@@ -76,6 +72,13 @@ contains
         call set_and_check(p_seas_4,ntss4,'The ss4 tracer is mandatory.')
         call set_and_check(p_seas_5,ntss5,'The ss5 tracer is mandatory.')
         call set_and_check(p_p10,ntpp10,'The pp10 tracer is mandatory.')
+
+        if(chem_opt == CHEM_OPT_GOCART_CO) then
+          print *,'chem_opt_gocart_co'
+          print *,'co=',ntco,p_co
+          print *,'p10=',ntpp10,p_p10
+          print *,'num_chem=',num_chem
+        endif
 
       contains
         subroutine set_and_check(p_index,nt_index,mandatory)
@@ -120,17 +123,24 @@ contains
 !> @{
       subroutine gsd_chem_config_wrapper_run(ntso2,ntsulf,ntdms,ntmsa,ntco,   &
            ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,    &
-           ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,errmsg,errflg)
+           ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu,     &
+           errmsg,errflg)
+        use gsd_chem_config, only: num_chem
         implicit none
         integer, intent(in) :: ntso2,ntsulf,ntdms,ntmsa,ntco,ntpp25,ntbc1, &
              ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,    &
-             ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt
+             ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu
         character(len=*), intent(out) :: errmsg
         integer,          intent(out) :: errflg
-        
-        call gsd_chem_config_wrapper_init(ntso2,ntsulf,ntdms,ntmsa,ntco,      &
-           ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,    &
-           ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,errmsg,errflg)
+
+        ! Workaround for CCPP bug: init function is never called, so
+        ! the run function must call it.
+        if(num_chem<0) then
+          call gsd_chem_config_wrapper_init(ntso2,ntsulf,ntdms,ntmsa,ntco,        &
+               ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,    &
+               ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu,     &
+               errmsg,errflg)
+        endif
       end subroutine gsd_chem_config_wrapper_run
 !> @}
     end module gsd_chem_config_wrapper

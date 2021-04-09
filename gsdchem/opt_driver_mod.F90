@@ -42,21 +42,21 @@ CONTAINS
 !
 ! array that holds all advected chemical species
 !
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),             &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),             &
          INTENT(INOUT ) ::  chem
 !
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme ),                       &  
+   REAL(kind_phys), DIMENSION( :, :, : ),                       &  
          INTENT(IN ) ::  relhum, dz8w, alt, h2oai, h2oaj
 !
 ! arrays that hold the aerosol optical properties
 !
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 1:4 ),                       &  
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                       &  
          INTENT(INOUT ) ::                                             &
            tauaersw,gaersw,waersw,bscoefsw
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 1:16),                       &  
+   REAL(kind_phys), DIMENSION( :, :, :, :),                       &  
          INTENT(INOUT ) ::                                             &
            tauaerlw
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 1:4 ),                  &  
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                  &  
          INTENT(INOUT ) ::                                             &
            l2aer, l3aer, l4aer, l5aer, l6aer, l7aer
 !

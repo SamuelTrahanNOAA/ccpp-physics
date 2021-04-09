@@ -68,18 +68,18 @@ contains
     integer, parameter :: ims=1,jms=1,jme=1, kms=1
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
-    integer, dimension(im), intent(in) :: land, vegtype, soiltyp        
-    real(kind_phys), dimension(im,nsoil), intent(in) :: smc
-    real(kind_phys), dimension(im,    5), intent(in) :: dust_in
-    real(kind_phys), dimension(im,   10), intent(in) :: emi_in
-    real(kind_phys), dimension(im), intent(in) :: u10m, v10m, ustar,              &
+    integer, dimension(:), intent(in) :: land, vegtype, soiltyp        
+    real(kind_phys), dimension(:,:), intent(in) :: smc
+    real(kind_phys), dimension(:,:), intent(in) :: dust_in
+    real(kind_phys), dimension(:,:), intent(in) :: emi_in
+    real(kind_phys), dimension(:), intent(in) :: u10m, v10m, ustar,              &
                 garea, rlat,rlon, tskin,                      &
                 hf2d, pb2d, sigmaf, dswsfc, zorl, snow_cpl 
-    real(kind_phys), dimension(im,kme), intent(in) :: ph3d, pr3d
-    real(kind_phys), dimension(im,kte), intent(in) :: phl3d, prl3d, tk3d,        &
+    real(kind_phys), dimension(:,:), intent(in) :: ph3d, pr3d
+    real(kind_phys), dimension(:,:), intent(in) :: phl3d, prl3d, tk3d,        &
                 us3d, vs3d, spechum
-    real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0, qgrs
-    real(kind_phys), dimension(im,ndust    ), intent(inout) :: duem
+    real(kind_phys), dimension(:,:,:), intent(inout) :: gq0, qgrs
+    real(kind_phys), dimension(:,:), intent(inout) :: duem
     integer,        intent(in) :: chem_opt_in, dust_opt_in, dust_calcdrag_in
     real(kind_phys),intent(in) :: dust_alpha_in,dust_gamma_in
     character(len=*), intent(out) :: errmsg
@@ -127,6 +127,9 @@ contains
     chem_opt          = chem_opt_in
     dust_opt          = dust_opt_in
     dust_calcdrag     = dust_calcdrag_in
+
+    ! -- initialize dust emissions
+    emis_dust = 0._kind_phys
 
     ! -- set domain
     ide=im 
@@ -267,20 +270,20 @@ contains
 
     !FV3 input variables
     integer, intent(in) :: nsoil
-    integer, dimension(ims:ime), intent(in) :: land, vegtype, soiltyp
+    integer, dimension(:), intent(in) :: land, vegtype, soiltyp
     integer, intent(in) :: ntrac
     integer, intent(in) :: ntdust1,ntdust2,ntdust3,ntdust4,ntdust5
-    real(kind=kind_phys), dimension(ims:ime), intent(in) ::                & 
+    real(kind=kind_phys), dimension(:), intent(in) ::                & 
          u10m, v10m, ustar, garea, rlat, rlon, ts2d, sigmaf, dswsfc,       &
          zorl, snow_cpl, hf2d, pb2d
-    real(kind=kind_phys), dimension(ims:ime, nsoil),   intent(in) :: smc 
-    real(kind=kind_phys), dimension(ims:ime,     5),   intent(in) :: dust_in
-    real(kind=kind_phys), dimension(ims:ime,    10),   intent(in) :: emi_in
-    real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) ::     &
+    real(kind=kind_phys), dimension(:,:),   intent(in) :: smc 
+    real(kind=kind_phys), dimension(:,:),   intent(in) :: dust_in
+    real(kind=kind_phys), dimension(:,:),   intent(in) :: emi_in
+    real(kind=kind_phys), dimension(:, :), intent(in) ::     &
          pr3d,ph3d
-    real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) ::       &
+    real(kind=kind_phys), dimension(:, :), intent(in) ::       &
          phl3d,tk3d,prl3d,us3d,vs3d,spechum
-    real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
+    real(kind=kind_phys), dimension(:, :,:), intent(in) :: gq0
 
 
     !GSD Chem variables
@@ -289,21 +292,21 @@ contains
                            ims,ime, jms,jme, kms,kme,                      &
                            its,ite, jts,jte, kts,kte
 
-    real(kind_phys), dimension(num_chem), intent(in) :: ppm2ugkg
+    real(kind_phys), dimension(:), intent(in) :: ppm2ugkg
 
     
-    integer,dimension(ims:ime, jms:jme), intent(out) :: isltyp, ivgtyp
-    real(kind_phys), dimension(ims:ime, jms:jme, 3), intent(inout) :: erod
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) ::              & 
+    integer,dimension(:, :), intent(out) :: isltyp, ivgtyp
+    real(kind_phys), dimension(:, :, :), intent(inout) :: erod
+    real(kind_phys), dimension(:, :, :), intent(out) ::              & 
          rri, t_phy, u_phy, v_phy, p_phy, rho_phy, dz8w, p8w, t8w
-    real(kind_phys), dimension(ims:ime, jms:jme),          intent(out) ::              &
+    real(kind_phys), dimension(:, :),          intent(out) ::              &
          u10, v10, ust, tsk, xland, xlat, xlong, dxy, vegfrac, rmol, gsw, znt, hfx,    &
          pbl, snowh, clayf, rdrag, sandf, ssm, uthr
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_moist), intent(out) :: moist
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_chem),  intent(out) :: chem
+    real(kind_phys), dimension(:, :, :, :), intent(out) :: moist
+    real(kind_phys), dimension(:, :, :, :),  intent(out) :: chem
 
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) :: z_at_w
-    real(kind_phys), dimension(ims:ime, nsoil, jms:jme), intent(out) :: smois
+    real(kind_phys), dimension(:, :, :), intent(out) :: z_at_w
+    real(kind_phys), dimension(:, :, :), intent(out) :: smois
 
     ! -- local variables
 !   real(kind=kind_phys), dimension(ims:ime, kms:kme, jms:jme) :: p_phy

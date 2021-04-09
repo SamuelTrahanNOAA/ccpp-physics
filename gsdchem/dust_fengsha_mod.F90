@@ -34,13 +34,13 @@ contains
          its,ite, jts,jte, kts,kte,                      &
          num_emis_dust,num_moist,num_chem,num_soil_layers
 
-    real(kind_phys), dimension(ims:ime,jms:jme), intent(in) :: random_factor
-    INTEGER,DIMENSION( ims:ime , jms:jme ), INTENT(IN) :: isltyp
-    REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ), INTENT(INOUT) :: chem
-    REAL(kind_phys), DIMENSION( ims:ime, 1, jms:jme,num_emis_dust),OPTIONAL, INTENT(INOUT) :: emis_dust
-    REAL(kind_phys), DIMENSION( ims:ime, num_soil_layers, jms:jme ), INTENT(IN) :: smois
-    REAL(kind_phys), DIMENSION( ims:ime , jms:jme ), INTENT(IN) :: ssm
-    REAL(kind_phys), DIMENSION( ims:ime , jms:jme ), INTENT(IN) :: vegfra,     &
+    real(kind_phys), dimension(:,:), intent(in) :: random_factor
+    INTEGER,DIMENSION( : , : ), INTENT(IN) :: isltyp
+    REAL(kind_phys), DIMENSION( :, :, :, : ), INTENT(INOUT) :: chem
+    REAL(kind_phys), DIMENSION( :, :, :, : ),OPTIONAL, INTENT(INOUT) :: emis_dust
+    REAL(kind_phys), DIMENSION( :, :, : ), INTENT(IN) :: smois
+    REAL(kind_phys), DIMENSION( : , : ), INTENT(IN) :: ssm
+    REAL(kind_phys), DIMENSION( : , : ), INTENT(IN) :: vegfra,     &
                                                         snowh,      &
                                                         xland,      &
                                                         area,       &
@@ -50,7 +50,7 @@ contains
                                                         sand,       &
                                                         rdrag,      &
                                                         uthr
-    REAL(kind_phys), DIMENSION( ims:ime , kms:kme , jms:jme ), INTENT(IN   ) :: &
+    REAL(kind_phys), DIMENSION( : , : , : ), INTENT(IN   ) :: &
          p8w,             &
          rho_phy
     REAL(kind_phys), INTENT(IN) :: dt,g
@@ -62,8 +62,10 @@ contains
     real(kind_phys), DIMENSION (1,1) :: erodtot
     REAL(kind_phys), DIMENSION (1,1) :: gravsm
     REAL(kind_phys), DIMENSION (1,1) :: drylimit
-    real(kind_phys), DIMENSION (5)   :: tc,bems
-    real(kind_phys), dimension (1,1) :: airden,airmas,ustar
+    real(kind_phys), DIMENSION (1,1,1,5)   :: tc
+    real(kind_phys), DIMENSION (1,1,5)   :: bems
+    real(kind_phys), dimension (1,1,1) :: airden,airmas
+    real(kind_phys), dimension (1,1) :: ustar
     real(kind_phys), dimension (1) :: dxy
     real(kind_phys), dimension (3) :: massfrac
     real(kind_phys) :: conver,converi
@@ -96,17 +98,17 @@ contains
              !    if(config_flags%chem_opt == 2 .or. config_flags%chem_opt == 11 ) then
              !       tc(:)=1.e-16*conver
              !    else
-             tc(1)=chem(i,kts,j,p_dust_1)*conver
-             tc(2)=chem(i,kts,j,p_dust_2)*conver
-             tc(3)=chem(i,kts,j,p_dust_3)*conver
-             tc(4)=chem(i,kts,j,p_dust_4)*conver
-             tc(5)=chem(i,kts,j,p_dust_5)*conver
+             tc(1,1,1,1)=chem(i,kts,j,p_dust_1)*conver
+             tc(1,1,1,2)=chem(i,kts,j,p_dust_2)*conver
+             tc(1,1,1,3)=chem(i,kts,j,p_dust_3)*conver
+             tc(1,1,1,4)=chem(i,kts,j,p_dust_4)*conver
+             tc(1,1,1,5)=chem(i,kts,j,p_dust_5)*conver
              !    endif
 
              ! Air mass and density at lowest model level.
 
-             airmas(1,1)=-(p8w(i,kts+1,j)-p8w(i,kts,j))*area(i,j)/g
-             airden(1,1)=rho_phy(i,kts,j)
+             airmas(1,1,1)=-(p8w(i,kts+1,j)-p8w(i,kts,j))*area(i,j)/g
+             airden(1,1,1)=rho_phy(i,kts,j)
              ustar(1,1)=ust(i,j)
              dxy(1)=area(i,j)
 
@@ -175,31 +177,31 @@ contains
              ! Call dust emission routine.
              call source_dust(imx, jmx, lmx, nmx, smx, dt, tc, ustar, massfrac, & 
                   erodtot, dxy, gravsm, airden, airmas, &
-                  bems, g, drylimit, dust_alpha, dust_gamma, R, uthr(i,j), random_factor(i,j))
+                  bems, g, drylimit, dust_alpha, dust_gamma, R, uthr(i,j), random_factor)
 
              !    if(config_flags%chem_opt == 2 .or. config_flags%chem_opt == 11 ) then
-             !     dustin(i,j,1:5)=tc(1:5)*converi
+             !     dustin(i,j,1:5)=tc(1,1,1,1:5)*converi
              !    else
-             chem(i,kts,j,p_dust_1)=tc(1)*converi
-             chem(i,kts,j,p_dust_2)=tc(2)*converi
-             chem(i,kts,j,p_dust_3)=tc(3)*converi
-             chem(i,kts,j,p_dust_4)=tc(4)*converi
-             chem(i,kts,j,p_dust_5)=tc(5)*converi
+             chem(i,kts,j,p_dust_1)=tc(1,1,1,1)*converi
+             chem(i,kts,j,p_dust_2)=tc(1,1,1,2)*converi
+             chem(i,kts,j,p_dust_3)=tc(1,1,1,3)*converi
+             chem(i,kts,j,p_dust_4)=tc(1,1,1,4)*converi
+             chem(i,kts,j,p_dust_5)=tc(1,1,1,5)*converi
              !    endif
 
-             !     chem(i,kts,j,p_dust_1)=tc(1)*converi
-             !     chem(i,kts,j,p_dust_2)=tc(2)*converi
-             !     chem(i,kts,j,p_dust_3)=tc(3)*converi
-             !     chem(i,kts,j,p_dust_4)=tc(4)*converi
-             !     chem(i,kts,j,p_dust_5)=tc(5)*converi
+             !     chem(i,kts,j,p_dust_1)=tc(1,1,1,1)*converi
+             !     chem(i,kts,j,p_dust_2)=tc(1,1,1,2)*converi
+             !     chem(i,kts,j,p_dust_3)=tc(1,1,1,3)*converi
+             !     chem(i,kts,j,p_dust_4)=tc(1,1,1,4)*converi
+             !     chem(i,kts,j,p_dust_5)=tc(1,1,1,5)*converi
 
              ! For output diagnostics
 
-             emis_dust(i,1,j,p_edust1)=bems(1)
-             emis_dust(i,1,j,p_edust2)=bems(2)
-             emis_dust(i,1,j,p_edust3)=bems(3)
-             emis_dust(i,1,j,p_edust4)=bems(4)
-             emis_dust(i,1,j,p_edust5)=bems(5)
+             emis_dust(i,1,j,p_edust1)=bems(1,1,1)
+             emis_dust(i,1,j,p_edust2)=bems(1,1,2)
+             emis_dust(i,1,j,p_edust3)=bems(1,1,3)
+             emis_dust(i,1,j,p_edust4)=bems(1,1,4)
+             emis_dust(i,1,j,p_edust5)=bems(1,1,5)
           endif
        enddo
     enddo
@@ -277,18 +279,18 @@ contains
 
     INTEGER,            INTENT(IN)    :: imx,jmx,lmx,nmx,smx
     REAL(kind_phys), INTENT(IN)    :: dt1
-    REAL(kind_phys), INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-    REAL(kind_phys), INTENT(IN)    :: ustar(imx,jmx)
-    REAL(kind_phys), INTENT(IN)    :: massfrac(3)
-    REAL(kind_phys), INTENT(IN)    :: erod(imx,jmx)
-    REAL(kind_phys), INTENT(IN)    :: dxy(jmx)
-    REAL(kind_phys), INTENT(IN)    :: gravsm(imx,jmx)
-    REAL(kind_phys), INTENT(IN)    :: random_factor(imx,jmx)
-    REAL(kind_phys), INTENT(IN)    :: airden(imx,jmx,lmx)
-    REAL(kind_phys), INTENT(IN)    :: airmas(imx,jmx,lmx)
-    REAL(kind_phys), INTENT(OUT)   :: bems(imx,jmx,nmx)
+    REAL(kind_phys), INTENT(INOUT) :: tc(:,:,:,:)
+    REAL(kind_phys), INTENT(IN)    :: ustar(:,:)
+    REAL(kind_phys), INTENT(IN)    :: massfrac(:)
+    REAL(kind_phys), INTENT(IN)    :: erod(:,:)
+    REAL(kind_phys), INTENT(IN)    :: dxy(:)
+    REAL(kind_phys), INTENT(IN)    :: gravsm(:,:)
+    REAL(kind_phys), INTENT(IN)    :: random_factor(:,:)
+    REAL(kind_phys), INTENT(IN)    :: airden(:,:,:)
+    REAL(kind_phys), INTENT(IN)    :: airmas(:,:,:)
+    REAL(kind_phys), INTENT(OUT)   :: bems(:,:,:)
     REAL(kind_phys), INTENT(IN)    :: g0
-    REAL(kind_phys), INTENT(IN)    :: drylimit(imx,jmx)
+    REAL(kind_phys), INTENT(IN)    :: drylimit(:,:)
     !! Sandblasting mass efficiency, aka "fudge factor" (based on Tegen et al,
     !! 2006 and Hemold et al, 2007)
     !
@@ -477,7 +479,7 @@ contains
 
   subroutine fengsha_utst(styp,uth, ut)
     integer,                            intent(in)  :: styp
-    real(kind_phys), dimension(fengsha_maxstypes), intent(in)  :: uth
+    real(kind_phys), dimension(:), intent(in)  :: uth
     real(kind_phys),                 intent(out) :: ut
     ut = uth(styp)
 !     real (kind_phys) :: uth(13) = &
