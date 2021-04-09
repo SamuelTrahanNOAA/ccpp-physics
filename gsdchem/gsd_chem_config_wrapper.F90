@@ -30,9 +30,6 @@ contains
         errmsg = ''
         errflg = 0
 
-        write(0,*) 'gsd_chem_config_wrapper_init'
-        print *,'gsd_chem_config_wrapper_init'
-
         config_chem_opt = chem_opt
 
         num_chem=20

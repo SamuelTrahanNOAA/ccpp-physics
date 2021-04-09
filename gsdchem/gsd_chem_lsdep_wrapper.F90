@@ -196,12 +196,12 @@ contains
        gq0(i,k,ntss4  )=ppm2ugkg(p_seas_4) * max(epsilc,chem(i,k,1,p_seas_4))
        gq0(i,k,ntss5  )=ppm2ugkg(p_seas_5) * max(epsilc,chem(i,k,1,p_seas_5))
        gq0(i,k,ntpp10 )=ppm2ugkg(p_p10   ) * max(epsilc,chem(i,k,1,p_p10))
+
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         gq0(i,k,ntco )=ppm2ugkg(p_co    ) * max(epsilc,chem(i,k,1,p_co))       
+       endif
      enddo
     enddo
-
-    if(chem_opt == CHEM_OPT_GOCART_CO) then
-       gq0(:,:,ntco   )=ppm2ugkg(p_co    ) * max(epsilc,chem(:,:,1,p_co))       
-    endif
 
     do k=kts,kte
      do i=its,ite
@@ -225,12 +225,12 @@ contains
        qgrs(i,k,ntss4  )=gq0(i,k,ntss4  )
        qgrs(i,k,ntss5  )=gq0(i,k,ntss5  )
        qgrs(i,k,ntpp10 )=gq0(i,k,ntpp10 )
+
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         qgrs(i,k,ntco )=gq0(i,k,ntco   )
+       endif
      enddo
     enddo
-
-    if(chem_opt == CHEM_OPT_GOCART_CO) then
-       qgrs(:,:,ntco   )=gq0(:,:,ntco   )
-    endif
 
     ! -- output large-scale wet deposition
     call gocart_diag_store(3, var_rmv, trdf)
@@ -411,12 +411,12 @@ contains
        chem(i,k,jts,p_seas_4)=max(epsilc,gq0(i,k,ntss4  )/ppm2ugkg(p_seas_4))
        chem(i,k,jts,p_seas_5)=max(epsilc,gq0(i,k,ntss5  )/ppm2ugkg(p_seas_5))
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
+
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         chem(i,k,jts,p_co  )=max(epsilc,gq0(i,k,ntco   )/ppm2ugkg(p_co))
+       endif
      enddo
     enddo
-
-    if(chem_opt == CHEM_OPT_GOCART_CO) then
-       chem(:,:,jts,p_co    )=max(epsilc,gq0(:,:,ntco   )/ppm2ugkg(p_co))
-    endif
 
 
   end subroutine gsd_chem_prep_lsdep

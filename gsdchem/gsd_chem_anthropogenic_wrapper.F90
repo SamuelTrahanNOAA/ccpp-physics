@@ -135,11 +135,11 @@ contains
        gq0(i,k,ntbc1  )=ppm2ugkg(p_bc1   ) * max(epsilc,chem(i,k,1,p_bc1))
        gq0(i,k,ntoc1  )=ppm2ugkg(p_oc1   ) * max(epsilc,chem(i,k,1,p_oc1))
        gq0(i,k,ntpp10 )=ppm2ugkg(p_p10   ) * max(epsilc,chem(i,k,1,p_p10))
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         gq0(i,k,ntco )=ppm2ugkg(p_co    ) * max(epsilc,chem(i,k,1,p_co))
+       endif
      enddo
     enddo
-    if(chem_opt == CHEM_OPT_GOCART_CO) then
-       gq0(:,:,ntco   )=ppm2ugkg(p_co    ) * max(epsilc,chem(:,:,1,p_co))
-    endif
 
     do k=kts,kte
      do i=its,ite
@@ -149,11 +149,11 @@ contains
        qgrs(i,k,ntbc1  )=gq0(i,k,ntbc1  )
        qgrs(i,k,ntoc1  )=gq0(i,k,ntoc1  )
        qgrs(i,k,ntpp10 )=gq0(i,k,ntpp10 )
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         qgrs(i,k,ntco) = gq0(i,k,ntco)
+       endif
      enddo
     enddo
-    if(chem_opt == CHEM_OPT_GOCART_CO) then
-       qgrs(:,:,ntco) = gq0(:,:,ntco)
-    endif
 
     abem(:,1)=ugkg*emis_ant(:,kts,1,p_e_bc )
     abem(:,2)=ugkg*emis_ant(:,kts,1,p_e_oc )

@@ -224,12 +224,12 @@ contains
        gq0(i,k,ntoc1  )=ppm2ugkg(p_oc1   ) * max(epsilc,chem(i,k,1,p_oc1))
        gq0(i,k,ntoc2  )=ppm2ugkg(p_oc2   ) * max(epsilc,chem(i,k,1,p_oc2))
        gq0(i,k,ntpp10 )=ppm2ugkg(p_p10   ) * max(epsilc,chem(i,k,1,p_p10))
+
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         gq0(i,k,ntco )=ppm2ugkg(p_co    ) * max(epsilc,chem(i,k,1,p_co))
+       endif
      enddo
     enddo
-
-    if(chem_opt == CHEM_OPT_GOCART_CO) then
-       gq0(:,:,ntco   )=ppm2ugkg(p_co    ) * max(epsilc,chem(:,:,1,p_co))
-    endif
 
     do k=kts,kte
      do i=its,ite
@@ -243,12 +243,12 @@ contains
        qgrs(i,k,ntoc1  )=gq0(i,k,ntoc1  )
        qgrs(i,k,ntoc2  )=gq0(i,k,ntoc2  )
        qgrs(i,k,ntpp10 )=gq0(i,k,ntpp10 )
+       
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         qgrs(i,k,ntco )=gq0(i,k,ntco   )
+       endif
      enddo
     enddo
-
-    if(chem_opt == CHEM_OPT_GOCART_CO) then
-       qgrs(:,:,ntco   )=gq0(:,:,ntco   )
-    endif
 
 
 !
@@ -447,12 +447,12 @@ contains
        chem(i,k,jts,p_oc1   )=max(epsilc,gq0(i,k,ntoc1  )/ppm2ugkg(p_oc1))
        chem(i,k,jts,p_oc2   )=max(epsilc,gq0(i,k,ntoc2  )/ppm2ugkg(p_oc2))
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         chem(i,k,jts,p_co  )=max(epsilc,gq0(i,k,ntco   )/ppm2ugkg(p_co))
+       endif
      enddo
     enddo
 
-    if(chem_opt == CHEM_OPT_GOCART_CO) then
-       chem(:,:,jts,p_co    )=max(epsilc,gq0(:,:,ntco   )/ppm2ugkg(p_co))
-    endif
 
 
     if (.NOT. readrestart) then

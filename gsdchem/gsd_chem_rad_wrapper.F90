@@ -331,10 +331,6 @@ contains
         enddo
       enddo
     enddo
-
-    if(chem_opt == CHEM_OPT_GOCART_CO) then
-       chem(:,:,jts,p_co    )=max(epsilc,gq0(:,:,ntco   )/ppm2ugkg(p_co))
-    endif
  
     do k=kms,kte
      do i=ims,ime
@@ -358,6 +354,9 @@ contains
        chem(i,k,jts,p_seas_4)=max(epsilc,gq0(i,k,ntss4  )/ppm2ugkg(p_seas_4))
        chem(i,k,jts,p_seas_5)=max(epsilc,gq0(i,k,ntss5  )/ppm2ugkg(p_seas_5))
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         chem(i,k,jts,p_co  )=max(epsilc,gq0(i,k,ntco   )/ppm2ugkg(p_co))
+       endif
      enddo
     enddo
 
