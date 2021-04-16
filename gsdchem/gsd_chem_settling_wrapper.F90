@@ -43,7 +43,7 @@ contains
 !> @{
     subroutine gsd_chem_settling_wrapper_run(im, kte, kme, ktau, dt, garea,      &
                    pr3d, ph3d, prl3d, tk3d, spechum,                             &
-                   ntrac,ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                        &
+                   ntrac,ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                   &
                    ntbc1,ntbc2,ntoc1,ntoc2,ntss1,ntss2,ntss3,ntss4,ntss5,        &
                    ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,ntchmdiag,     &
                    gq0,qgrs,sedimio, dust_opt_in, seas_opt_in,                   &
@@ -56,7 +56,7 @@ contains
     integer,        intent(in) :: ntrac,ntss1,ntss2,ntss3,ntss4,ntss5
     integer,        intent(in) :: ntdust1,ntdust2,ntdust3,ntdust4,ntdust5
     integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntchmdiag
-    integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
+    integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa,ntco
     real(kind_phys),intent(in) :: dt
 
     integer, parameter :: ids=1,jds=1,jde=1, kds=1
@@ -174,6 +174,9 @@ contains
        qgrs(i,k,ntoc1  )=gq0(i,k,ntoc1  )
        qgrs(i,k,ntoc2  )=gq0(i,k,ntoc2  )
        qgrs(i,k,ntpp10 )=gq0(i,k,ntpp10 )
+       IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+         qgrs(i,k,ntco )=gq0(i,k,ntco   )
+       ENDIF
      enddo
     enddo
 

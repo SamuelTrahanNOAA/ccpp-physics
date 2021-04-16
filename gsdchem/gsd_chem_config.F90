@@ -78,11 +78,10 @@ module gsd_chem_config
   integer, parameter :: p_qv=1
   integer, parameter :: p_qc=2
   integer, parameter :: p_qi=3
-  ! -- set pointers to predefined atmospheric tracers
-  ! -- FV3 GFDL microphysics
-  integer, parameter :: p_atm_shum = 1
-  integer, parameter :: p_atm_cldq = 2
-  integer, parameter :: p_atm_o3mr = 7
+  ! -- Indices to predefined atmospheric tracers are set in gsd_chem_config_wrapper.F90
+  integer :: p_atm_shum = -99 ! = ntqv
+  integer :: p_atm_cldq = -99 ! = ntcw, which is only for GFDL microphysics
+  integer :: p_atm_o3mr = -99 ! = ntoz
 
   integer :: numgas = 0
 
@@ -94,27 +93,27 @@ module gsd_chem_config
 
 
   !-- tracers. These are overwritten by gsd_chem_config_wrapper.F90
-  integer :: p_so2=1
-  integer :: p_sulf=2
-  integer :: p_dms=3
-  integer :: p_msa=4
-  integer :: p_p25=5
-  integer :: p_co=-999
-  integer :: p_bc1=6
-  integer :: p_bc2=7
-  integer :: p_oc1=8
-  integer :: p_oc2=9
-  integer :: p_dust_1=10
-  integer :: p_dust_2=11
-  integer :: p_dust_3=12
-  integer :: p_dust_4=13
-  integer :: p_dust_5=14
-  integer :: p_seas_1=15
-  integer :: p_seas_2=16
-  integer :: p_seas_3=17
-  integer :: p_seas_4=18
-  integer :: p_seas_5=19
-  integer :: p_p10   =20
+  integer :: p_so2=-99
+  integer :: p_sulf=-99
+  integer :: p_dms=-99
+  integer :: p_msa=-99
+  integer :: p_p25=-99
+  integer :: p_co=-99
+  integer :: p_bc1=-99
+  integer :: p_bc2=-99
+  integer :: p_oc1=-99
+  integer :: p_oc2=-99
+  integer :: p_dust_1=-99
+  integer :: p_dust_2=-99
+  integer :: p_dust_3=-99
+  integer :: p_dust_4=-99
+  integer :: p_dust_5=-99
+  integer :: p_seas_1=-99
+  integer :: p_seas_2=-99
+  integer :: p_seas_3=-99
+  integer :: p_seas_4=-99
+  integer :: p_seas_5=-99
+  integer :: p_p10   =-99
 
   integer, parameter :: p_edust1=1,p_edust2=2,p_edust3=3,p_edust4=4,p_edust5=5
   integer, parameter :: p_eseas1=1,p_eseas2=2,p_eseas3=3,p_eseas4=4,p_eseas5=5

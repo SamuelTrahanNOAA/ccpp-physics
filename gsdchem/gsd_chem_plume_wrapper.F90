@@ -154,7 +154,7 @@ contains
         plumerise_flag,num_plume_data,ppm2ugkg,                         &
         mean_fct_agtf,mean_fct_agef,mean_fct_agsv,mean_fct_aggr,        &
         firesize_agtf,firesize_agef,firesize_agsv,firesize_aggr,        &
-        moist,chem,plume_frp,ebu_in,ivgtyp,                             &
+        moist,chem,plume_frp,ebu_in,ivgtyp,ntco,                        &
         ids,ide, jds,jde, kds,kde,                                      &
         ims,ime, jms,jme, kms,kme,                                      &
         its,ite, jts,jte, kts,kte)
@@ -271,7 +271,7 @@ contains
        gq0(i,k,ntpp10 )=ppm2ugkg(p_p10   ) * max(epsilc,chem(i,k,1,p_p10))
 
        if(chem_opt == CHEM_OPT_GOCART_CO) then
-         gq0(i,k,ntco )=ppm2ugkg(p_co   ) * max(epsilc,chem(i,k,1,p_co))
+         gq0(i,k,ntco )=ppm2ugkg(p_co    ) * max(epsilc,chem(i,k,1,p_co))
        endif
      enddo
     enddo
@@ -315,7 +315,7 @@ contains
         mean_fct_agtf,mean_fct_agef,mean_fct_agsv,mean_fct_aggr,       &
         firesize_agtf,firesize_agef,firesize_agsv,firesize_aggr,       &
         moist,chem,plumedist,ebu_in,                                   &
-        ivgtyp,              &
+        ivgtyp,ntco,         &
         ids,ide, jds,jde, kds,kde,                                     &
         ims,ime, jms,jme, kms,kme,                                     &
         its,ite, jts,jte, kts,kte)
@@ -327,7 +327,7 @@ contains
     !FV3 input variables
     integer, dimension(:), intent(in) :: vegtype
     integer, intent(in) :: ntrac
-    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     real(kind=kind_phys), dimension(:,:),   intent(in) :: fire_GBBEPx
     real(kind=kind_phys), dimension(:,:),   intent(in) :: fire_MODIS
     real(kind=kind_phys), dimension(:, :), intent(in) ::     &
@@ -546,7 +546,7 @@ contains
               ebu_in(i,j,p_ebu_in_so2)  = frpc * emiss_abu(i,j,p_e_so2)
 
               IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
-                 ebu_in(i,j,p_ebu_in_co) = frpc * emiss_abu(i,j,p_e_co)
+                ebu_in(i,j,p_ebu_in_co) = frpc * emiss_abu(i,j,p_e_co)
               ENDIF
 
               plumedist(i,j,p_frp_flam_frac) = flaming(catb(ivgtyp(i,j)))
@@ -568,6 +568,9 @@ contains
        chem(i,k,jts,p_bc1   )=max(epsilc,gq0(i,k,ntbc1  )/ppm2ugkg(p_bc1))
        chem(i,k,jts,p_oc1   )=max(epsilc,gq0(i,k,ntoc1  )/ppm2ugkg(p_oc1))
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
+       IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+         chem(i,k,jts,p_co  )=max(epsilc,gq0(i,k,ntco   )/ppm2ugkg(p_co))
+       ENDIF
      enddo
     enddo
 

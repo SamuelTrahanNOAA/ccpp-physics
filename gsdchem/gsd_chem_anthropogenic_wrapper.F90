@@ -118,7 +118,7 @@ contains
         ktau,dtstep,                                                    &
         pr3d,ph3d,phl3d,tk3d,prl3d,spechum,emi_in,                      &
         rri,t_phy,p_phy,rho_phy,dz8w,p8w,z_at_w,                        & 
-        ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,ntrac,gq0,               &
+        ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,ntco,ntrac,gq0,          &
         num_chem, num_ebu_in,num_emis_ant,                              &
         emis_ant,ppm2ugkg,chem,random_factor,                           &
         ids,ide, jds,jde, kds,kde,                                      &
@@ -167,7 +167,7 @@ contains
         ktau,dtstep,                                                     &
         pr3d,ph3d,phl3d,tk3d,prl3d,spechum,emi_in,                       &
         rri,t_phy,p_phy,rho_phy,dz8w,p8w,z_at_w,                         &
-        ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,ntrac,gq0,                &
+        ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,ntco,ntrac,gq0,           &
         num_chem, num_ebu_in,num_emis_ant,                               &
         emis_ant,ppm2ugkg,chem,random_factor,                            &
         ids,ide, jds,jde, kds,kde,                                       &
@@ -183,7 +183,7 @@ contains
 
     !FV3 input variables
     integer, intent(in) :: ntrac
-    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf
     real(kind=kind_phys), dimension(:,:),   intent(in) :: emi_in
     real(kind=kind_phys), dimension(:, :), intent(in) :: pr3d,ph3d
@@ -327,6 +327,9 @@ contains
        chem(i,k,jts,p_bc1   )=max(epsilc,gq0(i,k,ntbc1  )/ppm2ugkg(p_bc1))
        chem(i,k,jts,p_oc1   )=max(epsilc,gq0(i,k,ntoc1  )/ppm2ugkg(p_oc1))
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
+       IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+         chem(i,k,jts,p_co  )=max(epsilc,gq0(i,k,ntco   )/ppm2ugkg(p_co))
+       ENDIF
      enddo
     enddo
 

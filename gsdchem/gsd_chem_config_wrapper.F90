@@ -19,12 +19,13 @@ contains
       subroutine gsd_chem_config_wrapper_init(ntso2,ntsulf,ntdms,ntmsa,ntco, &
            ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,   &
            ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu,    &
-           errmsg,errflg)
+           ntoz,ntqv,ntcw,errmsg,errflg)
         use gsd_chem_config, config_chem_opt=>chem_opt, config_num_ebu=>num_ebu
         implicit none
         integer, intent(in) :: ntso2,ntsulf,ntdms,ntmsa,ntco,ntpp25,ntbc1, &
              ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,    &
-             ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu
+             ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu,        &
+             ntoz,ntqv,ntcw
         character(len=*), intent(out) :: errmsg
         integer,          intent(out) :: errflg
         
@@ -48,6 +49,21 @@ contains
            p_ebu_co = 5
            p_ebu_in_co = 5
         endif
+
+        if(ntcw<1) then
+          errflg=1
+          errmsg='The "cloud condensate (or liquid water)" tracer (ntcw) is mandatory.'
+          return
+        else
+          p_atm_cldq=ntcw
+        endif
+        if(ntoz<1) then
+          errflg=1
+          errmsg='The ozone mixing ratio tracer (ntoz) is mandatory.'
+        else
+          p_atm_o3mr=ntoz
+        endif
+        p_atm_shum=ntqv ! ntqv is always present
 
         call set_and_check(p_so2,ntso2,'The so2 tracer is mandatory.')
         call set_and_check(p_sulf,ntsulf,'The sulf tracer is mandatory.')
@@ -124,12 +140,13 @@ contains
       subroutine gsd_chem_config_wrapper_run(ntso2,ntsulf,ntdms,ntmsa,ntco,   &
            ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,    &
            ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu,     &
-           errmsg,errflg)
+           ntoz,ntqv,ntcw,errmsg,errflg)
         use gsd_chem_config, only: num_chem
         implicit none
         integer, intent(in) :: ntso2,ntsulf,ntdms,ntmsa,ntco,ntpp25,ntbc1, &
              ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,    &
-             ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu
+             ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu,        &
+             ntoz,ntqv,ntcw
         character(len=*), intent(out) :: errmsg
         integer,          intent(out) :: errflg
 
@@ -139,7 +156,7 @@ contains
           call gsd_chem_config_wrapper_init(ntso2,ntsulf,ntdms,ntmsa,ntco,        &
                ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,    &
                ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu,     &
-               errmsg,errflg)
+               ntoz,ntqv,ntcw,errmsg,errflg)
         endif
       end subroutine gsd_chem_config_wrapper_run
 !> @}
