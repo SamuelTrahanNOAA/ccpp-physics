@@ -137,6 +137,8 @@ contains
         ids,ide, jds,jde, kds,kde,                                      &
         ims,ime, jms,jme, kms,kme,                                      &
         its,ite, jts,jte, kts,kte)
+    else
+      emis_seas = 0
     endif
 
     ! -- put chem stuff back into tracer array
@@ -164,7 +166,7 @@ contains
      do n=1,nseasalt
       ssem(i,n)=emis_seas(i,1,1,n)
      enddo
-   enddo
+    enddo
 
 !
    end subroutine gsd_chem_seas_wrapper_run
