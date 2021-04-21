@@ -37,7 +37,7 @@ contains
     trcm = 0._kind_phys
 
     select case (chem_opt)
-      case (CHEM_OPT_GOCART, CHEM_OPT_GOCART_RACM)
+      case (CHEM_OPT_GOCART, CHEM_OPT_GOCART_RACM, CHEM_OPT_GOCART_CO)
 
         do k = 1, nk
           do j = 1, nj
@@ -54,10 +54,14 @@ contains
               ! -- seas
               trcm(i,j,6) = trcm(i,j,6) + coef * (tr(i,j,k,nbegin + p_seas_1) + tr(i,j,k,nbegin + p_seas_2 ) &
               + tr(i,j,k,nbegin + p_seas_3) + fseas2 * tr(i,j,k,nbegin + p_seas_4))
+              ! -- carbon monoxide
+              if(chem_opt==CHEM_OPT_GOCART_CO) then
+                trcm(i,j,7) = trcm(i,j,7) + coef * tr(i,j,k,nbegin + p_co)
+              endif
             end do
           end do
         end do
-        ! -- pm2.5 aerosol includes all tracers above (note: p25 emissions are added to oc1)
+        ! -- pm2.5 aerosol includes all tracers above except CO (note: p25 emissions are added to oc1)
         do k = 2, 6
           do j = 1, nj
             do i = 1, ni
@@ -121,6 +125,7 @@ contains
     do n = 1, nt
       if (n == p_so2) cycle
       if (n == p_msa) cycle
+      if (n == p_co) cycle
       m = m + 1
       w(:,:,m,ipos) = ugkg*v(:,:,n) !kg/m2/s
     end do

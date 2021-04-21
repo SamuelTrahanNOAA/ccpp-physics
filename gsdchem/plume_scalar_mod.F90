@@ -29,12 +29,12 @@ subroutine plumerise(m1,m2,m3,ia,iz,ja,jz,firesize,mean_fct   &
   ! arguments
   integer :: m1,m2,m3,ia,iz,ja,jz,nspecies,plumerise_flag
 
-  real(kind=kind_phys), dimension(nveg_agreg),    intent(in)    :: firesize,mean_fct
-  real(kind=kind_phys), dimension(nspecies),      intent(in)    :: eburn_in
-  real(kind=kind_phys), dimension(m1,nspecies),   intent(out)   :: eburn_out
-  real(kind=kind_phys), dimension(m1,m2,m3),      intent(in)    :: up,vp,wp,theta,pp,dn0,rv
-  real(kind=kind_phys), dimension(m1),            intent(in)    :: zt_rams,zm_rams
-  real(kind=kind_phys), dimension(num_frp_plume), intent(inout) :: plume_frp
+  real(kind=kind_phys), dimension(:),    intent(in)    :: firesize,mean_fct
+  real(kind=kind_phys), dimension(:),      intent(in)    :: eburn_in
+  real(kind=kind_phys), dimension(:,:),   intent(out)   :: eburn_out
+  real(kind=kind_phys), dimension(:),      intent(in)    :: up,vp,wp,theta,pp,dn0,rv
+  real(kind=kind_phys), dimension(:),            intent(in)    :: zt_rams,zm_rams
+  real(kind=kind_phys), dimension(:), intent(inout) :: plume_frp
 
   ! local variables
   integer :: i,j,k,iveg_ag,imm,ispc,ixx,k1,k2,kmt
@@ -90,15 +90,15 @@ subroutine plumerise(m1,m2,m3,ia,iz,ja,jz,firesize,mean_fct   &
      !- plume rise => cycle
 
       do k = 1,m1
-        ucon  (k)=up(k,i,j)           ! u wind
-        vcon  (k)=vp(k,i,j)           ! v wind
-        !wcon  (k)=wp(k,i,j)           ! w wind
-        thtcon(k)=theta(k,i,j)          ! pot temperature
-        picon (k)=pp(k,i,j)                ! exner function
+        ucon  (k)=up(k)           ! u wind
+        vcon  (k)=vp(k)           ! v wind
+        !wcon  (k)=wp(k)           ! w wind
+        thtcon(k)=theta(k)          ! pot temperature
+        picon (k)=pp(k)                ! exner function
         !tmpcon(k)=thtcon(k)*picon(k)/cp   ! temperature (K)
-        !dncon (k)=dn0(k,i,j)           ! dry air density (basic state)
+        !dncon (k)=dn0(k)           ! dry air density (basic state)
         !prcon (k)=(picon(k)/cp)**cpor*p00 ! pressure (Pa)
-        rvcon (k)=rv(k,i,j)            ! water vapor mixing ratio
+        rvcon (k)=rv(k)            ! water vapor mixing ratio
         zcon  (k)=zt_rams(k)               ! termod-point height
         zzcon (k)=zm_rams(k)               ! W-point height
       enddo
@@ -338,20 +338,20 @@ end subroutine set_grid
 
   SUBROUTINE set_flam_vert(ztopmax,k1,k2,nkp,zzcon,W_VMD,VMD)
 
-    REAL(kind=kind_phys)    , INTENT(IN)  :: ztopmax(2)
+    REAL(kind=kind_phys)    , INTENT(IN)  :: ztopmax(:)
     INTEGER , INTENT(OUT) :: k1
     INTEGER , INTENT(OUT) :: k2
 
     ! plumegen_coms
     INTEGER , INTENT(IN)  :: nkp
-    REAL(kind=kind_phys)    , INTENT(IN)  :: zzcon(nkp)
+    REAL(kind=kind_phys)    , INTENT(IN)  :: zzcon(:)
 
     INTEGER imm,k
     INTEGER, DIMENSION(2)  :: k_lim
 
     !- version 2
-    REAL(kind=kind_phys)    , INTENT(IN)  :: W_VMD(nkp,2)
-    REAL(kind=kind_phys)    , INTENT(OUT) ::   VMD(nkp,2)
+    REAL(kind=kind_phys)    , INTENT(IN)  :: W_VMD(:,:)
+    REAL(kind=kind_phys)    , INTENT(OUT) ::   VMD(:,:)
     real(kind=kind_phys)   w_thresold,xxx
     integer k_initial,k_final,ko,kk4,kl
 
@@ -1541,28 +1541,28 @@ end subroutine scl_misc
     ! plumegen_coms
     INTEGER , INTENT(IN)    :: nkp
     REAL(kind=kind_phys)    , INTENT(INOUT) :: wbar 
-    REAL(kind=kind_phys)    , INTENT(IN)    :: w(nkp)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: w(:)
     REAL(kind=kind_phys)    , INTENT(INOUT) :: adiabat 
     REAL(kind=kind_phys)    , INTENT(IN)    :: alpha
-    REAL(kind=kind_phys)    , INTENT(IN)    :: radius(nkp)
-    REAL(kind=kind_phys)    , INTENT(INOUT) :: tt(nkp)
-    REAL(kind=kind_phys)    , INTENT(IN)    :: t(nkp)
-    REAL(kind=kind_phys)    , INTENT(IN)    :: te(nkp)
-    REAL(kind=kind_phys)    , INTENT(INOUT) :: qvt(nkp)
-    REAL(kind=kind_phys)    , INTENT(IN)    :: qv(nkp)
-    REAL(kind=kind_phys)    , INTENT(IN)    :: qvenv(nkp)
-    REAL(kind=kind_phys)    , INTENT(INOUT) :: qct(nkp)
-    REAL(kind=kind_phys)    , INTENT(IN)    :: qc(nkp)
-    REAL(kind=kind_phys)    , INTENT(INOUT) :: qht(nkp)
-    REAL(kind=kind_phys)    , INTENT(IN)    :: qh(nkp)
-    REAL(kind=kind_phys)    , INTENT(INOUT) :: qit(nkp)
-    REAL(kind=kind_phys)    , INTENT(IN)    :: qi(nkp)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: radius(:)
+    REAL(kind=kind_phys)    , INTENT(INOUT) :: tt(:)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: t(:)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: te(:)
+    REAL(kind=kind_phys)    , INTENT(INOUT) :: qvt(:)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: qv(:)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: qvenv(:)
+    REAL(kind=kind_phys)    , INTENT(INOUT) :: qct(:)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: qc(:)
+    REAL(kind=kind_phys)    , INTENT(INOUT) :: qht(:)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: qh(:)
+    REAL(kind=kind_phys)    , INTENT(INOUT) :: qit(:)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: qi(:)
 
-    REAL(kind=kind_phys)    , INTENT(IN)    :: vel_e(nkp)
-    REAL(kind=kind_phys)    , INTENT(IN)    :: vel_p(nkp)
-    REAL(kind=kind_phys)    , INTENT(INOUT) :: vel_t(nkp)
-    REAL(kind=kind_phys)    , INTENT(INOUT) :: rad_T(nkp)
-    REAL(kind=kind_phys)    , INTENT(IN)    :: rad_p(nkp)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: vel_e(:)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: vel_p(:)
+    REAL(kind=kind_phys)    , INTENT(INOUT) :: vel_t(:)
+    REAL(kind=kind_phys)    , INTENT(INOUT) :: rad_T(:)
+    REAL(kind=kind_phys)    , INTENT(IN)    :: rad_p(:)
 
     real(kind=kind_phys), parameter :: g = 9.81, cp=1004., pi=3.1416
 
@@ -2393,10 +2393,10 @@ SUBROUTINE htint (nzz1, vctra, eleva, nzz2, vctrb, elevb)
   IMPLICIT NONE
   INTEGER, INTENT(IN ) :: nzz1
   INTEGER, INTENT(IN ) :: nzz2
-  REAL(kind=kind_phys),    INTENT(IN ) :: vctra(nzz1)
-  REAL(kind=kind_phys),    INTENT(OUT) :: vctrb(nzz2)
-  REAL(kind=kind_phys),    INTENT(IN ) :: eleva(nzz1)
-  REAL(kind=kind_phys),    INTENT(IN ) :: elevb(nzz2)
+  REAL(kind=kind_phys),    INTENT(IN ) :: vctra(:)
+  REAL(kind=kind_phys),    INTENT(OUT) :: vctrb(:)
+  REAL(kind=kind_phys),    INTENT(IN ) :: eleva(:)
+  REAL(kind=kind_phys),    INTENT(IN ) :: elevb(:)
 
   INTEGER :: l
   INTEGER :: k

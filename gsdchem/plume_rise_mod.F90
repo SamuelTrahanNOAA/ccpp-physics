@@ -39,20 +39,20 @@ contains
                                   ids,ide, jds,jde, kds,kde,           &
                                   ims,ime, jms,jme, kms,kme,           &
                                   its,ite, jts,jte, kts,kte
-   REAL(kind=kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_ebu ),              &
+   REAL(kind=kind_phys), DIMENSION( :, :, :, : ),              &
          INTENT(INOUT ) ::                                   ebu
-   REAL(kind=kind_phys), DIMENSION( ims:ime, jms:jme, num_ebu_in ),                    &
+   REAL(kind=kind_phys), DIMENSION( :, :, : ),                    &
          INTENT(INOUT ) ::                                   ebu_in
-   REAL(kind=kind_phys), DIMENSION( ims:ime, jms:jme, num_frp_plume ),                 &
+   REAL(kind=kind_phys), DIMENSION( :, :, : ),                 &
          INTENT(INOUT ) ::                                   plume_frp
-   REAL(kind=kind_phys), DIMENSION( ims:ime, jms:jme ),INTENT(IN ) ::     &
+   REAL(kind=kind_phys), DIMENSION( :, : ),INTENT(IN ) ::     &
            mean_fct_agtf,mean_fct_agef,mean_fct_agsv,mean_fct_aggr,       &
            firesize_agtf,firesize_agef,firesize_agsv,firesize_aggr
 
 !
 !
 !
-   REAL(kind=kind_phys), DIMENSION( ims:ime , kms:kme , jms:jme ),                     &
+   REAL(kind=kind_phys), DIMENSION( : , : , : ),                     &
          INTENT(IN   ) ::                                              &
                                                       t_phy,           &
                  z_at_w,vvel,u_phy,v_phy,rho_phy,p_phy,q_vap
@@ -125,6 +125,11 @@ contains
                ebu(i,kts,j,p_ebu_so2)=ebu_in(i,j,p_ebu_in_so2)
                ebu(i,kts,j,p_ebu_pm25)=ebu_in(i,j,p_ebu_in_pm25)
                ebu(i,kts,j,p_ebu_pm10)=ebu_in(i,j,p_ebu_in_pm10)
+
+               IF (chem_opt == 'GOCART_CO') THEN
+                  ebu(i,kts,j,p_ebu_co)=ebu_in(i,j,p_ebu_in_co)
+               ENDIF
+
             enddo
          enddo
        elseif ( burn_opt == 'BIOMASSB_MOZC' .or. &

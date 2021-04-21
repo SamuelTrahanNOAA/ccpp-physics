@@ -33,15 +33,15 @@ CONTAINS
                                   ids,ide, jds,jde, kds,kde,               &
                                   ims,ime, jms,jme, kms,kme,               &
                                   its,ite, jts,jte, kts,kte
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),                &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                &
          INTENT(IN ) ::                                   moist
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),                 &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                 &
          INTENT(INOUT ) ::                                   chem
-   REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),                        &
+   REAL(kind_phys),  DIMENSION( : , : , : ),                        &
           INTENT(IN   ) ::                     t_phy,                      &
                                             dz8w,p8w,                      &
                                               rho_phy
-   REAL(kind_phys),  DIMENSION( ims:ime ,  jms:jme ),                                 &
+   REAL(kind_phys),  DIMENSION( : ,  : ),                                 &
           INTENT(IN   ) ::     area
 
    REAL(kind_phys), INTENT(IN   ) :: dt,g
@@ -50,7 +50,7 @@ CONTAINS
    REAL(kind_phys)    :: chmlos(1,1,1,4)
    REAL(kind_phys)    :: bchmlos(1,1,4)
    REAL(kind_phys) :: pc2(1,1,1,2)
-   REAL(kind_phys) :: tc(4)
+   REAL(kind_phys) :: tc(1,1,1,4)
    real(kind_phys), parameter :: mw_c = 12.
    real(kind_phys) mwdry,tt1,tt2
        mwdry=airmw
@@ -69,20 +69,20 @@ CONTAINS
           airmas(1,1,1)=-(p8w(i,k+1,j)-p8w(i,k,j))*area(i,j)/g
           pc2(1,1,1,1)=0.
           pc2(1,1,1,2)=0.
-          tc(1)=chem(i,k,j,p_bc1)/mw_c*mwdry*1.d-9
-          tc(2)=chem(i,k,j,p_oc1)/mw_c*mwdry*1.d-9
-          tc(3)=chem(i,k,j,p_bc2)/mw_c*mwdry*1.d-9
-          tc(4)=chem(i,k,j,p_oc2)/mw_c*mwdry*1.d-9
-          tt1=tc(3)
+          tc(1,1,1,1)=chem(i,k,j,p_bc1)/mw_c*mwdry*1.d-9
+          tc(1,1,1,2)=chem(i,k,j,p_oc1)/mw_c*mwdry*1.d-9
+          tc(1,1,1,3)=chem(i,k,j,p_bc2)/mw_c*mwdry*1.d-9
+          tc(1,1,1,4)=chem(i,k,j,p_oc2)/mw_c*mwdry*1.d-9
+          tt1=tc(1,1,1,3)
 
          CALL chem_1(imx,jmx,lmx, nmx, ndt1, airmas, tc, &
               chmlos, bchmlos, pc2)
          CALL chem_2(imx,jmx,lmx, nmx, ndt1, airmas, tc, pc2)
-         tt2 = tc(3) -tt1
-          chem(i,k,j,p_bc1)=tc(1)/mwdry*mw_c*1.e9
-          chem(i,k,j,p_oc1)=tc(2)/mwdry*mw_c*1.e9
-          chem(i,k,j,p_bc2)=tc(3)/mwdry*mw_c*1.e9
-          chem(i,k,j,p_oc2)=tc(4)/mwdry*mw_c*1.e9
+         tt2 = tc(1,1,1,3) -tt1
+          chem(i,k,j,p_bc1)=tc(1,1,1,1)/mwdry*mw_c*1.e9
+          chem(i,k,j,p_oc1)=tc(1,1,1,2)/mwdry*mw_c*1.e9
+          chem(i,k,j,p_bc2)=tc(1,1,1,3)/mwdry*mw_c*1.e9
+          chem(i,k,j,p_oc2)=tc(1,1,1,4)/mwdry*mw_c*1.e9
 
        enddo
        enddo
@@ -94,16 +94,19 @@ end subroutine gocart_aerosols_driver
             ids,ide, jds,jde, kds,kde,               &
             ims,ime, jms,jme, kms,kme,               &
             its,ite, jts,jte, kts,kte                )
+
+   USE gsd_chem_config, ONLY : CHEM_OPT_GOCART_CO
+
    IMPLICIT NONE
    REAL(kind_phys), PARAMETER :: mwso4 = 96.066
    INTEGER,      INTENT(IN   ) :: chem_opt,ids,ide, jds,jde, kds,kde,               &
                                   ims,ime, jms,jme, kms,kme,               &
                                   its,ite, jts,jte, kts,kte,num_chem
-    REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme ),                          &
+    REAL(kind_phys), DIMENSION( :, :, : ),                          &
          INTENT(INOUT ) :: pm2_5_dry, pm2_5_dry_ec, pm10     
-    REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme ),                          &
+    REAL(kind_phys), DIMENSION( :, :, : ),                          &
          INTENT(IN ) :: alt
-    REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),                 &
+    REAL(kind_phys), DIMENSION( :, :, :, : ),                 &
          INTENT(IN ) ::                                   chem
     real(kind_phys) minv,maxv,d_2_5,s_2_5,d_10,sulfate,mwdry
     integer i,j,k,ii,jj,n,maxp,maxs,maxd
@@ -126,7 +129,7 @@ end subroutine gocart_aerosols_driver
             do n=p_p25,p_dust_1
                pm2_5_dry(i,k,j) = pm2_5_dry(i,k,j)+chem(i,k,j,n)        
             enddo
-            if(chem_opt.eq.300.or.chem_opt.eq.301)then
+            if(chem_opt.eq.300.or.chem_opt.eq.301 .or. chem_opt == CHEM_OPT_GOCART_CO)then
                pm2_5_dry(i,k,j) = pm2_5_dry(i,k,j)+chem(i,k,j,p_dust_2)*d_2_5     &
                                             +chem(i,k,j,p_seas_1)           &
                                             +chem(i,k,j,p_seas_2)           &
@@ -189,11 +192,11 @@ SUBROUTINE chem_1(imx,jmx,lmx, nmx, &
   IMPLICIT NONE
 
   INTEGER, INTENT(IN)    :: lmx, nmx,imx,jmx, ndt1
-  REAL(kind_phys),    INTENT(IN)    :: airm(imx,jmx,lmx)
-  REAL(kind_phys),    INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind_phys),    INTENT(INOUT) :: chmlos(imx,jmx,lmx,nmx)
-  REAL(kind_phys),    INTENT(INOUT) :: bchmlos(imx,jmx,nmx)
-  REAL(kind_phys),    INTENT(OUT)   :: pc2(imx,jmx,lmx,2)
+  REAL(kind_phys),    INTENT(IN)    :: airm(:,:,:)
+  REAL(kind_phys),    INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind_phys),    INTENT(INOUT) :: chmlos(:,:,:,:)
+  REAL(kind_phys),    INTENT(INOUT) :: bchmlos(:,:,:)
+  REAL(kind_phys),    INTENT(OUT)   :: pc2(:,:,:,:)
 
   REAL(kind_phys) :: r1, c0, r2, rkt, c1
   INTEGER :: np, n, i, j, l
@@ -251,9 +254,9 @@ SUBROUTINE chem_2(imx,jmx,lmx, nmx, &
   IMPLICIT NONE
 
   INTEGER, INTENT(IN)    :: lmx,imx,jmx, nmx, ndt1
-  REAL(kind_phys),    INTENT(IN)    :: airm(imx,jmx,lmx)
-  REAL(kind_phys),    INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind_phys),    INTENT(IN)    :: pc2(imx,jmx,lmx,2)
+  REAL(kind_phys),    INTENT(IN)    :: airm(:,:,:)
+  REAL(kind_phys),    INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind_phys),    INTENT(IN)    :: pc2(:,:,:,:)
 
   INTEGER :: np, n, i, j, l
   REAL(kind_phys)  :: c0, pp, rkt, c1

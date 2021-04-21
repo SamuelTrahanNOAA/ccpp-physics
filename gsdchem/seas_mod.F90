@@ -3,24 +3,18 @@ module seas_mod
   use machine ,         only : kind_phys
   use physcons,         only : pi=>con_pi
 ! use chem_rc_mod,      only : chem_rc_test
-!  use chem_tracers_mod, only : p_seas_1, p_seas_2, p_seas_3, p_seas_4, p_seas_5, &
-!                               p_eseas1, p_eseas2, p_eseas3, p_eseas4, p_eseas5, &
-!                               config => chem_config
+  use gsd_chem_config, only : p_seas_1, p_seas_2, p_seas_3, p_seas_4, p_seas_5, &
+                              p_eseas1, p_eseas2, p_eseas3, p_eseas4, p_eseas5, &
+                              chem_opt
   use seas_data_mod
   use seas_ngac_mod
 
   implicit none
 
-  integer, parameter :: SEAS_OPT_DEFAULT = 1
-  integer, parameter :: CHEM_OPT_GOCART  = 300
-  integer, parameter :: chem_opt  = 300
-
   ! -- NGAC parameters
   integer, parameter :: emission_scheme = 3    ! GEOSS 2012
 
   private
-
-  public :: SEAS_OPT_DEFAULT
 
   public :: gocart_seasalt_driver
 
@@ -34,19 +28,18 @@ CONTAINS
          ids,ide, jds,jde, kds,kde,                                        &
          ims,ime, jms,jme, kms,kme,                                        &
          its,ite, jts,jte, kts,kte                                         )
-
      INTEGER,      INTENT(IN   ) :: ktau,num_emis_seas,num_moist,num_chem,   &
                                     ids,ide, jds,jde, kds,kde,               &
                                     ims,ime, jms,jme, kms,kme,               &
                                     its,ite, jts,jte, kts,kte,seas_opt
-     REAL(kind=kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),                &
+     REAL(kind=kind_phys), DIMENSION( :, :, :, : ),                &
            INTENT(IN ) ::                                   moist
-     REAL(kind=kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),                 &
+     REAL(kind=kind_phys), DIMENSION( :, :, :, : ),                 &
            INTENT(INOUT ) ::                                   chem
-     REAL(kind=kind_phys), DIMENSION( ims:ime, 1, jms:jme,num_emis_seas),                    &
+     REAL(kind=kind_phys), DIMENSION( :, :, :,:),                    &
            INTENT(OUT   ) ::                                                 &
            emis_seas
-     REAL(kind=kind_phys),  DIMENSION( ims:ime , jms:jme )                   ,               &
+     REAL(kind=kind_phys),  DIMENSION( : , : )                   ,               &
             INTENT(IN   ) ::                                                 &
                                                        u10,                  &
                                                        v10,                  &
@@ -56,9 +49,9 @@ CONTAINS
                                                        xlong,area,           &
                                                        random_factor
      LOGICAL, INTENT(IN) ::                        use_random_factor
-     REAL(kind=kind_phys),  DIMENSION( ims:ime , jms:jme ),                        &
+     REAL(kind=kind_phys),  DIMENSION( : , : ),                        &
             INTENT(OUT   ) :: seashelp
-     REAL(kind=kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),                        &
+     REAL(kind=kind_phys),  DIMENSION( : , : , : ),                        &
             INTENT(IN   ) ::                                                 &
                                                           alt,               &
                                                         t_phy,               &
@@ -67,21 +60,9 @@ CONTAINS
 
     REAL(kind=kind_phys), INTENT(IN   ) :: dt,g
 !
-    integer, parameter :: p_seas_1=15
-    integer, parameter :: p_seas_2=16
-    integer, parameter :: p_seas_3=17
-    integer, parameter :: p_seas_4=18
-    integer, parameter :: p_seas_5=19
-
-    integer, parameter :: p_eseas1=1
-    integer, parameter :: p_eseas2=2
-    integer, parameter :: p_eseas3=3
-    integer, parameter :: p_eseas4=4
-    integer, parameter :: p_eseas5=5
-!
 ! local variables
 !
-    integer :: ipr,i,j,imx,jmx,lmx,n,rc,chem_config
+    integer :: ipr,i,j,imx,jmx,lmx,n,rc
     integer,dimension (1,1) :: ilwi
     real(kind=kind_phys)               :: fsstemis, memissions, nemissions, tskin_c, ws10m
     real(kind=kind_phys) :: delp
@@ -105,7 +86,6 @@ CONTAINS
     imx=1
     jmx=1
     lmx=1
-    chem_config=CHEM_OPT_GOCART
 
     one = 1.0
     emis_seas = 0.
@@ -308,11 +288,11 @@ CONTAINS
     IMPLICIT NONE
 
     INTEGER, INTENT(IN)    :: nmx,imx,jmx,lmx,ipr
-    INTEGER, INTENT(IN)    :: ilwi(imx,jmx)
-    REAL(kind=kind_phys),    INTENT(IN)    :: dxy(jmx), w10m(imx,jmx)
-    REAL(kind=kind_phys),    INTENT(IN)    :: airmas(imx,jmx,lmx)
-    REAL(kind=kind_phys),    INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-    REAL(kind=kind_phys),    INTENT(OUT)   :: bems(imx,jmx,nmx)
+    INTEGER, INTENT(IN)    :: ilwi(:,:)
+    REAL(kind=kind_phys),    INTENT(IN)    :: dxy(:), w10m(:,:)
+    REAL(kind=kind_phys),    INTENT(IN)    :: airmas(:,:,:)
+    REAL(kind=kind_phys),    INTENT(INOUT) :: tc(:,:,:,:)
+    REAL(kind=kind_phys),    INTENT(OUT)   :: bems(:,:,:)
 
     REAL(kind=kind_phys) :: c0(5), b0(2)
 !  REAL(kind=kind_phys), PARAMETER :: c_old(5)=(/1.373, 3.41, 0.057, 1.05, 1.190/) 

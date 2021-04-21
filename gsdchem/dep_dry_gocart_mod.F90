@@ -25,15 +25,15 @@ subroutine gocart_drydep_driver(numgas,        &
                             num_moist,num_chem,              &
                             its,ite, jts,jte, kts,kte,numgas
   REAL(kind_phys),    INTENT(IN   ) :: g
-  REAL(kind_phys),    DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),&
+  REAL(kind_phys),    DIMENSION( :, :, :, : ),&
            INTENT(IN   ) :: moist
-  REAL(kind_phys),    DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ) ,&
+  REAL(kind_phys),    DIMENSION( :, :, :, : ) ,&
            INTENT(INOUT) :: chem
-  REAL(kind_phys),    DIMENSION( ims:ime , kms:kme , jms:jme )         ,&
+  REAL(kind_phys),    DIMENSION( : , : , : )         ,&
            INTENT(IN   ) :: dz8w, p8w,rho_phy
-  INTEGER, DIMENSION( ims:ime , jms:jme )                   ,&
+  INTEGER, DIMENSION( : , : )                   ,&
            INTENT(IN   ) :: ivgtyp
-  REAL(kind_phys),    DIMENSION( ims:ime , jms:jme )                   ,&
+  REAL(kind_phys),    DIMENSION( : , : )                   ,&
            INTENT(INOUT) :: tsk,                             &
                             pbl,                             &
                             ust,                             &
@@ -133,14 +133,14 @@ SUBROUTINE depvel_gocart(      &
   IMPLICIT NONE
 
   INTEGER, INTENT(IN)  :: imx,jmx,lmx
-  REAL(kind_phys),    INTENT(IN)  :: airden(imx,jmx), delz_sfc(imx,jmx)
-  REAL(kind_phys),    INTENT(IN)  :: hflux(imx,jmx), ts(imx,jmx)
-  REAL(kind_phys),    INTENT(IN)  :: ustar(imx,jmx), pblz(imx,jmx)
-  REAL(kind_phys),    INTENT(IN)  :: ps(imx,jmx)
-  INTEGER, INTENT(IN)  :: ilwi(imx,jmx)
-  REAL(kind_phys),    INTENT(IN)  :: z0(imx,jmx)
+  REAL(kind_phys),    INTENT(IN)  :: airden(:,:), delz_sfc(:,:)
+  REAL(kind_phys),    INTENT(IN)  :: hflux(:,:), ts(:,:)
+  REAL(kind_phys),    INTENT(IN)  :: ustar(:,:), pblz(:,:)
+  REAL(kind_phys),    INTENT(IN)  :: ps(:,:)
+  INTEGER, INTENT(IN)  :: ilwi(:,:)
+  REAL(kind_phys),    INTENT(IN)  :: z0(:,:)
   REAL,    INTENT(IN)  :: g0
-  REAL(kind_phys),    INTENT(OUT) :: dvel(imx,jmx), drydf(imx,jmx)
+  REAL(kind_phys),    INTENT(OUT) :: dvel(:,:), drydf(:,:)
   
   REAL(kind_phys)    :: obk, vds, czh, rttl, frac, logmfrac, psi_h, cz, eps
   REAL(kind_phys)    :: vd, ra, rb, rs  

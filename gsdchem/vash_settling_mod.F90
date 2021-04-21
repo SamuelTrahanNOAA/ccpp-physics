@@ -24,15 +24,15 @@ SUBROUTINE vash_settling_driver(dt,t_phy,moist,                            &
                                   ims,ime, jms,jme, kms,kme,               &
                                   its,ite, jts,jte, kts,kte,               &
                                   num_chem,num_moist
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),                &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                &
          INTENT(IN ) ::                                   moist
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),                 &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                 &
          INTENT(INOUT ) ::                                   chem
-   REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),                        &
+   REAL(kind_phys),  DIMENSION( : , : , : ),                        &
           INTENT(IN   ) ::  t_phy,p_phy,dz8w,p8w,rho_phy
-   REAL(kind_phys),  DIMENSION( ims:ime , jms:jme ),                        &
+   REAL(kind_phys),  DIMENSION( : , : ),                        &
           INTENT(INOUT   ) ::  ash_fall
-   REAL(kind_phys),  DIMENSION( ims:ime , jms:jme ),                        &
+   REAL(kind_phys),  DIMENSION( : , : ),                        &
           INTENT(IN   ) ::  area
 
   REAL(kind_phys), INTENT(IN   ) :: dt,g
@@ -54,7 +54,7 @@ SUBROUTINE vash_settling_driver(dt,t_phy,moist,                            &
                               05.859D-6,&!
                               02.930D-6,&!
                               00.975D-6 /)! 3.9 um
-  real(kind_phys), DIMENSION (10) :: bstl_ash
+  real(kind_phys), DIMENSION (1,1,10) :: bstl_ash
   real(kind_phys) :: maxash(10)
   real(kind_phys) :: are
   integer nv,iprt,iash
@@ -72,7 +72,7 @@ SUBROUTINE vash_settling_driver(dt,t_phy,moist,                            &
        do i=its,ite
           kk=0
           are=area(i,j)
-      bstl_ash(:)=0.
+      bstl_ash(:,:,:)=0.
           do k=kts,kte 
           kk=kk+1
           p_mid(1,1,kk)=.01*p_phy(i,kte-k+kts,j) 
@@ -130,7 +130,7 @@ SUBROUTINE vash_settling_driver(dt,t_phy,moist,                            &
                     ash, tmp, p_mid, delz, airmas, &
                     den_ash, reff_ash, dt, bstl_ash, rh, idust, iseas,iash)
           kk=0
-          ash_fall(i,j)=ash_fall(i,j)+sum(bstl_ash(1:10))
+          ash_fall(i,j)=ash_fall(i,j)+sum(bstl_ash(1,1,1:10))
           do k=kts,kte
           kk=kk+1
             chem(i,k,j,p_vash_1)=min(maxash(1),ash(1,1,kk,1)*converi)
@@ -177,15 +177,15 @@ SUBROUTINE vashshort_settling_driver(dt,t_phy,moist,                       &
                                   ims,ime, jms,jme, kms,kme,               &
                                   its,ite, jts,jte, kts,kte,               &
                                   num_chem,num_moist
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),               &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),               &
          INTENT(IN ) ::                                   moist
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),                 &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),                 &
          INTENT(INOUT ) ::                                   chem
-   REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),                        &
+   REAL(kind_phys),  DIMENSION( : , : , : ),                        &
           INTENT(IN   ) ::  t_phy,p_phy,dz8w,p8w,rho_phy
-   REAL(kind_phys),  DIMENSION( ims:ime , jms:jme ),                        &
+   REAL(kind_phys),  DIMENSION( : , : ),                        &
           INTENT(INOUT   ) ::  ash_fall
-   REAL(kind_phys),  DIMENSION( ims:ime , jms:jme ),                        &
+   REAL(kind_phys),  DIMENSION( : , : ),                        &
           INTENT(IN   ) ::  area
 
   REAL(kind_phys), INTENT(IN   ) :: dt,g
@@ -200,7 +200,7 @@ SUBROUTINE vashshort_settling_driver(dt,t_phy,moist,                       &
                               05.859D-6,&!
                               02.930D-6,&!
                               00.975D-6 /)! 3.9 um
-  real(kind_phys), DIMENSION (4) :: bstl_ash
+  real(kind_phys), DIMENSION (1,1,4) :: bstl_ash
   real(kind_phys) :: maxash(4)
   real :: are
   integer nv,iprt,iash
@@ -219,7 +219,7 @@ SUBROUTINE vashshort_settling_driver(dt,t_phy,moist,                       &
        do i=its,ite
           kk=0
           are=area(i,j)
-      bstl_ash(:)=0.
+      bstl_ash(:,:,:)=0.
           do k=kts,kte 
           kk=kk+1
           p_mid(1,1,kk)=.01*p_phy(i,kte-k+kts,j) 
@@ -297,7 +297,7 @@ SUBROUTINE vashshort_settling_driver(dt,t_phy,moist,                       &
           call vsettling(iprt,1, 1, lmx, 4, g,are,&
                     ash, tmp, p_mid, delz, airmas, &
                     den_ash, reff_ash, dt, bstl_ash, rh, idust, iseas,iash)
-          ash_fall(i,j)=ash_fall(i,j)+sum(bstl_ash(1:4))
+          ash_fall(i,j)=ash_fall(i,j)+sum(bstl_ash(1,1,1:4))
           if(p_vash_4.gt.1)then
           kk=0
           do k=kts,kte
@@ -351,11 +351,11 @@ END SUBROUTINE vashshort_settling_driver
   INTEGER, INTENT(IN) :: imx, jmx, lmx, nmx,iseas,idust,iash
   INTEGER :: ntdt
   REAL(kind_phys), INTENT(IN) :: dt,g0,are ! ,dyn_visc
-  REAL(kind_phys),    INTENT(IN) :: tmp(imx,jmx,lmx), delz(imx,jmx,lmx),  &
-                         airmas(imx,jmx,lmx), rh(imx,jmx,lmx), &
-                         den(nmx), reff(nmx), p_mid(imx,jmx,lmx)
-  REAL(kind_phys), INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind_phys), INTENT(OUT)   :: bstl(imx,jmx,nmx)
+  REAL(kind_phys),    INTENT(IN) :: tmp(:,:,:), delz(:,:,:),  &
+                         airmas(:,:,:), rh(:,:,:), &
+                         den(:), reff(:), p_mid(:,:,:)
+  REAL(kind_phys), INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind_phys), INTENT(OUT)   :: bstl(:,:,:)
 
   REAL(kind_phys)    :: tc1(imx,jmx,lmx,nmx), dt_settl(nmx), rcm(nmx), rho(nmx),addmass(lmx,nmx)
   INTEGER :: ndt_settl(nmx)

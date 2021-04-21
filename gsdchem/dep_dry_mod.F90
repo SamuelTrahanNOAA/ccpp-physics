@@ -2,7 +2,7 @@ module dep_dry_mod
 
   use machine ,        only : kind_phys
   use gsd_chem_config, only : epsilc, GOCART_SIMPLE => CHEM_OPT_GOCART, CTRA_OPT_NONE, &
-            GOCARTRACM_KPP,RADM2SORG_AQ,RACMSORG_AQ,                                   &
+            CHEM_OPT_GOCART_CO,GOCARTRACM_KPP,RADM2SORG_AQ,RACMSORG_AQ,                &
             CBMZ_MOSAIC_4BIN, CBMZ_MOSAIC_8BIN, CBMZ_MOSAIC_4BIN_AQ,                   &
             CBMZ_MOSAIC_8BIN_AQ
 !  use chem_tracers_mod, only : p_o3,p_dust_1,p_vash_1,p_vash_4,p_vash_10,p_dms,
@@ -68,33 +68,33 @@ contains
                                   its,ite, jts,jte, kts,kte
    INTEGER,      INTENT(IN   ) ::                               &
                                   ktau
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),        &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),        &
          INTENT(IN ) ::                                   moist
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),         &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),         &
          INTENT(INOUT ) ::                                 chem
 
    INTEGER,      INTENT(IN   ) :: kemit
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kemit, jms:jme ),            &
+   REAL(kind_phys), DIMENSION( :, :, : ),            &
          INTENT(IN ) ::                                                    &
           e_co
 
 
 
 
-   REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme )         ,    &
+   REAL(kind_phys),  DIMENSION( : , : , : )         ,    &
           INTENT(IN   ) ::                                      &
                                                         alt,    &
                                                         t8w,    &
                                                       dz8w,     &
                                               p8w,z_at_w ,  &
                                               exch_h,rho_phy,z
- REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme )         ,    &
+ REAL(kind_phys),  DIMENSION( : , : , : )         ,    &
           INTENT(INOUT) ::                                      &
                h2oaj,h2oai,nu3,ac3,cor3,asulf,ahno3,anh3
-   INTEGER,DIMENSION( ims:ime , jms:jme )                  ,    &
+   INTEGER,DIMENSION( : , : )                  ,    &
           INTENT(IN   ) ::                                      &
                                                      ivgtyp
-   REAL(kind_phys),  DIMENSION( ims:ime , jms:jme )                   ,    &
+   REAL(kind_phys),  DIMENSION( : , : )                   ,    &
           INTENT(INOUT) ::                                      &
                                                      tsk,       &
                                                      gsw,       &
@@ -108,12 +108,12 @@ contains
                                                    xlat,        &
                                                    xlong,       &
                                                     znt,rmol
-   REAL(kind_phys), DIMENSION( ims:ime, jms:jme, num_chem ),         &
+   REAL(kind_phys), DIMENSION( :, :, : ),         &
          INTENT(OUT ) ::                                   ddep
-   REAL(kind_phys),  DIMENSION( ims:ime , jms:jme )                   ,    &
+   REAL(kind_phys),  DIMENSION( : , : )                   ,    &
           INTENT(OUT) ::                                      &
                                                      dep_vel_o3
-       REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),              &
+       REAL(kind_phys),  DIMENSION( : , : , : ),              &
                INTENT(IN   ) ::                                      &
                                                            p_phy,    &
                                                            t_phy
@@ -181,7 +181,7 @@ contains
 !
 !      CALL wrf_debug(15,'DOING DRY DEP VELOCITIES WITH WESELY METHOD')
 
-      IF( chem_opt /= GOCART_SIMPLE ) THEN
+      IF( chem_opt /= GOCART_SIMPLE .AND. chem_opt /= CHEM_OPT_GOCART_CO ) THEN
          call wesely_driver(ktau,dtstep,                                 &
               current_month,                                              &
               gmt,julday,t_phy,moist,p8w,t8w,raincv,                      &
@@ -193,6 +193,7 @@ contains
               its,ite, jts,jte, kts,kte                                  )
       ENDIF
        IF (( chem_opt == GOCART_SIMPLE ) .or.            &
+              ( chem_opt == CHEM_OPT_GOCART_CO ) .or.      &
               ( chem_opt == GOCARTRACM_KPP)  .or.            &
               ( chem_opt == 316)  .or.            &
               ( chem_opt == 317)  .or.            &
@@ -209,6 +210,15 @@ contains
                ids,ide, jds,jde, kds,kde,                      &
                ims,ime, jms,jme, kms,kme,                      &
                its,ite, jts,jte, kts,kte                       )
+
+         IF (chem_opt == CHEM_OPT_GOCART_CO) then
+           do j=jts,jte
+             do i=its,ite
+               ddvel(i,j,p_co)=0.
+             enddo
+           enddo
+         ENDIF
+
        ELSE if (chem_opt == 501 ) then
 ! for caesium .1cm/s
 !

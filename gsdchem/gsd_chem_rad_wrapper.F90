@@ -42,7 +42,7 @@ contains
 !> @{
     subroutine gsd_chem_rad_wrapper_run(im, kte, kme, ktau, dt,         &
                    ph3d,prl3d, tk3d, spechum,                           &
-                   ntrac,ntso2,ntsulf,ntDMS,ntmsa,ntpp25,               &
+                   ntrac,ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,          &
                    ntbc1,ntbc2,ntoc1,ntoc2,                             &
                    ntss1,ntss2,ntss3,ntss4,ntss5,                       &
                    ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,      &
@@ -57,7 +57,7 @@ contains
     integer,        intent(in) :: im,kte,kme,ktau
     integer,        intent(in) :: ntrac,ntss1,ntss2,ntss3,ntss4,ntss5
     integer,        intent(in) :: ntdust1,ntdust2,ntdust3,ntdust4,ntdust5
-    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
     real(kind_phys),intent(in) :: dt
 
@@ -65,12 +65,12 @@ contains
     integer, parameter :: ims=1,jms=1,jme=1, kms=1
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
-    real(kind_phys), dimension(im,kme), intent(in) :: ph3d
-    real(kind_phys), dimension(im,kte), intent(in) :: prl3d, tk3d, spechum
-    real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0
-    real(kind_phys), dimension(im,7        ), intent(inout) :: abem
+    real(kind_phys), dimension(:,:), intent(in) :: ph3d
+    real(kind_phys), dimension(:,:), intent(in) :: prl3d, tk3d, spechum
+    real(kind_phys), dimension(:,:,:), intent(inout) :: gq0
+    real(kind_phys), dimension(:,:), intent(inout) :: abem
     integer,         intent(in) :: lmk
-    real(kind_phys), dimension(im, lmk, 14, 3),intent(inout) :: faersw_cpl
+    real(kind_phys), dimension(:,:,:,:),intent(inout) :: faersw_cpl
     logical, intent(in) :: cplchm_rad_opt
     integer,        intent(in) :: chem_opt_in
     integer,        intent(in) :: aer_ra_feedback_in,aer_ra_frq_in
@@ -152,7 +152,7 @@ contains
 !>- get ready for chemistry run
     call gsd_chem_prep_rad(                                             &
         ktau,dtstep,ph3d,tk3d,prl3d,spechum,rri,dz8w,                   &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                                &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                           &
         ntbc1,ntbc2,ntoc1,ntoc2,                                        &
         ntss1,ntss2,ntss3,ntss4,ntss5,                                  &
         ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,                 &
@@ -234,7 +234,7 @@ contains
 !> @}
    subroutine gsd_chem_prep_rad(                                       &
         ktau,dtstep,ph3d,tk3d,prl3d,spechum,rri,dz8w,                  &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                               &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                          &
         ntbc1,ntbc2,ntoc1,ntoc2,                                       &
         ntss1,ntss2,ntss3,ntss4,ntss5,                                 &
         ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,                &
@@ -249,11 +249,11 @@ contains
     !FV3 input variables
     integer, intent(in) :: ntrac,ntss1,ntss2,ntss3,ntss4,ntss5
     integer, intent(in) :: ntdust1,ntdust2,ntdust3,ntdust4,ntdust5
-    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
-    real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) :: ph3d
-    real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) :: tk3d,prl3d,spechum
-    real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
+    real(kind=kind_phys), dimension(:, :), intent(in) :: ph3d
+    real(kind=kind_phys), dimension(:, :), intent(in) :: tk3d,prl3d,spechum
+    real(kind=kind_phys), dimension(:, :,:), intent(in) :: gq0
 
 
     !GSD Chem variables
@@ -262,10 +262,10 @@ contains
                            ims,ime, jms,jme, kms,kme,                      &
                            its,ite, jts,jte, kts,kte
 
-    real(kind_phys), dimension(num_chem), intent(in) :: ppm2ugkg
+    real(kind_phys), dimension(:), intent(in) :: ppm2ugkg
     
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) :: rri, dz8w, relhum
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_chem),  intent(out) :: chem
+    real(kind_phys), dimension(:, :, :), intent(out) :: rri, dz8w, relhum
+    real(kind_phys), dimension(:, :, :, :),  intent(out) :: chem
 
     ! -- local variables
     real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_moist) :: moist
@@ -331,7 +331,6 @@ contains
         enddo
       enddo
     enddo
-
  
     do k=kms,kte
      do i=ims,ime
@@ -355,6 +354,9 @@ contains
        chem(i,k,jts,p_seas_4)=max(epsilc,gq0(i,k,ntss4  )/ppm2ugkg(p_seas_4))
        chem(i,k,jts,p_seas_5)=max(epsilc,gq0(i,k,ntss5  )/ppm2ugkg(p_seas_5))
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         chem(i,k,jts,p_co  )=max(epsilc,gq0(i,k,ntco   )/ppm2ugkg(p_co))
+       endif
      enddo
     enddo
 

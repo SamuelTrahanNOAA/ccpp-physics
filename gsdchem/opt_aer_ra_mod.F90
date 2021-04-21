@@ -15,14 +15,14 @@ CONTAINS
    INTEGER,    INTENT(IN   ) ::        ids,ide, jds,jde, kds,kde, &
                                        ims,ime, jms,jme, kms,kme, &
                                        its,ite, jts,jte, kts,kte,nbands
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme,nbands ), INTENT (OUT) :: extt
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme,nbands ), INTENT (OUT) :: ssca
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, nbands), INTENT (OUT) :: asympar
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 4 ),        &
+   REAL(kind_phys), DIMENSION( :, :, :,: ), INTENT (OUT) :: extt
+   REAL(kind_phys), DIMENSION( :, :, :,: ), INTENT (OUT) :: ssca
+   REAL(kind_phys), DIMENSION( :, :, :, :), INTENT (OUT) :: asympar
+   REAL(kind_phys), DIMENSION( :, :, :, : ),        &
          INTENT(IN    ) :: tauaersw,gaersw,waersw
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme ),           &
+   REAL(kind_phys), DIMENSION( :, :, : ),           &
          INTENT(IN    ) :: dz8w
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, 16 ),        &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),        &
          INTENT(IN    ) :: tauaerlw
    real(kind_phys) :: ang,slope,slopeg,slopessa,onemang    
    integer :: i,j,k,ib

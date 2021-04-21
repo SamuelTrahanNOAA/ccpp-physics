@@ -27,25 +27,25 @@ contains
                                ids,ide, jds,jde, kds,kde,               &
                                     ims,ime, jms,jme, kms,kme,               &
                                     its,ite, jts,jte, kts,kte
-     INTEGER,DIMENSION( ims:ime , jms:jme )                  ,               &
+     INTEGER,DIMENSION( : , : )                  ,               &
             INTENT(IN   ) ::                                                 &
                                                        ivgtyp,               &
                                                        isltyp
-     REAL(kind=kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),                &
+     REAL(kind=kind_phys), DIMENSION( :, :, :, : ),                &
            INTENT(IN ) ::                                   moist
-     REAL(kind=kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),                 &
+     REAL(kind=kind_phys), DIMENSION( :, :, :, : ),                 &
            INTENT(INOUT ) ::                                   chem
-     REAL(kind=kind_phys), DIMENSION( ims:ime, 1, jms:jme,num_emis_dust),                    &
+     REAL(kind=kind_phys), DIMENSION( :, :, :, : ),                    &
            INTENT(INOUT ) ::                                                 &
            emis_dust
-     REAL(kind=kind_phys), DIMENSION( ims:ime, 1, jms:jme,num_emis_dust),                    &
+     REAL(kind=kind_phys), DIMENSION( :, :, :, : ),                    &
            INTENT(INOUT ) ::                                                 &
            srce_dust  
-     REAL(kind=kind_phys), DIMENSION( ims:ime, num_soil_layers, jms:jme ) ,      &
+     REAL(kind=kind_phys), DIMENSION( :, :, : ) ,      &
         INTENT(INOUT) ::                               smois
-     REAL(kind=kind_phys),  DIMENSION( ims:ime , jms:jme, 3 )                   ,               &
+     REAL(kind=kind_phys),  DIMENSION( : , :, : )                   ,               &
             INTENT(IN   ) ::    erod
-     REAL(kind=kind_phys),  DIMENSION( ims:ime , jms:jme )                   ,               &
+     REAL(kind=kind_phys),  DIMENSION( : , : )                   ,               &
             INTENT(IN   ) ::                                                 &
                                                        u10,                  &
                                                        v10,                  &
@@ -54,9 +54,9 @@ contains
                                                        xland,                &
                                                        xlat,                 &
                                                        xlong,area
-     REAL(kind=kind_phys),  DIMENSION( ims:ime , jms:jme ),                        &
+     REAL(kind=kind_phys),  DIMENSION( : , : ),                        &
             INTENT(OUT  ) :: dusthelp
-     REAL(kind=kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),                        &
+     REAL(kind=kind_phys),  DIMENSION( : , : , : ),                        &
             INTENT(IN   ) ::                                                 &
                                                           alt,               &
                                                         t_phy,               &
@@ -70,8 +70,10 @@ contains
     integer :: nmx,i,j,k,imx,jmx,lmx,ipr
     integer,dimension (1,1) :: ilwi
     real(kind=kind_phys), DIMENSION (1,1,3,1) :: erodin
-    real(kind=kind_phys), DIMENSION (5) :: tc,bems,srce_out 
-    real(kind=kind_phys), dimension (1,1) :: w10m,gwet,airden,airmas
+    real(kind=kind_phys), DIMENSION (1,1,5) :: bems,srce_out 
+    real(kind=kind_phys), DIMENSION (1,1,1,5) :: tc
+    real(kind=kind_phys), dimension (1,1) :: w10m,gwet
+    real(kind=kind_phys), DIMENSION(1,1,1) :: airden,airmas
     real(kind=kind_phys), dimension (1) :: dxy
     real(kind=kind_phys)  tcs,conver,converi
     real(kind=kind_phys) dttt
@@ -98,14 +100,14 @@ contains
         do i=its,ite
          if(xland(i,j).lt.1.5 .and. xland(i,j).gt.0.5)then
            ilwi(1,1)=1
-           tc(1)=chem(i,kts,j,p_dust_1)*conver
-           tcs=tc(1)
-           tc(2)=1.d-30
-           tc(3)=chem(i,kts,j,p_dust_2)*conver
-           tc(4)=1.d-30
-           tc(5)=1.d-30
+           tc(1,1,1,1)=chem(i,kts,j,p_dust_1)*conver
+           tcs=tc(1,1,1,1)
+           tc(1,1,1,2)=1.d-30
+           tc(1,1,1,3)=chem(i,kts,j,p_dust_2)*conver
+           tc(1,1,1,4)=1.d-30
+           tc(1,1,1,5)=1.d-30
            w10m(1,1)=sqrt(u10(i,j)*u10(i,j)+v10(i,j)*v10(i,j))
-           airmas(1,1)=-(p8w(i,kts+1,j)-p8w(i,kts,j))*area(i,j)/g
+           airmas(1,1,1)=-(p8w(i,kts+1,j)-p8w(i,kts,j))*area(i,j)/g
 
            ! -- we don't trust the u10,v10 values, is model layers are very thin near surface
            if(dz8w(i,kts,j).lt.12.)w10m=sqrt(u_phy(i,kts,j)*u_phy(i,kts,j)+v_phy(i,kts,j)*v_phy(i,kts,j))
@@ -121,20 +123,20 @@ contains
              gwet(1,1)=smois(i,1,j)/maxsmc(isltyp(i,j))
            endif
 
-           airden(1,1)=rho_phy(i,kts,j)
+           airden(1,1,1)=rho_phy(i,kts,j)
            dxy(1)=area(i,j)
            ipr=0
            call source_du( imx,jmx,lmx,nmx, dt, tc, & 
                             erodin, ilwi, dxy, w10m, gwet, airden, airmas, &
                             bems,srce_out, start_month,g,ipr) 
-           chem(i,kts,j,p_dust_1)=max(max_default,(tc(1)+.3125*tc(2))*converi)
-           chem(i,kts,j,p_dust_2)=max(max_default,(.67*tc(2)+tc(3))*converi)
-           dusthelp(i,j)=max(max_default,tc(2)*converi)
+           chem(i,kts,j,p_dust_1)=max(max_default,(tc(1,1,1,1)+.3125*tc(1,1,1,2))*converi)
+           chem(i,kts,j,p_dust_2)=max(max_default,(.67*tc(1,1,1,2)+tc(1,1,1,3))*converi)
+           dusthelp(i,j)=max(max_default,tc(1,1,1,2)*converi)
 
            ! -- for output diagnostics
-           emis_dust(i,1,j,p_edust1)=bems(1)
-           emis_dust(i,1,j,p_edust2)=bems(2)
-           emis_dust(i,1,j,p_edust3)=bems(3)
+           emis_dust(i,1,j,p_edust1)=bems(1,1,1)
+           emis_dust(i,1,j,p_edust2)=bems(1,1,2)
+           emis_dust(i,1,j,p_edust3)=bems(1,1,3)
          endif
        enddo
      enddo
@@ -146,13 +148,13 @@ contains
        if(xland(i,j).lt.1.5 .and. xland(i,j).gt.0.5)then
 !         print*,'default dust'
          ilwi(1,1)=1
-         tc(1)=chem(i,kts,j,p_dust_1)*conver
-         tc(2)=chem(i,kts,j,p_dust_2)*conver
-         tc(3)=chem(i,kts,j,p_dust_3)*conver
-         tc(4)=chem(i,kts,j,p_dust_4)*conver
-         tc(5)=chem(i,kts,j,p_dust_5)*conver
+         tc(1,1,1,1)=chem(i,kts,j,p_dust_1)*conver
+         tc(1,1,1,2)=chem(i,kts,j,p_dust_2)*conver
+         tc(1,1,1,3)=chem(i,kts,j,p_dust_3)*conver
+         tc(1,1,1,4)=chem(i,kts,j,p_dust_4)*conver
+         tc(1,1,1,5)=chem(i,kts,j,p_dust_5)*conver
          w10m(1,1)=sqrt(u10(i,j)*u10(i,j)+v10(i,j)*v10(i,j))
-         airmas(1,1)=-(p8w(i,kts+1,j)-p8w(i,kts,j))*area(i,j)/g
+         airmas(1,1,1)=-(p8w(i,kts+1,j)-p8w(i,kts,j))*area(i,j)/g
 
          ! -- we don't trust the u10,v10 values, is model layers are very thin near surface
          if(dz8w(i,kts,j).lt.12.)w10m=sqrt(u_phy(i,kts,j)*u_phy(i,kts,j)+v_phy(i,kts,j)*v_phy(i,kts,j))
@@ -168,7 +170,7 @@ contains
              gwet(1,1)=smois(i,1,j)/maxsmc(isltyp(i,j))
            endif
 
-           airden(1,1)=rho_phy(i,kts,j)
+           airden(1,1,1)=rho_phy(i,kts,j)
            dxy(1)=area(i,j)
            ipr=0
 
@@ -176,25 +178,25 @@ contains
                           erodin, ilwi, dxy, w10m, gwet, airden, airmas, &
                           bems,srce_out, start_month,g,ipr) 
 
-         chem(i,kts,j,p_dust_1)=max(max_default,tc(1)*converi)
-         chem(i,kts,j,p_dust_2)=max(max_default,tc(2)*converi)
-         chem(i,kts,j,p_dust_3)=max(max_default,tc(3)*converi)
-         chem(i,kts,j,p_dust_4)=max(max_default,tc(4)*converi)
-         chem(i,kts,j,p_dust_5)=max(max_default,tc(5)*converi)
+         chem(i,kts,j,p_dust_1)=max(max_default,tc(1,1,1,1)*converi)
+         chem(i,kts,j,p_dust_2)=max(max_default,tc(1,1,1,2)*converi)
+         chem(i,kts,j,p_dust_3)=max(max_default,tc(1,1,1,3)*converi)
+         chem(i,kts,j,p_dust_4)=max(max_default,tc(1,1,1,4)*converi)
+         chem(i,kts,j,p_dust_5)=max(max_default,tc(1,1,1,5)*converi)
 
          ! -- for output diagnostics
-         emis_dust(i,1,j,p_edust1)=bems(1)
-         emis_dust(i,1,j,p_edust2)=bems(2)
-         emis_dust(i,1,j,p_edust3)=bems(3)
-         emis_dust(i,1,j,p_edust4)=bems(4)
-         emis_dust(i,1,j,p_edust5)=bems(5)
+         emis_dust(i,1,j,p_edust1)=bems(1,1,1)
+         emis_dust(i,1,j,p_edust2)=bems(1,1,2)
+         emis_dust(i,1,j,p_edust3)=bems(1,1,3)
+         emis_dust(i,1,j,p_edust4)=bems(1,1,4)
+         emis_dust(i,1,j,p_edust5)=bems(1,1,5)
 
          ! -- for output diagnostics of dust source 
-         srce_dust(i,1,j,p_edust1)=srce_out(1)
-         srce_dust(i,1,j,p_edust2)=srce_out(2)
-         srce_dust(i,1,j,p_edust3)=srce_out(3)
-         srce_dust(i,1,j,p_edust4)=srce_out(4)
-         srce_dust(i,1,j,p_edust5)=srce_out(5)
+         srce_dust(i,1,j,p_edust1)=srce_out(1,1,1)
+         srce_dust(i,1,j,p_edust2)=srce_out(1,1,2)
+         srce_dust(i,1,j,p_edust3)=srce_out(1,1,3)
+         srce_dust(i,1,j,p_edust4)=srce_out(1,1,4)
+         srce_dust(i,1,j,p_edust5)=srce_out(1,1,5)
        endif
       enddo
     enddo
@@ -231,16 +233,16 @@ contains
 ! ****************************************************************************
 
   INTEGER,            INTENT(IN)    :: imx,jmx,lmx,nmx
-  INTEGER,            INTENT(IN)    :: ilwi(imx,jmx),month
+  INTEGER,            INTENT(IN)    :: ilwi(:,:),month
 
   REAL(kind=kind_phys),               INTENT(IN)    :: dt1, g0
-  REAL(kind=kind_phys), INTENT(IN)    :: erod(imx,jmx,ndcls,ndsrc)
-  REAL(kind=kind_phys), INTENT(IN)    :: w10m(imx,jmx), gwet(imx,jmx)
-  REAL(kind=kind_phys), INTENT(IN)    :: dxy(jmx)
-  REAL(kind=kind_phys), INTENT(IN)    :: airden(imx,jmx,lmx), airmas(imx,jmx,lmx)
-  REAL(kind=kind_phys), INTENT(INOUT) :: tc(imx,jmx,lmx,nmx)
-  REAL(kind=kind_phys), INTENT(OUT)   :: bems(imx,jmx,nmx)
-  REAL(kind=kind_phys), INTENT(OUT)   :: srce_out(imx,jmx,nmx) !dust source
+  REAL(kind=kind_phys), INTENT(IN)    :: erod(:,:,:,:)
+  REAL(kind=kind_phys), INTENT(IN)    :: w10m(:,:), gwet(:,:)
+  REAL(kind=kind_phys), INTENT(IN)    :: dxy(:)
+  REAL(kind=kind_phys), INTENT(IN)    :: airden(:,:,:), airmas(:,:,:)
+  REAL(kind=kind_phys), INTENT(INOUT) :: tc(:,:,:,:)
+  REAL(kind=kind_phys), INTENT(OUT)   :: bems(:,:,:)
+  REAL(kind=kind_phys), INTENT(OUT)   :: srce_out(:,:,:) !dust source
   INTEGER,            INTENT(OUT)   :: ipr
 
   !-----------------------------------------------------------------------  

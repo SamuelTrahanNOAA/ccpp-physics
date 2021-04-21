@@ -35,9 +35,9 @@ CONTAINS
       REAL, INTENT(IN) :: dt, vd
 ! ..
 ! .. Array Arguments ..
-      REAL, INTENT(IN), DIMENSION (kts:ktem1+1) :: kt_turb, zsigma
-      REAL, INTENT(IN), DIMENSION (kts:ktem1) :: dryrho, zsigma_half
-      REAL, INTENT(INOUT), DIMENSION (kts:ktem1) :: phi
+      REAL, INTENT(IN), DIMENSION (:) :: kt_turb, zsigma
+      REAL, INTENT(IN), DIMENSION (:) :: dryrho, zsigma_half
+      REAL, INTENT(INOUT), DIMENSION (:) :: phi
 ! ..
 ! .. Local Scalars ..
       INTEGER :: k
@@ -79,11 +79,11 @@ CONTAINS
       REAL, INTENT(IN) :: dt, vd
 ! ..
 ! .. Array Arguments ..
-      REAL, INTENT(IN), DIMENSION (kts:ktem1+1) :: k_turb
+      REAL, INTENT(IN), DIMENSION (:) :: k_turb
       REAL, INTENT(IN), DIMENSION (kts+1:ktem1) :: a_coeff
-      REAL, INTENT(IN), DIMENSION (kts:ktem1) :: b_coeff, dryrho
-      REAL, INTENT(IN), DIMENSION (kts:ktem1) :: phi
-      REAL, INTENT(OUT), DIMENSION (kts:ktem1) :: lhs1, lhs2, lhs3, rhs
+      REAL, INTENT(IN), DIMENSION (:) :: b_coeff, dryrho
+      REAL, INTENT(IN), DIMENSION (:) :: phi
+      REAL, INTENT(OUT), DIMENSION (:) :: lhs1, lhs2, lhs3, rhs
 ! ..
 ! .. Local Scalars ..
       !REAL :: a1, a2, alfa_explicit = .25, beta_implicit = .75
@@ -139,8 +139,8 @@ CONTAINS
       INTEGER, INTENT(IN) :: kts,ktem1
 ! ..
 ! .. Array Arguments ..
-      REAL, INTENT(IN), DIMENSION (kts:ktem1) :: a, b, c
-      REAL, INTENT(INOUT), DIMENSION (kts:ktem1) :: f
+      REAL, INTENT(IN), DIMENSION (:) :: a, b, c
+      REAL, INTENT(INOUT), DIMENSION (:) :: f
 ! ..
 ! .. Local Scalars ..
       REAL :: p
@@ -179,10 +179,10 @@ CONTAINS
       INTEGER, INTENT(IN) :: kts,ktem1
 ! ..
 ! .. Array Arguments ..
-      REAL, INTENT(IN), DIMENSION (kts:ktem1+1) :: z_sigma
-      REAL, INTENT(IN), DIMENSION (kts:ktem1) :: z_sigma_half, dryrho
+      REAL, INTENT(IN), DIMENSION (:) :: z_sigma
+      REAL, INTENT(IN), DIMENSION (:) :: z_sigma_half, dryrho
       REAL, INTENT(OUT), DIMENSION (kts+1:ktem1) :: a_coeff
-      REAL, INTENT(OUT), DIMENSION (kts:ktem1) :: b_coeff
+      REAL, INTENT(OUT), DIMENSION (:) :: b_coeff
 ! ..
 ! .. Local Scalars ..
       INTEGER :: i

@@ -8574,11 +8574,11 @@
 !
 ! array that holds all advected chemical species
 !
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),             &
+   REAL(kind_phys), DIMENSION( :, :, :, : ),             &
          INTENT(INOUT ) ::  chem
 !
-   REAL(kind_phys), DIMENSION( ims:ime, jms:jme ) :: aod
-   REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme ),                       &
+   REAL(kind_phys), DIMENSION( :, : ) :: aod
+   REAL(kind_phys), DIMENSION( :, :, : ),                       &
          INTENT(IN ) ::  relhum,dz8w, alt
    integer, dimension( its:ite, jts:jte ) :: iprt
 
@@ -8611,9 +8611,9 @@
  integer, parameter :: nband = 11         !# of radiation bands
  real(kind_phys)      :: aero(kts:kte,tgmx) !aerosol mass conc [g/m3]
  real(kind_phys)      :: dz(kts:kte)        !layer thickness [m]
- real(kind_phys), intent(out)   :: tau(its:ite, kts:kte,jts:jte,nband)      !total aerosol optical depth
- real(kind_phys), intent(out)   :: ssa(its:ite, kts:kte,jts:jte,nband)      !total aerosol single scattering albedo
- real(kind_phys), intent(out)   :: asy(its:ite, kts:kte,jts:jte,nband)      !total aerosol asymetry factor
+ real(kind_phys), intent(out)   :: tau(:, :,:,:)      !total aerosol optical depth
+ real(kind_phys), intent(out)   :: ssa(:, :,:,:)      !total aerosol single scattering albedo
+ real(kind_phys), intent(out)   :: asy(:, :,:,:)      !total aerosol asymetry factor
 
 !-----Local variables
  integer :: rhi         !RH index

@@ -59,12 +59,12 @@ contains
     integer, parameter :: ims=1,jms=1,jme=1, kms=1
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
-    integer, dimension(im), intent(in) :: land, vegtype, soiltyp        
-    real(kind_phys), dimension(im,10), intent(in) :: emi_in
-    real(kind_phys), dimension(im),    intent(in) :: u10m, v10m, garea, tskin
-    real(kind_phys), dimension(im,kme),intent(in) :: ph3d, pr3d
-    real(kind_phys), dimension(im,kte),intent(in) :: phl3d, prl3d, tk3d, us3d, vs3d, spechum
-    real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0, qgrs
+    integer, dimension(:), intent(in) :: land, vegtype, soiltyp        
+    real(kind_phys), dimension(:,:), intent(in) :: emi_in
+    real(kind_phys), dimension(:),    intent(in) :: u10m, v10m, garea, tskin
+    real(kind_phys), dimension(:,:),intent(in) :: ph3d, pr3d
+    real(kind_phys), dimension(:,:),intent(in) :: phl3d, prl3d, tk3d, us3d, vs3d, spechum
+    real(kind_phys), dimension(:,:,:), intent(inout) :: gq0, qgrs
     integer,           intent(in) :: dmsemis_opt_in
     character(len=*), intent(out) :: errmsg
     integer,          intent(out) :: errflg
@@ -155,17 +155,17 @@ contains
 
 
     !FV3 input variables
-    integer, dimension(ims:ime), intent(in) :: land, vegtype, soiltyp
+    integer, dimension(:), intent(in) :: land, vegtype, soiltyp
     integer, intent(in) :: ntrac
     integer,        intent(in) :: ntdms
-    real(kind=kind_phys), dimension(ims:ime), intent(in) ::                & 
+    real(kind=kind_phys), dimension(:), intent(in) ::                & 
          u10m, v10m, garea, ts2d
-    real(kind=kind_phys), dimension(ims:ime,    10),   intent(in) :: emi_in
-    real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) ::     &
+    real(kind=kind_phys), dimension(:,:),   intent(in) :: emi_in
+    real(kind=kind_phys), dimension(:,:), intent(in) ::     &
          pr3d,ph3d
-    real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) ::       &
+    real(kind=kind_phys), dimension(:, :), intent(in) ::       &
          phl3d,tk3d,prl3d,us3d,vs3d,spechum
-    real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
+    real(kind=kind_phys), dimension(:, :,:), intent(in) :: gq0
 
 
     !GSD Chem variables
@@ -174,16 +174,16 @@ contains
                            ims,ime, jms,jme, kms,kme,                      &
                            its,ite, jts,jte, kts,kte
 
-    real(kind_phys), dimension(num_chem), intent(in) :: ppm2ugkg
+    real(kind_phys), dimension(:), intent(in) :: ppm2ugkg
 
     
-    integer,dimension(ims:ime, jms:jme), intent(out) :: isltyp, ivgtyp
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) ::              & 
+    integer,dimension(:, :), intent(out) :: isltyp, ivgtyp
+    real(kind_phys), dimension(:, :, :), intent(out) ::              & 
          rri, t_phy, u_phy, v_phy, rho_phy, dz8w, p8w
-    real(kind_phys), dimension(ims:ime, jms:jme),          intent(out) ::              &
+    real(kind_phys), dimension(:, :),          intent(out) ::              &
          u10, v10, tsk, xland, dxy,     &
          dms_0
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_chem),  intent(out) :: chem
+    real(kind_phys), dimension(:, :, :, :),  intent(out) :: chem
 
 
     ! -- local variables

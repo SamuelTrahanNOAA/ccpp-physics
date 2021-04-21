@@ -44,7 +44,7 @@ contains
                    ustar, rlat, rlon, tskin, julian, rainc_cpl, hf2d, pb2d,   &
                    pr3d, ph3d, phl3d, prl3d, tk3d, spechum, exch,             &
                    vegtype, sigmaf, jdate, idat, dswsfc, zorl, snow_cpl,      & 
-                   ntrac,ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                     &
+                   ntrac,ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                &
                    ntbc1,ntbc2,ntoc1,ntoc2,ntss1,ntss2,ntss3,ntss4,ntss5,     &
                    ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,            &
                    ntchmdiag,gq0,qgrs,drydep,chem_conv_tr_in,                 &
@@ -53,10 +53,10 @@ contains
     implicit none
 
 
-    integer,        intent(in) :: im,kte,kme,ktau,jdate(8),idat(8)
+    integer,        intent(in) :: im,kte,kme,ktau,jdate(:),idat(:)
     integer,        intent(in) :: ntrac,ntchmdiag,ntss1,ntss2,ntss3,ntss4,ntss5
     integer,        intent(in) :: ntdust1,ntdust2,ntdust3,ntdust4,ntdust5
-    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
     real(kind_phys),intent(in) :: dt,julian
 
@@ -64,14 +64,14 @@ contains
     integer, parameter :: ims=1,jms=1,jme=1, kms=1
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
-    integer, dimension(im), intent(in) :: land, vegtype     
-    real(kind_phys), dimension(im), intent(in) :: ustar,                  &
+    integer, dimension(:), intent(in) :: land, vegtype     
+    real(kind_phys), dimension(:), intent(in) :: ustar,                  &
                 rlat,rlon, tskin, rainc_cpl,                              &
                 hf2d, pb2d, sigmaf, dswsfc, zorl, snow_cpl
-    real(kind_phys), dimension(im,kme), intent(in) :: ph3d, pr3d
-    real(kind_phys), dimension(im,kte), intent(in) :: phl3d, prl3d, tk3d, spechum, exch
-    real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0, qgrs
-    real(kind_phys), dimension(im,ntchmdiag), intent(inout) :: drydep
+    real(kind_phys), dimension(:,:), intent(in) :: ph3d, pr3d
+    real(kind_phys), dimension(:,:), intent(in) :: phl3d, prl3d, tk3d, spechum, exch
+    real(kind_phys), dimension(:,:,:), intent(inout) :: gq0, qgrs
+    real(kind_phys), dimension(:,:), intent(inout) :: drydep
     integer,        intent(in) :: chem_conv_tr_in
     character(len=*), intent(out) :: errmsg
     integer,          intent(out) :: errflg
@@ -97,8 +97,8 @@ contains
 
     integer :: current_month
 
-    real(kind_phys), dimension(ims:im, kms:kme, jms:jme) :: ac3, ahno3, anh3, asulf, cor3, h2oai, h2oaj, nu3
-    real(kind_phys), dimension(ims:im, jms:jme) :: dep_vel_o3, e_co
+    real(kind_phys), dimension(ims:im, kms:kme, jms:jme) :: ac3, ahno3, anh3, asulf, cor3, h2oai, h2oaj, nu3, e_co
+    real(kind_phys), dimension(ims:im, jms:jme) :: dep_vel_o3
 
     real(kind_phys) :: gmt
     real(kind_phys), dimension(1:num_chem) :: ppm2ugkg
@@ -155,7 +155,7 @@ contains
         ust,tsk,xland,xlat,xlong,                                       &
         rri,t_phy,p_phy,rho_phy,dz8w,p8w,                               &
         t8w,exch_h,z_at_w,zmid,                                         &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                                &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                           &
         ntbc1,ntbc2,ntoc1,ntoc2,ntss1,ntss2,ntss3,ntss4,ntss5,          &
         ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,                 &
         ntrac,gq0,num_chem, num_moist,                                  &
@@ -203,6 +203,9 @@ contains
        gq0(i,k,ntss4  )=ppm2ugkg(p_seas_4) * max(epsilc,chem(i,k,1,p_seas_4))
        gq0(i,k,ntss5  )=ppm2ugkg(p_seas_5) * max(epsilc,chem(i,k,1,p_seas_5))
        gq0(i,k,ntpp10 )=ppm2ugkg(p_p10   ) * max(epsilc,chem(i,k,1,p_p10))
+       ! if(chem_opt == CHEM_OPT_GOCART_CO) then
+       !   gq0(i,k,ntco   )=ppm2ugkg(p_co  ) * max(epsilc,chem(i,k,1,P_co))
+       ! endif
      enddo
     enddo
 
@@ -228,6 +231,9 @@ contains
        qgrs(i,k,ntss4  )=gq0(i,k,ntss4  )
        qgrs(i,k,ntss5  )=gq0(i,k,ntss5  )
        qgrs(i,k,ntpp10 )=gq0(i,k,ntpp10 )
+       ! if(chem_opt == CHEM_OPT_GOCART_CO) then
+       !   qgrs(i,k,ntco )=gq0(i,k,ntco   )
+       ! endif
      enddo
     enddo
 
@@ -246,7 +252,7 @@ contains
         ust,tsk,xland,xlat,xlong,                                      &
         rri,t_phy,p_phy,rho_phy,dz8w,p8w,                              &
         t8w,exch_h,z_at_w,zmid,                                        &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                               &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                          &
         ntbc1,ntbc2,ntoc1,ntoc2,ntss1,ntss2,ntss3,ntss4,ntss5,         &
         ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,ntpp10,                &
         ntrac,gq0,num_chem, num_moist,                                 &
@@ -257,16 +263,16 @@ contains
         its,ite, jts,jte, kts,kte)
 
     !FV3 input variables
-    integer, dimension(ims:ime), intent(in) :: land, vegtype
+    integer, dimension(:), intent(in) :: land, vegtype
     integer, intent(in) :: ntrac,ntss1,ntss2,ntss3,ntss4,ntss5
     integer, intent(in) :: ntdust1,ntdust2,ntdust3,ntdust4,ntdust5
-    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer, intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
-    real(kind=kind_phys), dimension(ims:ime), intent(in) ::                & 
+    real(kind=kind_phys), dimension(:), intent(in) ::                & 
          ustar, rlat, rlon, ts2d, sigmaf, dswsfc, zorl, snow_cpl, hf2d, pb2d
-    real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) :: pr3d,ph3d
-    real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) :: phl3d,tk3d,prl3d,spechum,exch
-    real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
+    real(kind=kind_phys), dimension(:, :), intent(in) :: pr3d,ph3d
+    real(kind=kind_phys), dimension(:, :), intent(in) :: phl3d,tk3d,prl3d,spechum,exch
+    real(kind=kind_phys), dimension(:, :,:), intent(in) :: gq0
 
 
     !GSD Chem variables
@@ -275,20 +281,20 @@ contains
                            ims,ime, jms,jme, kms,kme,                      &
                            its,ite, jts,jte, kts,kte
 
-    real(kind_phys), dimension(num_chem), intent(in) :: ppm2ugkg
+    real(kind_phys), dimension(:), intent(in) :: ppm2ugkg
 
     
-    integer,dimension(ims:ime, jms:jme), intent(out) :: ivgtyp
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) ::              & 
+    integer,dimension(:, :), intent(out) :: ivgtyp
+    real(kind_phys), dimension(:, :, :), intent(out) ::              & 
          rri, t_phy, p_phy, rho_phy, dz8w, p8w, t8w, zmid,         &
          exch_h
-    real(kind_phys), dimension(ims:ime, jms:jme),          intent(out) ::              &
+    real(kind_phys), dimension(:, :),          intent(out) ::              &
          ust, tsk, xland, xlat, xlong, vegfrac, rmol, gsw, znt, hfx,    &
          pbl, snowh
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_moist), intent(out) :: moist
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_chem),  intent(out) :: chem
+    real(kind_phys), dimension(:, :, :, :), intent(out) :: moist
+    real(kind_phys), dimension(:, :, :, :),  intent(out) :: chem
 
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) :: z_at_w
+    real(kind_phys), dimension(:, :, :), intent(out) :: z_at_w
 
     ! -- local variables
     integer i,ip,j,jp,k,kp,kk,kkp,nv,l,ll,n
@@ -450,8 +456,12 @@ contains
        chem(i,k,jts,p_seas_4)=max(epsilc,gq0(i,k,ntss4  )/ppm2ugkg(p_seas_4))
        chem(i,k,jts,p_seas_5)=max(epsilc,gq0(i,k,ntss5  )/ppm2ugkg(p_seas_5))
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         chem(i,k,jts,p_co  )=0 !max(epsilc,gq0(i,k,ntco   )/ppm2ugkg(p_co))
+       endif
      enddo
     enddo
+
 
 
   end subroutine gsd_chem_prep_drydep

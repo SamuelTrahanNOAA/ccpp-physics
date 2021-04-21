@@ -44,7 +44,7 @@ contains
     subroutine gsd_chem_gocart_wrapper_run(im, kte, kme, ktau, dt, garea,   &
                    rlat, rlon, julian, xcosz,                               &
                    pr3d, ph3d, prl3d, tk3d, spechum, idat, emi2_in, ntrac,  &
-                   ntso2, ntsulf, ntDMS, ntmsa, ntpp25,                     &
+                   ntso2, ntsulf, ntDMS, ntmsa, ntpp25, ntco,               &
                    ntbc1, ntbc2, ntoc1, ntoc2, ntpp10,                      &
                    chem_in_opt,chem_opt_in,                                 &
                    gq0, qgrs, tile_num, errmsg, errflg) 
@@ -52,9 +52,9 @@ contains
     implicit none
 
 
-    integer,        intent(in) :: im,kte,kme,ktau,idat(8),tile_num
+    integer,        intent(in) :: im,kte,kme,ktau,idat(:),tile_num
     integer,        intent(in) :: ntrac
-    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
     real(kind_phys),intent(in) :: dt,julian
 
@@ -62,11 +62,11 @@ contains
     integer, parameter :: ims=1,jms=1,jme=1, kms=1
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
-    real(kind_phys), dimension(im,64, 3), intent(in) :: emi2_in
-    real(kind_phys), dimension(im), intent(in) :: garea, rlat,rlon, xcosz
-    real(kind_phys), dimension(im,kme), intent(in) :: ph3d, pr3d
-    real(kind_phys), dimension(im,kte), intent(in) :: prl3d, tk3d, spechum
-    real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0, qgrs
+    real(kind_phys), dimension(:,:,:), intent(in) :: emi2_in
+    real(kind_phys), dimension(:), intent(in) :: garea, rlat,rlon, xcosz
+    real(kind_phys), dimension(:,:), intent(in) :: ph3d, pr3d
+    real(kind_phys), dimension(:,:), intent(in) :: prl3d, tk3d, spechum
+    real(kind_phys), dimension(:,:,:), intent(inout) :: gq0, qgrs
     integer,           intent(in) :: chem_in_opt
     integer,           intent(in) :: chem_opt_in
     character(len=*), intent(out) :: errmsg
@@ -83,7 +83,6 @@ contains
 
     integer :: ide, ime, ite, kde, julday
 
-!   integer, parameter :: SEAS_OPT_DEFAULT = 1
 !   integer, parameter :: chem_in_opt = 0  ! 0 for coldstart, 1 for restart
     logical, parameter :: readrestart = .false.
     integer, parameter :: nvl_gocart  = 64  ! number of input levels from gocart file
@@ -149,7 +148,7 @@ contains
         xlat,xlong,dxy,                           &
         rri,t_phy,p_phy,rho_phy,dz8w,p8w,                   &
         t8w,                                               &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                                &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                           &
         ntbc1,ntbc2,ntoc1,ntoc2,ntpp10,                                        &
         ntrac,gq0,                                                      &
         num_chem, num_moist,                                 &
@@ -224,6 +223,10 @@ contains
        gq0(i,k,ntoc1  )=ppm2ugkg(p_oc1   ) * max(epsilc,chem(i,k,1,p_oc1))
        gq0(i,k,ntoc2  )=ppm2ugkg(p_oc2   ) * max(epsilc,chem(i,k,1,p_oc2))
        gq0(i,k,ntpp10 )=ppm2ugkg(p_p10   ) * max(epsilc,chem(i,k,1,p_p10))
+
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         gq0(i,k,ntco )=ppm2ugkg(p_co    ) * max(epsilc,chem(i,k,1,p_co))
+       endif
      enddo
     enddo
 
@@ -239,8 +242,13 @@ contains
        qgrs(i,k,ntoc1  )=gq0(i,k,ntoc1  )
        qgrs(i,k,ntoc2  )=gq0(i,k,ntoc2  )
        qgrs(i,k,ntpp10 )=gq0(i,k,ntpp10 )
+       
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         qgrs(i,k,ntco )=gq0(i,k,ntco   )
+       endif
      enddo
     enddo
+
 
 !
    end subroutine gsd_chem_gocart_wrapper_run
@@ -254,7 +262,7 @@ contains
         xlat,xlong,dxy,                          &
         rri,t_phy,p_phy,rho_phy,dz8w,p8w,                  &
         t8w,                                              &
-        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,                               &
+        ntso2,ntsulf,ntDMS,ntmsa,ntpp25,ntco,                          &
         ntbc1,ntbc2,ntoc1,ntoc2,ntpp10,                                       &
         ntrac,gq0,                                                     &
         num_chem, num_moist,                                &
@@ -274,14 +282,15 @@ contains
 
     !FV3 input variables
     integer, intent(in) :: ntrac
-    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf,ntbc2,ntoc2,ntDMS,ntmsa
-    real(kind=kind_phys), dimension(ims:ime), intent(in) :: garea, rlat, rlon, xcosz
-    real(kind=kind_phys), dimension(ims:ime, 64, 3),   intent(in) :: emi2_in
-    real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) :: pr3d,ph3d
-    real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) ::       &
+    real(kind=kind_phys), dimension(:), intent(in) :: garea, rlat, rlon
+    real(kind=kind_phys), dimension(:), intent(in) :: xcosz
+    real(kind=kind_phys), dimension(:,:,:),   intent(in) :: emi2_in
+    real(kind=kind_phys), dimension(:, :), intent(in) :: pr3d,ph3d
+    real(kind=kind_phys), dimension(:, :), intent(in) ::       &
          tk3d,prl3d,spechum
-    real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
+    real(kind=kind_phys), dimension(:, :,:), intent(in) :: gq0
 
 
     !GSD Chem variables
@@ -292,18 +301,18 @@ contains
                            ims,ime, jms,jme, kms,kme,                      &
                            its,ite, jts,jte, kts,kte
 
-    real(kind_phys), dimension(num_chem), intent(in) :: ppm2ugkg
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme),    intent(out) ::          &
+    real(kind_phys), dimension(:), intent(in) :: ppm2ugkg
+    real(kind_phys), dimension(:, :, :),    intent(out) ::          &
                            backg_oh,backg_h2o2,backg_no3
 
     
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) ::              & 
+    real(kind_phys), dimension(:, :, :), intent(out) ::              & 
          rri, t_phy, p_phy, rho_phy, dz8w, p8w, t8w
-    real(kind_phys), dimension(ims:ime, jms:jme),          intent(out) ::              &
+    real(kind_phys), dimension(:, :),          intent(out) ::              &
          xlat, xlong, dxy,       &
          ttday, tcosz
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_moist), intent(out) :: moist
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_chem),  intent(out) :: chem
+    real(kind_phys), dimension(:, :, :, :), intent(out) :: moist
+    real(kind_phys), dimension(:, :, :, :),  intent(out) :: chem
 
     real(kind_phys), dimension(ims:ime, kms:kme, jms:jme) :: z_at_w
     real(kind_phys), dimension(nvl_gocart) :: p_gocart
@@ -438,8 +447,13 @@ contains
        chem(i,k,jts,p_oc1   )=max(epsilc,gq0(i,k,ntoc1  )/ppm2ugkg(p_oc1))
        chem(i,k,jts,p_oc2   )=max(epsilc,gq0(i,k,ntoc2  )/ppm2ugkg(p_oc2))
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         chem(i,k,jts,p_co  )=max(epsilc,gq0(i,k,ntco   )/ppm2ugkg(p_co))
+       endif
      enddo
     enddo
+
+
 
     if (.NOT. readrestart) then
       if (chem_in_opt == 0 ) then
@@ -450,7 +464,7 @@ contains
             do k=kts,kte
               do i=its,ite
                 ip = i - its + 1
-                if (chem_opt == CHEM_OPT_GOCART) then
+                if (chem_opt == CHEM_OPT_GOCART .OR. chem_opt == CHEM_OPT_GOCART_CO) then
                   do n=1,num_chem
                     chem(i,k,j,n)=1.e-12
                   enddo
@@ -466,6 +480,9 @@ contains
                   chem(i,k,j,p_oc2)=0.1e-3
                   chem(i,k,j,p_p25)=0.1e-3 !lzhang
                   chem(i,k,j,p_p10)=0.1e-3 !lzhang
+
+                  IF (chem_opt == CHEM_OPT_GOCART_CO ) chem(i,k,j,p_co) = co_background
+
                 endif !chem_opt >= 300 .and. chem_opt <  500
 
 !                if ((chem_opt == CHEM_OPT_GOCART_RACM) .or. (chem_opt == CHEM_OPT_RACM_SOA_VBS)) then  !added o3 background !lzhang
@@ -535,7 +552,8 @@ contains
     ! -- gocart background fields only if gocart is called
     !
     !if (.NOT. readrestart) then
-    if (call_gocart .and. (chem_opt == CHEM_OPT_GOCART))then
+    IF (call_gocart .AND. ((chem_opt == CHEM_OPT_GOCART) &
+         .OR. (chem_opt == CHEM_OPT_GOCART_CO)) )THEN
       do j=jts,jte
         do i=its,ite
           do k=kts,kte

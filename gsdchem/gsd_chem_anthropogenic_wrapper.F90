@@ -40,7 +40,7 @@ contains
 !> @{
     subroutine gsd_chem_anthropogenic_wrapper_run(im, kte, kme, ktau, dt,               &
                    pr3d, ph3d,phl3d, prl3d, tk3d, spechum,emi_in,                       &
-                   ntrac,ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,                        &
+                   ntrac,ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,ntco,                   &
                    gq0,qgrs,abem,chem_opt_in,kemit_in,pert_scale_anthro,                &
                    emis_amp_anthro,do_sppt_emis,sppt_wts,errmsg,errflg)
 
@@ -49,7 +49,7 @@ contains
 
     integer,        intent(in) :: im,kte,kme,ktau
     integer,        intent(in) :: ntrac
-    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer,        intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf
     real(kind_phys),intent(in) :: dt, emis_amp_anthro, pert_scale_anthro
     real(kind_phys), optional, intent(in) :: sppt_wts(:,:)
@@ -59,11 +59,11 @@ contains
     integer, parameter :: ims=1,jms=1,jme=1, kms=1
     integer, parameter :: its=1,jts=1,jte=1, kts=1
 
-    real(kind_phys), dimension(im, 10), intent(in) :: emi_in
-    real(kind_phys), dimension(im,kme), intent(in) :: ph3d, pr3d
-    real(kind_phys), dimension(im,kte), intent(in) :: phl3d, prl3d, tk3d, spechum
-    real(kind_phys), dimension(im,kte,ntrac), intent(inout) :: gq0, qgrs
-    real(kind_phys), dimension(im,7        ), intent(inout) :: abem
+    real(kind_phys), dimension(:,:), intent(in) :: emi_in
+    real(kind_phys), dimension(:,:), intent(in) :: ph3d, pr3d
+    real(kind_phys), dimension(:,:), intent(in) :: phl3d, prl3d, tk3d, spechum
+    real(kind_phys), dimension(:,:,:), intent(inout) :: gq0, qgrs
+    real(kind_phys), dimension(:,:), intent(inout) :: abem
     integer,           intent(in) :: chem_opt_in, kemit_in
     character(len=*), intent(out) :: errmsg
     integer,          intent(out) :: errflg
@@ -118,7 +118,7 @@ contains
         ktau,dtstep,                                                    &
         pr3d,ph3d,phl3d,tk3d,prl3d,spechum,emi_in,                      &
         rri,t_phy,p_phy,rho_phy,dz8w,p8w,z_at_w,                        & 
-        ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,ntrac,gq0,               &
+        ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,ntco,ntrac,gq0,          &
         num_chem, num_ebu_in,num_emis_ant,                              &
         emis_ant,ppm2ugkg,chem,random_factor,                           &
         ids,ide, jds,jde, kds,kde,                                      &
@@ -135,6 +135,9 @@ contains
        gq0(i,k,ntbc1  )=ppm2ugkg(p_bc1   ) * max(epsilc,chem(i,k,1,p_bc1))
        gq0(i,k,ntoc1  )=ppm2ugkg(p_oc1   ) * max(epsilc,chem(i,k,1,p_oc1))
        gq0(i,k,ntpp10 )=ppm2ugkg(p_p10   ) * max(epsilc,chem(i,k,1,p_p10))
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         gq0(i,k,ntco )=ppm2ugkg(p_co    ) * max(epsilc,chem(i,k,1,p_co))
+       endif
      enddo
     enddo
 
@@ -146,6 +149,9 @@ contains
        qgrs(i,k,ntbc1  )=gq0(i,k,ntbc1  )
        qgrs(i,k,ntoc1  )=gq0(i,k,ntoc1  )
        qgrs(i,k,ntpp10 )=gq0(i,k,ntpp10 )
+       if(chem_opt == CHEM_OPT_GOCART_CO) then
+         qgrs(i,k,ntco) = gq0(i,k,ntco)
+       endif
      enddo
     enddo
 
@@ -161,7 +167,7 @@ contains
         ktau,dtstep,                                                     &
         pr3d,ph3d,phl3d,tk3d,prl3d,spechum,emi_in,                       &
         rri,t_phy,p_phy,rho_phy,dz8w,p8w,z_at_w,                         &
-        ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,ntrac,gq0,                &
+        ntso2,ntsulf,ntpp25,ntbc1,ntoc1,ntpp10,ntco,ntrac,gq0,           &
         num_chem, num_ebu_in,num_emis_ant,                               &
         emis_ant,ppm2ugkg,chem,random_factor,                            &
         ids,ide, jds,jde, kds,kde,                                       &
@@ -173,16 +179,16 @@ contains
     real(kind=kind_phys), intent(in) :: dtstep
 
     !Stochastic physics variables
-    real(kind_phys), intent(in) :: random_factor(ims:ime,jms:jme)
+    real(kind_phys), intent(in) :: random_factor(:,:)
 
     !FV3 input variables
     integer, intent(in) :: ntrac
-    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10
+    integer, intent(in) :: ntso2,ntpp25,ntbc1,ntoc1,ntpp10,ntco
     integer,        intent(in) :: ntsulf
-    real(kind=kind_phys), dimension(ims:ime,    10),   intent(in) :: emi_in
-    real(kind=kind_phys), dimension(ims:ime, kms:kme), intent(in) :: pr3d,ph3d
-    real(kind=kind_phys), dimension(ims:ime, kts:kte), intent(in) :: phl3d,tk3d,prl3d,spechum
-    real(kind=kind_phys), dimension(ims:ime, kts:kte,ntrac), intent(in) :: gq0
+    real(kind=kind_phys), dimension(:,:),   intent(in) :: emi_in
+    real(kind=kind_phys), dimension(:, :), intent(in) :: pr3d,ph3d
+    real(kind=kind_phys), dimension(:, :), intent(in) :: phl3d,tk3d,prl3d,spechum
+    real(kind=kind_phys), dimension(:, :,:), intent(in) :: gq0
 
 
     !GSD Chem variables
@@ -191,15 +197,15 @@ contains
                            ims,ime, jms,jme, kms,kme,                      &
                            its,ite, jts,jte, kts,kte
 
-    real(kind_phys), dimension(num_chem), intent(in) :: ppm2ugkg
+    real(kind_phys), dimension(:), intent(in) :: ppm2ugkg
 
-    real(kind_phys), dimension(ims:ime, kms:kemit, jms:jme, num_emis_ant), intent(inout) :: emis_ant
+    real(kind_phys), dimension(:, :, :, :), intent(inout) :: emis_ant
     
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) ::              & 
+    real(kind_phys), dimension(:, :, :), intent(out) ::              & 
          rri, t_phy, p_phy, rho_phy, dz8w, p8w
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme, num_chem),  intent(out) :: chem
+    real(kind_phys), dimension(:, :, :, :),  intent(out) :: chem
 
-    real(kind_phys), dimension(ims:ime, kms:kme, jms:jme), intent(out) :: z_at_w
+    real(kind_phys), dimension(:, :, :), intent(out) :: z_at_w
     real(kind_phys), dimension(ims:ime, jms:jme, num_ebu_in) :: emiss_ab
     real(kind_phys), parameter :: frac_so2_ant = 0.5_kind_phys  ! antropogenic so2 fraction
 
@@ -284,6 +290,9 @@ contains
       emiss_ab(i,j,p_e_pm_25)=emi_in(i,4)*random_factor(i,j)
       emiss_ab(i,j,p_e_so2)  =emi_in(i,5)*random_factor(i,j)
       emiss_ab(i,j,p_e_pm_10)=emi_in(i,6)*random_factor(i,j)
+      IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+         emiss_ab(i,j,p_e_co)=emi_in(i,11)*random_factor(i,j)
+      ENDIF
      enddo
     enddo
 
@@ -300,6 +309,11 @@ contains
           emis_ant(i,k,j,p_e_dms)= 0. !emiss_ab(j,p_e_dms)
           emis_ant(i,k,j,p_e_pm_25)=emiss_ab(i,j,p_e_pm_25)
           emis_ant(i,k,j,p_e_pm_10)=emiss_ab(i,j,p_e_pm_10)
+
+          IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+             emis_ant(i,k,j,p_e_co)=emiss_ab(i,j,p_e_co)
+          ENDIF
+
         enddo
       enddo
     endif
@@ -313,6 +327,9 @@ contains
        chem(i,k,jts,p_bc1   )=max(epsilc,gq0(i,k,ntbc1  )/ppm2ugkg(p_bc1))
        chem(i,k,jts,p_oc1   )=max(epsilc,gq0(i,k,ntoc1  )/ppm2ugkg(p_oc1))
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
+       IF (chem_opt == CHEM_OPT_GOCART_CO) THEN
+         chem(i,k,jts,p_co  )=max(epsilc,gq0(i,k,ntco   )/ppm2ugkg(p_co))
+       ENDIF
      enddo
     enddo
 
@@ -338,6 +355,20 @@ contains
             chem(i,k,j,p_sulf)=chem(i,k,j,p_sulf)+emis_ant(i,k,j,p_e_sulf)*factor
             chem(i,k,j,p_so2)=chem(i,k,j,p_so2)+emis_ant(i,k,j,p_e_so2)*factor2
           enddo
+        enddo
+      elseif (chem_opt == CHEM_OPT_GOCART_CO) then
+        do j=jts,jte
+           do i=its,ite
+              factor=dtstep*rri(i,k,j)/dz8w(i,k,j)
+              factor2=4.828e-4*dtstep*rri(i,k,j)/(60.*dz8w(i,k,j))
+              chem(i,k,j,p_bc1)=chem(i,k,j,p_bc1)+emis_ant(i,k,j,p_e_bc)*factor
+              chem(i,k,j,p_oc1)=chem(i,k,j,p_oc1)+emis_ant(i,k,j,p_e_oc)*factor
+              chem(i,k,j,p_p25)=chem(i,k,j,p_p25)+emis_ant(i,k,j,p_e_pm_25)*factor
+              chem(i,k,j,p_p10)=chem(i,k,j,p_p10)+emis_ant(i,k,j,p_e_pm_10)*factor
+              chem(i,k,j,p_sulf)=chem(i,k,j,p_sulf)+emis_ant(i,k,j,p_e_sulf)*factor
+              chem(i,k,j,p_so2)=chem(i,k,j,p_so2)+emis_ant(i,k,j,p_e_so2)*factor2
+              chem(i,k,j,p_co)=chem(i,k,j,p_co)+emis_ant(i,k,j,p_e_co)*factor2
+           enddo
         enddo
       endif
     else if (p_tr2 > 1)then    !co2 here

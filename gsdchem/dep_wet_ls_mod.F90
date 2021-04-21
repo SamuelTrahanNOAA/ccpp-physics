@@ -53,6 +53,9 @@ contains
         select case (chem_opt)
           case (CHEM_OPT_GOCART)
             alpha = 1.0
+          case (CHEM_OPT_GOCART_CO)
+            alpha = 1.0
+            alpha(p_co) = 0.
           case (CHEM_OPT_GOCART_RACM)
             alpha = 1.0
 !            alpha(p_h2o2) = 0.5
@@ -82,6 +85,28 @@ contains
             alpha(p_sulf  ) = 1.5
             alpha(p_dms   ) = 0.
             alpha(p_msa   ) = 0.
+            alpha(p_p25   ) = 1.
+            alpha(p_bc1   ) = 0.7
+            alpha(p_bc2   ) = 0.7
+            alpha(p_oc1   ) = 1.
+            alpha(p_oc2   ) = 1.
+            alpha(p_dust_1) = 1.
+            alpha(p_dust_2) = 1.
+            alpha(p_dust_3) = 1.
+            alpha(p_dust_4) = 1.
+            alpha(p_dust_5) = 1.
+            alpha(p_seas_1) = 1.
+            alpha(p_seas_2) = 1.
+            alpha(p_seas_3) = 1.
+            alpha(p_seas_4) = 1.
+            alpha(p_seas_5) = 1.
+            alpha(p_p10   ) = 1.
+          case (CHEM_OPT_GOCART_CO)
+            alpha(p_so2   ) = 0.
+            alpha(p_sulf  ) = 1.5
+            alpha(p_dms   ) = 0.
+            alpha(p_msa   ) = 0.
+            alpha(p_co    ) = 0.
             alpha(p_p25   ) = 1.
             alpha(p_bc1   ) = 0.7
             alpha(p_bc2   ) = 0.7
@@ -128,15 +153,15 @@ contains
                                    ims,ime, jms,jme, kms,kme,               &
                                    its,ite, jts,jte, kts,kte
     real(kind_phys), INTENT(IN ) :: dt
-    REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),                &
+    REAL(kind_phys), DIMENSION( :, :, :, : ),                &
           INTENT(IN ) ::                                   moist
-    REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ),                        &
+    REAL(kind_phys),  DIMENSION( : , : , : ),                        &
            INTENT(IN   ) :: rho,dz8w,vvel
-    REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ,1:num_chem),             &
+    REAL(kind_phys),  DIMENSION( : , : , : ,:),             &
            INTENT(INOUT) :: var
-    REAL(kind_phys),  DIMENSION( ims:ime, jms:jme ),                                   &
+    REAL(kind_phys),  DIMENSION( :, : ),                                   &
            INTENT(IN   ) :: rain
-    REAL(kind_phys),  DIMENSION( ims:ime ,  jms:jme,num_chem ),                        &
+    REAL(kind_phys),  DIMENSION( : ,  :, : ),                        &
            INTENT(INOUT   ) :: var_rmv
     REAL(kind_phys),  DIMENSION( its:ite ,  jts:jte ) :: var_sum
     REAL(kind_phys),  DIMENSION( its:ite ,  kts:kte, jts:jte ) :: var_rmvl
@@ -231,13 +256,13 @@ contains
    integer, intent(in) :: i1, i2, j1, j2, k1, k2, n1, n2, num_chem, &
                           ims, ime, jms, jme, kms, kme
    real(kind_phys), intent(in)    :: cdt
-   REAL(kind_phys),  DIMENSION( ims:ime , kms:kme , jms:jme ,1:num_chem),&
+   REAL(kind_phys),  DIMENSION( : , : , : ,:),&
           INTENT(INOUT) :: chem
-   REAL(kind_phys),  DIMENSION( ims:ime ,  jms:jme,num_chem ), &
+   REAL(kind_phys),  DIMENSION( : ,  :, : ), &
           INTENT(INOUT   ) :: var_rmv !! tracer loss flux [kg m-2 s-1]
-   real(kind_phys), dimension(ims:ime, kms:kme, jms:jme),&
+   real(kind_phys), dimension(:, :, :),&
           INTENT(IN)     :: ple, tmpu, rhoa, dqcond
-   real(kind_phys), dimension(ims:ime ,  jms:jme) , &
+   real(kind_phys), dimension(: ,  :) , &
           INTENT(IN)      :: precc, precl    ! cv, ls precip [mm day-1]
 
 ! !OUTPUT PARAMETERS:
