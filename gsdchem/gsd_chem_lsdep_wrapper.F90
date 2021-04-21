@@ -197,9 +197,9 @@ contains
        gq0(i,k,ntss5  )=ppm2ugkg(p_seas_5) * max(epsilc,chem(i,k,1,p_seas_5))
        gq0(i,k,ntpp10 )=ppm2ugkg(p_p10   ) * max(epsilc,chem(i,k,1,p_p10))
 
-       if(chem_opt == CHEM_OPT_GOCART_CO) then
-         gq0(i,k,ntco )=ppm2ugkg(p_co    ) * max(epsilc,chem(i,k,1,p_co))       
-       endif
+       ! if(chem_opt == CHEM_OPT_GOCART_CO) then
+       !   gq0(i,k,ntco )=ppm2ugkg(p_co    ) * max(epsilc,chem(i,k,1,p_co))       
+       ! endif
      enddo
     enddo
 
@@ -226,9 +226,9 @@ contains
        qgrs(i,k,ntss5  )=gq0(i,k,ntss5  )
        qgrs(i,k,ntpp10 )=gq0(i,k,ntpp10 )
 
-       if(chem_opt == CHEM_OPT_GOCART_CO) then
-         qgrs(i,k,ntco )=gq0(i,k,ntco   )
-       endif
+       ! if(chem_opt == CHEM_OPT_GOCART_CO) then
+       !   qgrs(i,k,ntco )=gq0(i,k,ntco   )
+       ! endif
      enddo
     enddo
 
@@ -413,7 +413,7 @@ contains
        chem(i,k,jts,p_p10   )=max(epsilc,gq0(i,k,ntpp10 )/ppm2ugkg(p_p10))
 
        if(chem_opt == CHEM_OPT_GOCART_CO) then
-         chem(i,k,jts,p_co  )=max(epsilc,gq0(i,k,ntco   )/ppm2ugkg(p_co))
+         chem(i,k,jts,p_co  )=0 ! max(epsilc,gq0(i,k,ntco   )/ppm2ugkg(p_co))
        endif
      enddo
     enddo

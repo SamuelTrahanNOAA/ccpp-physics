@@ -855,7 +855,7 @@ SUBROUTINE chem_co(dt,co)
   REAL(kind=kind_phys), INTENT(INOUT) :: co
 
 !  co=MAX(co-kt*(co-co_background)*dt,co_min) !forward
-  co=MAX((co+kt*co_background*dt)/(1.+kt),co_min) !backward
+  co=MAX((co+kt*co_background*dt)/(1.+kt*dt),co_min) !backward
 
 END SUBROUTINE chem_co
 

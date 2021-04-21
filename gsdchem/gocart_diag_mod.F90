@@ -54,10 +54,14 @@ contains
               ! -- seas
               trcm(i,j,6) = trcm(i,j,6) + coef * (tr(i,j,k,nbegin + p_seas_1) + tr(i,j,k,nbegin + p_seas_2 ) &
               + tr(i,j,k,nbegin + p_seas_3) + fseas2 * tr(i,j,k,nbegin + p_seas_4))
+              ! -- carbon monoxide
+              if(chem_opt==CHEM_OPT_GOCART_CO) then
+                trcm(i,j,7) = trcm(i,j,7) + coef * tr(i,j,k,nbegin + p_co)
+              endif
             end do
           end do
         end do
-        ! -- pm2.5 aerosol includes all tracers above (note: p25 emissions are added to oc1)
+        ! -- pm2.5 aerosol includes all tracers above except CO (note: p25 emissions are added to oc1)
         do k = 2, 6
           do j = 1, nj
             do i = 1, ni

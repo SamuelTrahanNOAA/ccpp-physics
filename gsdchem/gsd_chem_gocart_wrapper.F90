@@ -83,7 +83,6 @@ contains
 
     integer :: ide, ime, ite, kde, julday
 
-!   integer, parameter :: SEAS_OPT_DEFAULT = 1
 !   integer, parameter :: chem_in_opt = 0  ! 0 for coldstart, 1 for restart
     logical, parameter :: readrestart = .false.
     integer, parameter :: nvl_gocart  = 64  ! number of input levels from gocart file

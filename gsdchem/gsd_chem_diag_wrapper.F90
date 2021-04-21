@@ -40,7 +40,7 @@ contains
 !>\section gsd_chem_diag_wrapper GSD Chemistry Scheme General Algorithm
 !> @{
     subroutine gsd_chem_diag_wrapper_run(im, kte, kme, ktau,                  &
-                   pr3d, ntrac, ntso2, gq0, aecm, ntchmdiag, ntchm,           &
+                   pr3d, ntrac, ntso2, gq0, aecm, num_aecm, ntchmdiag, ntchm, &
                    wetdpc, wetdpc_deep, wetdpc_mid,  wetdpc_shal,             &
                    imfdeepcnv, imfdeepcnv_samf, imfdeepcnv_gf, chem_opt_in,   &
                    errmsg,errflg)
@@ -48,7 +48,7 @@ contains
     implicit none
 
 
-    integer,        intent(in) :: im,kte,kme,ktau
+    integer,        intent(in) :: im,kte,kme,ktau,num_aecm
     integer,        intent(in) :: ntrac,ntso2,ntchmdiag,ntchm
     integer,        intent(in)  :: imfdeepcnv, imfdeepcnv_samf, imfdeepcnv_gf
 
@@ -66,7 +66,7 @@ contains
     integer,          intent(out) :: errflg
 
     ! -- for diagnostics
-    real(kind_phys), dimension(ims:im, jms:jme, 6) :: trcm  ! inst tracer column mass density
+    real(kind_phys), dimension(ims:im, jms:jme, num_aecm) :: trcm
     real(kind_phys), dimension(ims:im, jms:jme, ntchmdiag, 4) :: trdf 
     real(kind_phys), dimension(im,jme,kte,ntrac) :: gq0j
     real(kind_phys), dimension(im,jme,kme) :: pr3dj
@@ -75,7 +75,7 @@ contains
     integer :: ide, ime, ite, kde
 
     integer :: i, j, jp, k, kp, n, nbegin
-  
+    integer :: len_trcm
 
     errmsg = ''
     errflg = 0

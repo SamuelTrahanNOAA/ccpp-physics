@@ -89,13 +89,6 @@ contains
         call set_and_check(p_seas_5,ntss5,'The ss5 tracer is mandatory.')
         call set_and_check(p_p10,ntpp10,'The pp10 tracer is mandatory.')
 
-        if(chem_opt == CHEM_OPT_GOCART_CO) then
-          print *,'chem_opt_gocart_co'
-          print *,'co=',ntco,p_co
-          print *,'p10=',ntpp10,p_p10
-          print *,'num_chem=',num_chem
-        endif
-
       contains
         subroutine set_and_check(p_index,nt_index,mandatory)
           implicit none
@@ -140,13 +133,16 @@ contains
       subroutine gsd_chem_config_wrapper_run(ntso2,ntsulf,ntdms,ntmsa,ntco,   &
            ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,    &
            ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu,     &
-           ntoz,ntqv,ntcw,errmsg,errflg)
-        use gsd_chem_config, only: num_chem
+           ntoz,ntqv,ntcw,first_time_step,restart,qgrs,gq0,errmsg,errflg)
+        use gsd_chem_config, only : num_chem,numgas,co_background
+        use machine ,        only : kind_phys
         implicit none
         integer, intent(in) :: ntso2,ntsulf,ntdms,ntmsa,ntco,ntpp25,ntbc1, &
              ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,ntdust5,    &
              ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu,        &
              ntoz,ntqv,ntcw
+        logical, intent(in) :: first_time_step,restart
+        real(kind=kind_phys), intent(out) :: qgrs(:,:,:),gq0(:,:,:)
         character(len=*), intent(out) :: errmsg
         integer,          intent(out) :: errflg
 
@@ -157,6 +153,13 @@ contains
                ntpp25,ntbc1,ntbc2,ntoc1,ntoc2,ntdust1,ntdust2,ntdust3,ntdust4,    &
                ntdust5,ntss1,ntss2,ntss3,ntss4,ntss5,ntpp10,chem_opt,num_ebu,     &
                ntoz,ntqv,ntcw,errmsg,errflg)
+        endif
+
+        if(first_time_step .and. .not. restart .and. ntco>=1) then
+          !print *,'first timestep for non-restart run; fill CO with background values'
+          ! FIXME: This should not be necessary. Need to retest to see if it is.
+          qgrs(:,:,ntco) = co_background
+          gq0(:,:,ntco) = co_background
         endif
       end subroutine gsd_chem_config_wrapper_run
 !> @}

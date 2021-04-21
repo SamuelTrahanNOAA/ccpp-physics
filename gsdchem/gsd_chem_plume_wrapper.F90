@@ -173,7 +173,6 @@ contains
       IF (chem_opt==CHEM_OPT_GOCART_CO) then
          option='GOCART_CO'
       ELSE
-         print *,'chem opt gocart'
          option='GOCART'
       ENDIF
 
@@ -212,6 +211,7 @@ contains
         case default
           ! -- no further options available, skip this step
           jp = jts - 1
+          kp = kts
       end select
 
       if (kp == kts) then
