@@ -13,7 +13,7 @@
 !! \htmlinclude GFS_MP_generic_pre_run.html
 !!
       subroutine GFS_MP_generic_pre_run(im, levs, ldiag3d, qdiag3d, do_aw, ntcw, nncl, ntrac, gt0, gq0, &
-           save_t, save_qv, save_q, num_dfi_radar, errmsg, errflg)
+           save_t, save_q, num_dfi_radar, errmsg, errflg)
 !
       use machine,               only: kind_phys
 
@@ -91,7 +91,7 @@
         imp_physics_thompson, imp_physics_mg, imp_physics_fer_hires, cal_pre, cplflx, cplchm, con_g, dtf, frain, rainc,   &
         rain1, rann, xlat, xlon, gt0, gq0, prsl, prsi, phii, tsfc, ice, snow, graupel, save_t, save_q, rain0, ice0, snow0,&
         graupel0, del, rain, domr_diag, domzr_diag, domip_diag, doms_diag, tprcp, srflag, sr, cnvprcp, totprcp, totice,   &
-        num_dfi_radar, fh_dfi_radar, ix_dfi_radar, dfi_radar_tten, radar_tten_limits, dt3dt_dfi_radar, fhour,             &
+        num_dfi_radar, fh_dfi_radar, ix_dfi_radar, dfi_radar_tten, radar_tten_limits, fhour,                              &
         totsnw, totgrp, cnvprcpb, totprcpb, toticeb, totsnwb, totgrpb, rain_cpl, rainc_cpl, snow_cpl, pwat,               &
         drain_cpl, dsnow_cpl, lsm, lsm_ruc, lsm_noahmp, raincprv, rainncprv, iceprv, snowprv,                             &
         graupelprv, draincprv, drainncprv, diceprv, dsnowprv, dgraupelprv, dtp,                                           &
@@ -115,7 +115,8 @@
       real(kind=kind_phys), dimension(im),            intent(inout) :: ice, snow, graupel, rainc
       real(kind=kind_phys), dimension(im),            intent(in)    :: rain0, ice0, snow0, graupel0
       real(kind=kind_phys), dimension(im,nrcm),       intent(in)    :: rann
-      real(kind=kind_phys), dimension(im,levs),       intent(in)    :: gt0, prsl, save_t, del
+      real(kind=kind_phys), dimension(im,levs),       intent(in)    :: prsl, save_t, del
+      real(kind=kind_phys), dimension(im,levs),       intent(inout) :: gt0
       real(kind=kind_phys), dimension(im,levs+1),     intent(in)    :: prsi, phii
       real(kind=kind_phys), dimension(im,levs,ntrac), intent(in)    :: gq0, save_q
 
@@ -160,7 +161,7 @@
       real(kind=kind_phys), parameter :: p850    = 85000.0_kind_phys
       ! *DH
 
-      integer :: i, k, ic, itrac, idtend
+      integer :: i, k, ic, itrac, itime, idtend
 
       real(kind=kind_phys), parameter :: zero = 0.0_kind_phys, one = 1.0_kind_phys
       real(kind=kind_phys) :: crain, csnow, onebg, tem, total_precip, tem1, tem2, ttend
