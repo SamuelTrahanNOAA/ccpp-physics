@@ -16,15 +16,16 @@
 !!
     subroutine GFS_suite_interstitial_rad_reset_run (Interstitial, Model, errmsg, errflg)
 
-      use GFS_typedefs, only: GFS_control_type,GFS_interstitial_type
+      use machine,      only: kind_phys
+      use GFS_typedefs, only: GFS_control_type, GFS_interstitial_type
 
       implicit none
 
       ! interface variables
       type(GFS_interstitial_type), intent(inout) :: Interstitial
       type(GFS_control_type),      intent(in)    :: Model
-      character(len=*), intent(out) :: errmsg
-      integer, intent(out) :: errflg
+      character(len=*),            intent(out)   :: errmsg
+      integer,                     intent(out)   :: errflg
 
       errmsg = ''
       errflg = 0
@@ -51,6 +52,7 @@
 !!
     subroutine GFS_suite_interstitial_phys_reset_run (Interstitial, Model, errmsg, errflg)
 
+      use machine,      only: kind_phys
       use GFS_typedefs, only: GFS_control_type, GFS_interstitial_type
 
       implicit none
@@ -58,8 +60,8 @@
       ! interface variables
       type(GFS_interstitial_type), intent(inout) :: Interstitial
       type(GFS_control_type),      intent(in)    :: Model
-      character(len=*), intent(out) :: errmsg
-      integer, intent(out) :: errflg
+      character(len=*),            intent(out)   :: errmsg
+      integer,                     intent(out)   :: errflg
 
       errmsg = ''
       errflg = 0
@@ -85,7 +87,7 @@
 !! \htmlinclude GFS_suite_interstitial_1_run.html
 !!
     subroutine GFS_suite_interstitial_1_run (im, levs, ntrac, dtf, dtp, slmsk, area, dxmin, dxinv, pgr, &
-      islmsk, work1, work2, psurf, dudt, dvdt, dtdt, dtdtc, dqdt, errmsg, errflg)
+      islmsk, work1, work2, psurf, dudt, dvdt, dtdt, dqdt, errmsg, errflg)
 
       use machine,               only: kind_phys
 
@@ -98,8 +100,9 @@
 
       integer,              intent(out), dimension(im) :: islmsk
       real(kind=kind_phys), intent(out), dimension(im) :: work1, work2, psurf
-      real(kind=kind_phys), intent(out), dimension(im,levs) :: dudt, dvdt, dtdt, dtdtc
+      real(kind=kind_phys), intent(out), dimension(im,levs) :: dudt, dvdt, dtdt
       real(kind=kind_phys), intent(out), dimension(im,levs,ntrac) ::  dqdt
+      real(kind=kind_phys), parameter   :: zero = 0.0_kind_phys, one = 1.0_kind_phys
       character(len=*),     intent(out) :: errmsg
       integer,              intent(out) :: errflg
 
@@ -114,23 +117,22 @@
         islmsk(i)   = nint(slmsk(i))
 
         work1(i) = (log(area(i)) - dxmin) * dxinv
-        work1(i) = max(0.0, min(1.0,work1(i)))
-        work2(i) = 1.0 - work1(i)
+        work1(i) = max(zero, min(one, work1(i)))
+        work2(i) = one - work1(i)
         psurf(i) = pgr(i)
       end do
 
       do k=1,levs
         do i=1,im
-          dudt(i,k)  = 0.
-          dvdt(i,k)  = 0.
-          dtdt(i,k)  = 0.
-          dtdtc(i,k) = 0.
+          dudt(i,k)  = zero
+          dvdt(i,k)  = zero
+          dtdt(i,k)  = zero
         enddo
       enddo
       do n=1,ntrac
         do k=1,levs
           do i=1,im
-            dqdt(i,k,n) = 0.
+            dqdt(i,k,n) = zero
           enddo
         enddo
       enddo
@@ -143,7 +145,7 @@
   module GFS_suite_interstitial_2
 
   use machine, only: kind_phys
-  real(kind=kind_phys), parameter :: one = 1.0d0
+  real(kind=kind_phys), parameter :: one = 1.0_kind_phys
   logical :: linit_mod  = .false. 
 
   contains
@@ -153,23 +155,23 @@
 
     subroutine GFS_suite_interstitial_2_finalize()
     end subroutine GFS_suite_interstitial_2_finalize
-#if 0
+
 !> \section arg_table_GFS_suite_interstitial_2_run Argument Table
 !! \htmlinclude GFS_suite_interstitial_2_run.html
 !!
-#endif
     subroutine GFS_suite_interstitial_2_run (im, levs, lssav, ldiag3d, lsidea, cplflx, flag_cice, shal_cnv, old_monin, mstrat,    &
       do_shoc, frac_grid, imfshalcnv, dtf, xcosz, adjsfcdsw, adjsfcdlw, cice, pgr, ulwsfc_cice, lwhd, htrsw, htrlw, xmu, ctei_rm, &
       work1, work2, prsi, tgrs, prsl, qgrs_water_vapor, qgrs_cloud_water, cp, hvap, prslk, suntim, adjsfculw, adjsfculw_lnd,      &
-      adjsfculw_ice, adjsfculw_wat, dlwsfc, ulwsfc, psmean, dt3dt_lw, dt3dt_sw, dt3dt_pbl, dt3dt_dcnv, dt3dt_scnv, dt3dt_mp,      &
-      ctei_rml, ctei_r, kinver, dry, icy, wet, frland, huge, use_GP_jacobian, skt, sktp1r, fluxlwUP, fluxlwUP_jac, errmsg, errflg)
+      adjsfculw_ice, adjsfculw_wat, dlwsfc, ulwsfc, psmean, dtend, dtidx, index_of_process_longwave, index_of_process_shortwave,  &
+      index_of_process_pbl, index_of_process_dcnv, index_of_process_scnv, index_of_process_mp, index_of_temperature,              &
+      ctei_rml, ctei_r, kinver, dry, icy, wet, frland, huge, use_LW_jacobian, errmsg, errflg)
 
       implicit none
 
       ! interface variables
       integer,              intent(in   ) :: im, levs, imfshalcnv
       logical,              intent(in   ) :: lssav, ldiag3d, lsidea, cplflx, shal_cnv
-      logical,              intent(in   ) :: old_monin, mstrat, do_shoc, frac_grid
+      logical,              intent(in   ) :: old_monin, mstrat, do_shoc, frac_grid, use_LW_jacobian
       real(kind=kind_phys), intent(in   ) :: dtf, cp, hvap
 
       logical,              intent(in   ), dimension(im) :: flag_cice
@@ -182,21 +184,14 @@
       integer,              intent(inout), dimension(im) :: kinver
       real(kind=kind_phys), intent(inout), dimension(im) :: suntim, dlwsfc, ulwsfc, psmean, ctei_rml, ctei_r
       real(kind=kind_phys), intent(in   ), dimension(im) :: adjsfculw_lnd, adjsfculw_ice, adjsfculw_wat
-      real(kind=kind_phys), intent(  out), dimension(im) :: adjsfculw
-      
-      ! RRTMGP	
-      logical,              intent(in   ) :: &
-           use_GP_jacobian   ! Use RRTMGP LW Jacobian of upwelling to adjust the surface flux?
-      real(kind=kind_phys), intent(in   ), dimension(im) :: &
-           skt               ! Skin temperature
-      real(kind=kind_phys), intent(inout), dimension(im) :: &
-           sktp1r            ! Skin temperature at previous timestep
-      real(kind=kind_phys), intent(in   ), dimension(im,levs+1), optional :: &
-           fluxlwUP,       & ! Upwelling LW flux (W/m2)
-           fluxlwUP_jac      ! Jacobian of upwelling LW flux (W/m2/K)
+      real(kind=kind_phys), intent(inout), dimension(im) :: adjsfculw
 
-      ! These arrays are only allocated if ldiag3d is .true.
-      real(kind=kind_phys), intent(inout), dimension(:,:) :: dt3dt_lw, dt3dt_sw, dt3dt_pbl, dt3dt_dcnv, dt3dt_scnv, dt3dt_mp
+      ! dtend is only allocated if ldiag3d is .true.
+      real(kind=kind_phys), optional, intent(inout), dimension(:,:,:) :: dtend
+      integer,              intent(in),    dimension(:,:) :: dtidx
+      integer, intent(in) :: index_of_process_longwave, index_of_process_shortwave, &
+           index_of_process_pbl, index_of_process_dcnv, index_of_process_scnv,       &
+           index_of_process_mp, index_of_temperature
 
       logical,              intent(in   ), dimension(im) :: dry, icy, wet
       real(kind=kind_phys), intent(in   ), dimension(im) :: frland
@@ -206,13 +201,14 @@
       integer,              intent(out) :: errflg
 
       ! local variables
-      real(kind=kind_phys), parameter :: czmin   = 0.0001      ! cos(89.994)
-      integer :: i, k
+      real(kind=kind_phys), parameter :: czmin   = 0.0001_kind_phys      ! cos(89.994)
+      integer :: i, k, idtend
       real(kind=kind_phys) :: tem1, tem2, tem, hocp
       logical, dimension(im) :: invrsn
-      real(kind=kind_phys), dimension(im) :: tx1, tx2, dT
+      real(kind=kind_phys), dimension(im) :: tx1, tx2
 
-      real(kind=kind_phys), parameter :: qmin = 1.0d-10
+      real(kind=kind_phys), parameter :: zero = 0.0_kind_phys, one = 1.0_kind_phys
+      real(kind=kind_phys), parameter :: qmin = 1.0e-10_kind_phys, epsln=1.0e-10_kind_phys
 
       ! Initialize CCPP error handling variables
       errmsg = ''
@@ -229,105 +225,51 @@
         do i = 1, im
           if ( xcosz(i) >= czmin ) then   ! zenth angle > 89.994 deg
             tem1 = adjsfcdsw(i) / xcosz(i)
-            if ( tem1 >= 120.0 ) then
+            if ( tem1 >= 120.0_kind_phys ) then
               suntim(i) = suntim(i) + dtf
             endif
           endif
         enddo
 
 !  --- ...  sfc lw fluxes used by atmospheric model are saved for output
-
-!  --- ... when using RRTMGP w/ use_GP_jacobian, these adjustment factors are pre-computed
-!  --- ... and provided as inputs in this routine.
-        
-	if (use_GP_jacobian) then
-           ! Compute adjustment to the surface flux using Jacobian.
-           if(linit_mod) then
-              dT(:)        = (skt(:) - sktp1r(:)) 
-              adjsfculw(:) = fluxlwUP(:,1) + fluxlwUP_jac(:,1)  * dT(:)
-           else
-              adjsfculw(:) = 0.
-              linit_mod    = .true.
-           endif
-  
-           ! Store surface temperature for next iteration
-           sktp1r(:) = skt(:)       
-	else
-           if (frac_grid) then
-             do i=1,im
-               tem = (one - frland(i)) * cice(i) ! tem = ice fraction wrt whole cell
-               if (flag_cice(i)) then
+        if (.not. use_LW_jacobian) then
+        if (frac_grid) then
+           do i=1,im
+              tem = (one - frland(i)) * cice(i) ! tem = ice fraction wrt whole cell
+              if (flag_cice(i)) then
                  adjsfculw(i) = adjsfculw_lnd(i) * frland(i)               &
                               + ulwsfc_cice(i)   * tem                     &
                               + adjsfculw_wat(i) * (one - frland(i) - tem)
-                else
+              else
                  adjsfculw(i) = adjsfculw_lnd(i) * frland(i)               &
                               + adjsfculw_ice(i) * tem                     &
                               + adjsfculw_wat(i) * (one - frland(i) - tem)
-               endif
-             enddo
-           else
-             do i=1,im
-               if (dry(i)) then                     ! all land
+              endif
+           enddo
+        else
+           do i=1,im
+              if (dry(i)) then                     ! all land
                  adjsfculw(i) = adjsfculw_lnd(i)
-               elseif (icy(i)) then                 ! ice (and water)
+              elseif (icy(i)) then                 ! ice (and water)
                  tem = one - cice(i)
                  if (flag_cice(i)) then
-                   if (wet(i) .and. adjsfculw_wat(i) /= huge) then
-                     adjsfculw(i) = ulwsfc_cice(i)*cice(i) + adjsfculw_wat(i)*tem
-                   else
-                     adjsfculw(i) = ulwsfc_cice(i)
-                   endif
+                    if (wet(i) .and. adjsfculw_wat(i) /= huge) then
+                       adjsfculw(i) = ulwsfc_cice(i)*cice(i) + adjsfculw_wat(i)*tem
+                    else
+                       adjsfculw(i) = ulwsfc_cice(i)
+                    endif
                  else
-                   if (wet(i) .and. adjsfculw_wat(i) /= huge) then
-                     adjsfculw(i) = adjsfculw_ice(i)*cice(i) + adjsfculw_wat(i)*tem
-                   else
-                     adjsfculw(i) = adjsfculw_ice(i)
-                   endif
+                    if (wet(i) .and. adjsfculw_wat(i) /= huge) then
+                       adjsfculw(i) = adjsfculw_ice(i)*cice(i) + adjsfculw_wat(i)*tem
+                    else
+                       adjsfculw(i) = adjsfculw_ice(i)
+                    endif
                  endif
-               else                                 ! all water
+              else                                 ! all water
                  adjsfculw(i) = adjsfculw_wat(i)
-               endif
-             enddo
-           endif
-	    endif
-
-        if (frac_grid) then
-          do i=1,im
-            tem = (one - frland(i)) * cice(i) ! tem = ice fraction wrt whole cell
-            if (flag_cice(i)) then
-              adjsfculw(i) = adjsfculw_lnd(i) * frland(i)               &
-                           + ulwsfc_cice(i)   * tem                     &
-                           + adjsfculw_wat(i) * (one - frland(i) - tem)
-            else
-              adjsfculw(i) = adjsfculw_lnd(i) * frland(i)               &
-                           + adjsfculw_ice(i) * tem                     &
-                           + adjsfculw_wat(i) * (one - frland(i) - tem)
-            endif
-          enddo
-        else
-          do i=1,im
-            if (dry(i)) then                     ! all land
-              adjsfculw(i) = adjsfculw_lnd(i)
-            elseif (icy(i)) then                 ! ice (and water)
-              tem = one - cice(i)
-              if (flag_cice(i)) then
-                if (wet(i) .and. adjsfculw_wat(i) /= huge) then
-                  adjsfculw(i) = ulwsfc_cice(i)*cice(i) + adjsfculw_wat(i)*tem
-                else
-                  adjsfculw(i) = ulwsfc_cice(i)
-                endif
-              else
-                if (wet(i) .and. adjsfculw_wat(i) /= huge) then
-                  adjsfculw(i) = adjsfculw_ice(i)*cice(i) + adjsfculw_wat(i)*tem
-                else
-                  adjsfculw(i) = adjsfculw_ice(i)
-                endif
               endif
-            else                                 ! all water
-              adjsfculw(i) = adjsfculw_wat(i)
-            endif
-          enddo
+           enddo
+        endif
         endif
 
         do i=1,im
@@ -338,32 +280,58 @@
 
         if (ldiag3d) then
           if (lsidea) then
-            do k=1,levs
-              do i=1,im
-                dt3dt_lw(i,k)   = dt3dt_lw(i,k)   + lwhd(i,k,1)*dtf
-                dt3dt_sw(i,k)   = dt3dt_sw(i,k)   + lwhd(i,k,2)*dtf
-                dt3dt_pbl(i,k)  = dt3dt_pbl(i,k)  + lwhd(i,k,3)*dtf
-                dt3dt_dcnv(i,k) = dt3dt_dcnv(i,k) + lwhd(i,k,4)*dtf
-                dt3dt_scnv(i,k) = dt3dt_scnv(i,k) + lwhd(i,k,5)*dtf
-                dt3dt_mp(i,k)   = dt3dt_mp(i,k)   + lwhd(i,k,6)*dtf
-              enddo
-            enddo
+            idtend = dtidx(index_of_temperature,index_of_process_longwave)
+            if(idtend>=1) then
+               dtend(:,:,idtend) = dtend(:,:,idtend) + lwhd(:,:,1)*dtf
+            endif
+
+            idtend = dtidx(index_of_temperature,index_of_process_shortwave)
+            if(idtend>=1) then
+               dtend(:,:,idtend) = dtend(:,:,idtend) + lwhd(:,:,2)*dtf
+            endif
+
+            idtend = dtidx(index_of_temperature,index_of_process_pbl)
+            if(idtend>=1) then
+               dtend(:,:,idtend) = dtend(:,:,idtend) + lwhd(:,:,3)*dtf
+            endif
+
+            idtend = dtidx(index_of_temperature,index_of_process_dcnv)
+            if(idtend>=1) then
+               dtend(:,:,idtend) = dtend(:,:,idtend) + lwhd(:,:,4)*dtf
+            endif
+
+            idtend = dtidx(index_of_temperature,index_of_process_scnv)
+            if(idtend>=1) then
+               dtend(:,:,idtend) = dtend(:,:,idtend) + lwhd(:,:,5)*dtf
+            endif
+
+            idtend = dtidx(index_of_temperature,index_of_process_mp)
+            if(idtend>=1) then
+               dtend(:,:,idtend) = dtend(:,:,idtend) + lwhd(:,:,6)*dtf
+            endif
           else
-            do k=1,levs
-              do i=1,im
-                dt3dt_lw(i,k) = dt3dt_lw(i,k) + htrlw(i,k)*dtf
-                dt3dt_sw(i,k) = dt3dt_sw(i,k) + htrsw(i,k)*dtf*xmu(i)
-              enddo
-            enddo
+            idtend = dtidx(index_of_temperature,index_of_process_longwave)
+            if(idtend>=1) then
+               dtend(:,:,idtend) = dtend(:,:,idtend) + htrlw(:,:)*dtf
+            endif
+
+            idtend = dtidx(index_of_temperature,index_of_process_shortwave)
+            if(idtend>=1) then
+               do k=1,levs
+                  do i=1,im
+                     dtend(i,k,idtend) = dtend(i,k,idtend) + htrsw(i,k)*dtf*xmu(i)
+                  enddo
+               enddo
+            endif
           endif
         endif
       endif    ! end if_lssav_block
 
       do i=1, im
         invrsn(i) = .false.
-        tx1(i)    = 0.0
-        tx2(i)    = 10.0
-        ctei_r(i) = 10.0
+        tx1(i)    = zero
+        tx2(i)    = 10.0_kind_phys
+        ctei_r(i) = 10.0_kind_phys
       enddo
 
       if ((((imfshalcnv == 0 .and. shal_cnv) .or. old_monin) .and. mstrat) &
@@ -371,13 +339,13 @@
         ctei_rml(:) = ctei_rm(1)*work1(:) + ctei_rm(2)*work2(:)
         do k=1,levs/2
           do i=1,im
-            if (prsi(i,1)-prsi(i,k+1) < 0.35*prsi(i,1)       &
+            if (prsi(i,1)-prsi(i,k+1) < 0.35_kind_phys*prsi(i,1)       &
                 .and. (.not. invrsn(i))) then
               tem = (tgrs(i,k+1) - tgrs(i,k))  &
                   / (prsl(i,k)   - prsl(i,k+1))
 
-              if (((tem > 0.00010) .and. (tx1(i) < 0.0)) .or.  &
-                  ((tem-abs(tx1(i)) > 0.0) .and. (tx2(i) < 0.0))) then
+              if (((tem > 0.0001_kind_phys) .and. (tx1(i) < zero)) .or.  &
+                  ((tem-abs(tx1(i)) > zero) .and. (tx2(i) < zero))) then
                 invrsn(i) = .true.
 
                 if (qgrs_water_vapor(i,k) > qgrs_water_vapor(i,k+1)) then
@@ -387,10 +355,10 @@
                   tem1 = tem1 / prslk(i,k+1) - tem2 / prslk(i,k)
 
 !  --- ...  (cp/l)(deltathetae)/(deltatwater) > ctei_rm -> conditon for CTEI
-                  ctei_r(i) = (1.0/hocp)*tem1/(qgrs_water_vapor(i,k+1)-qgrs_water_vapor(i,k)  &
+                  ctei_r(i) = (one/hocp)*tem1/(qgrs_water_vapor(i,k+1)-qgrs_water_vapor(i,k)  &
                             + qgrs_cloud_water(i,k+1)-qgrs_cloud_water(i,k))
                 else
-                  ctei_r(i) = 10
+                  ctei_r(i) = 10.0_kind_phys
                 endif
 
                 if ( ctei_rml(i) > ctei_r(i) ) then
@@ -475,7 +443,8 @@
 !!
     subroutine GFS_suite_stateout_update_run (im, levs, ntrac, dtp,  &
                      tgrs, ugrs, vgrs, qgrs, dudt, dvdt, dtdt, dqdt, &
-                     gt0, gu0, gv0, gq0, errmsg, errflg)
+                     gt0, gu0, gv0, gq0, ntiw, nqrimef, imp_physics, &
+                     imp_physics_fer_hires, epsq, errmsg, errflg)
 
       use machine,               only: kind_phys
 
@@ -485,7 +454,9 @@
       integer,              intent(in) :: im
       integer,              intent(in) :: levs
       integer,              intent(in) :: ntrac
-      real(kind=kind_phys), intent(in) :: dtp
+      integer,              intent(in) :: imp_physics,imp_physics_fer_hires
+      integer,              intent(in) :: ntiw, nqrimef
+      real(kind=kind_phys), intent(in) :: dtp, epsq
 
       real(kind=kind_phys), dimension(im,levs),       intent(in)  :: tgrs, ugrs, vgrs
       real(kind=kind_phys), dimension(im,levs,ntrac), intent(in)  :: qgrs
@@ -497,6 +468,7 @@
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
 
+      integer                       :: i, k
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
@@ -505,6 +477,18 @@
       gu0(:,:)   = ugrs(:,:)   + dudt(:,:)   * dtp
       gv0(:,:)   = vgrs(:,:)   + dvdt(:,:)   * dtp
       gq0(:,:,:) = qgrs(:,:,:) + dqdt(:,:,:) * dtp
+      
+      if (imp_physics == imp_physics_fer_hires) then
+       do k=1,levs
+         do i=1,im
+           if(gq0(i,k,ntiw) > epsq) then
+             gq0(i,k,nqrimef) = max(1., gq0(i,k,nqrimef)/gq0(i,k,ntiw))
+           else
+             gq0(i,k,nqrimef) = 1.
+           end if
+         end do
+       end do
+      end if
 
     end subroutine GFS_suite_stateout_update_run
 
@@ -521,11 +505,9 @@
     subroutine GFS_suite_interstitial_3_finalize()
     end subroutine GFS_suite_interstitial_3_finalize
 
-#if 0
 !> \section arg_table_GFS_suite_interstitial_3_run Argument Table
 !! \htmlinclude GFS_suite_interstitial_3_run.html
 !!
-#endif
     subroutine GFS_suite_interstitial_3_run (im, levs, nn, cscnv,       &
                satmedmf, trans_trac, do_shoc, ltaerosol, ntrac, ntcw,   &
                ntiw, ntclamt, ntrw, ntsw, ntrnc, ntsnc, ntgl, ntgnc,    &
@@ -559,7 +541,7 @@
       real(kind=kind_phys), dimension(im, levs),      intent(inout) :: rhc, save_qc
       ! save_qi is not allocated for Zhao-Carr MP
       real(kind=kind_phys), dimension(:, :),          intent(inout) :: save_qi
-      real(kind=kind_phys), dimension(:, :),          intent(inout) :: save_tcp ! ONLY ALLOCATE FOR THOMPSON! TODO
+      real(kind=kind_phys), dimension(:, :),          intent(inout) :: save_tcp
       real(kind=kind_phys), dimension(im, levs, nn),  intent(inout) :: clw
 
       character(len=*), intent(out) :: errmsg
@@ -573,8 +555,9 @@
       !real(kind=kind_phys),parameter :: slope_mg = 0.02, slope_upmg = 0.04,  &
       !                   turnrhcrit = 0.900, turnrhcrit_upper = 0.150
       ! in the following inverse of slope_mg and slope_upmg are specified
-      real(kind=kind_phys),parameter :: slope_mg   = 50.0_kind_phys,   &
-                                        slope_upmg = 25.0_kind_phys
+      real(kind=kind_phys), parameter :: zero = 0.0_kind_phys, one = 1.0_kind_phys
+      real(kind=kind_phys), parameter :: slope_mg   = 50.0_kind_phys,   &
+                                         slope_upmg = 25.0_kind_phys
 
       ! Initialize CCPP error handling variables
       errmsg = ''
@@ -597,10 +580,10 @@
       endif ! end if_ras or cfscnv or samf
 
       if (ntcw > 0) then
-        if (imp_physics == imp_physics_mg .and. rhcpbl < 0.5) then ! compute rhc for GMAO macro physics cloud pdf
+        if (imp_physics == imp_physics_mg .and. rhcpbl < 0.5_kind_phys) then ! compute rhc for GMAO macro physics cloud pdf
           do i=1,im
-            tx1(i) = 1.0 / prsi(i,1)
-            tx2(i) = 1.0 - rhcmax*work1(i)-rhcbot*work2(i)
+            tx1(i) = one / prsi(i,1)
+            tx2(i) = one - rhcmax*work1(i)-rhcbot*work2(i)
 
             kk     = min(kinver(i), max(2,kpbl(i)))
             tx3(i) = prsi(i,kk)*tx1(i)
@@ -609,18 +592,18 @@
           do k = 1, levs
             do i = 1, im
               tem  = prsl(i,k) * tx1(i)
-              tem1 = min(max((tem-tx3(i))*slope_mg, -20.0), 20.0)
+              tem1 = min(max((tem-tx3(i))*slope_mg, -20.0_kind_phys), 20.0_kind_phys)
               ! Using rhcpbl and rhctop from the namelist instead of 0.3 and 0.2
               ! and rhcbot represents pbl top critical relative humidity
-              tem2 = min(max((tx4(i)-tem)*slope_upmg, -20.0), 20.0) ! Anning
+              tem2 = min(max((tx4(i)-tem)*slope_upmg, -20.0_kind_phys), 20.0_kind_phys) ! Anning
               if (islmsk(i) > 0) then
-                tem1 = 1.0 / (1.0+exp(tem1+tem1))
+                tem1 = one / (one+exp(tem1+tem1))
               else
-                tem1 = 2.0 / (1.0+exp(tem1+tem1))
+                tem1 = 2.0_kind_phys / (one+exp(tem1+tem1))
               endif
-              tem2 = 1.0 / (1.0+exp(tem2))
+              tem2 = one / (one+exp(tem2))
 
-              rhc(i,k) = min(rhcmax, max(0.7, 1.0-tx2(i)*tem1*tem2))
+              rhc(i,k) = min(rhcmax, max(0.7_kind_phys, one-tx2(i)*tem1*tem2))
             enddo
           enddo
         else
@@ -628,12 +611,12 @@
             do i=1,im
               kk = max(10,kpbl(i))
               if (k < kk) then
-                tem    = rhcbot - (rhcbot-rhcpbl) * (1.0-prslk(i,k)) / (1.0-prslk(i,kk))
+                tem    = rhcbot - (rhcbot-rhcpbl) * (one-prslk(i,k)) / (one-prslk(i,kk))
               else
                 tem    = rhcpbl - (rhcpbl-rhctop) * (prslk(i,kk)-prslk(i,k)) / prslk(i,kk)
               endif
               tem      = rhcmax * work1(i) + tem * work2(i)
-              rhc(i,k) = max(0.0, min(1.0,tem))
+              rhc(i,k) = max(zero, min(one,tem))
             enddo
           enddo
         endif
@@ -697,8 +680,9 @@
 !!
     subroutine GFS_suite_interstitial_4_run (im, levs, ltaerosol, cplchm, tracers_total, ntrac, ntcw, ntiw, ntclamt, &
       ntrw, ntsw, ntrnc, ntsnc, ntgl, ntgnc, ntlnc, ntinc, nn, imp_physics, imp_physics_gfdl, imp_physics_thompson,  &
-      imp_physics_zhao_carr, imp_physics_zhao_carr_pdf, dtf, save_qc, save_qi, con_pi,                               &
-      gq0, clw, prsl, save_tcp, con_rd, nwfa, spechum, dqdti, errmsg, errflg)
+      imp_physics_zhao_carr, imp_physics_zhao_carr_pdf, convert_dry_rho, dtf, save_qc, save_qi, con_pi, dtidx, dtend,&
+      index_of_process_conv_trans, gq0, clw, prsl, save_tcp, con_rd, con_eps, nwfa, spechum, dqdti, ldiag3d,         &
+      ntk, ntke, errmsg, errflg)
 
       use machine,               only: kind_phys
       use module_mp_thompson_make_number_concentrations, only: make_IceNumber, make_DropletNumber
@@ -711,31 +695,38 @@
         ntsw, ntrnc, ntsnc, ntgl, ntgnc, ntlnc, ntinc, nn, imp_physics, imp_physics_gfdl, imp_physics_thompson,           &
         imp_physics_zhao_carr, imp_physics_zhao_carr_pdf
 
-      logical,                                  intent(in) :: ltaerosol, cplchm
+      logical,                                  intent(in) :: ltaerosol, cplchm, convert_dry_rho
 
       real(kind=kind_phys),                     intent(in) :: con_pi, dtf
       real(kind=kind_phys), dimension(im,levs), intent(in) :: save_qc
       ! save_qi is not allocated for Zhao-Carr MP
       real(kind=kind_phys), dimension(:, :),    intent(in) :: save_qi
 
+      ! dtend and dtidx are only allocated if ldiag3d
+      logical, intent(in)                                     :: ldiag3d
+      real(kind=kind_phys), dimension(:,:,:),   intent(inout) :: dtend
+      integer,              dimension(:,:),     intent(in)    :: dtidx
+      integer,                                  intent(in)    :: index_of_process_conv_trans,ntk,ntke
+
       real(kind=kind_phys), dimension(im,levs,ntrac), intent(inout) :: gq0
       real(kind=kind_phys), dimension(im,levs,nn),    intent(inout) :: clw
       real(kind=kind_phys), dimension(im,levs),       intent(in) :: prsl
-      real(kind=kind_phys),                           intent(in) :: con_rd
+      real(kind=kind_phys),                           intent(in) :: con_rd, con_eps
       real(kind=kind_phys), dimension(:,:),           intent(in) :: nwfa, save_tcp
       real(kind=kind_phys), dimension(im,levs),       intent(in) :: spechum
 
       ! dqdti may not be allocated
       real(kind=kind_phys), dimension(:,:),           intent(inout) :: dqdti
 
+      real(kind=kind_phys), parameter :: zero = 0.0_kind_phys, one = 1.0_kind_phys
 
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
 
       ! local variables
-      integer :: i,k,n,tracers
+      integer :: i,k,n,tracers,idtend
 
-      real(kind=kind_phys), dimension(im,levs) :: rho_dryair
+      real(kind=kind_phys) :: rho, orho
       real(kind=kind_phys), dimension(im,levs) :: qv_mp !< kg kg-1 (dry mixing ratio)
       real(kind=kind_phys), dimension(im,levs) :: qc_mp !< kg kg-1 (dry mixing ratio)
       real(kind=kind_phys), dimension(im,levs) :: qi_mp !< kg kg-1 (dry mixing ratio)
@@ -745,6 +736,28 @@
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
+
+      if(ldiag3d) then
+         if(ntk>0 .and. ntk<=size(clw,3)) then
+            idtend=dtidx(100+ntke,index_of_process_conv_trans)
+            if(idtend>=1) then
+               dtend(:,:,idtend) = dtend(:,:,idtend) + clw(:,:,ntk)
+            endif
+         endif
+         if(ntclamt<=size(clw,3) .and. ntclamt>0) then
+            idtend=dtidx(100+ntclamt,index_of_process_conv_trans)
+            if(idtend>=1) then
+               dtend(:,:,idtend) = dtend(:,:,idtend) + clw(:,:,ntclamt)
+            endif
+         endif
+      endif
+
+      if(ldiag3d .and. ntk>0) then
+         idtend=dtidx(100+ntke,index_of_process_conv_trans)
+         if(idtend>=1) then
+            dtend(:,:,idtend) = dtend(:,:,idtend) + clw(:,:,ntk)
+         endif
+      endif
 
 !  --- update the tracers due to deep & shallow cumulus convective transport
 !           (except for suspended water and ice)
@@ -783,32 +796,55 @@
           enddo
 
           if (imp_physics == imp_physics_thompson .and. (ntlnc>0 .or. ntinc>0)) then
-             do k=1,levs
-               do i=1,im
-                 !> - Density of air in kg m-3
-                 rho_dryair(i,k) = prsl(i,k)/(con_rd*save_tcp(i,k))
-                 !> - Convert specific humidity to dry mixing ratio
-                 qv_mp(i,k) = spechum(i,k)/(1.0_kind_phys-spechum(i,k))
-                 if (ntlnc>0) then
-                   !> - Convert moist mixing ratio to dry mixing ratio
-                   qc_mp(i,k) = (clw(i,k,2)-save_qc(i,k))/(1.0_kind_phys-spechum(i,k))
-                   !> - Convert number concentration from moist to dry
-                   nc_mp(i,k) = gq0(i,k,ntlnc)/(1.0_kind_phys-spechum(i,k))
-                   nc_mp(i,k) = max(0.0, nc_mp(i,k) + make_DropletNumber(qc_mp(i,k) * rho_dryair(i,k), nwfa(i,k)) * (1.0/rho_dryair(i,k)))
-                   !> - Convert number concentrations from dry to moist
-                   gq0(i,k,ntlnc) = nc_mp(i,k)/(1.0_kind_phys+qv_mp(i,k))
-                 endif
-                 if (ntinc>0) then
-                   !> - Convert moist mixing ratio to dry mixing ratio
-                   qi_mp(i,k) = (clw(i,k,1)-save_qi(i,k))/(1.0_kind_phys-spechum(i,k))
-                   !> - Convert number concentration from moist to dry
-                   ni_mp(i,k) = gq0(i,k,ntinc)/(1.0_kind_phys-spechum(i,k)) 
-                   ni_mp(i,k) = max(0.0, ni_mp(i,k) + make_IceNumber(qi_mp(i,k) * rho_dryair(i,k), save_tcp(i,k)) * (1.0/rho_dryair(i,k)))
-                   !> - Convert number concentrations from dry to moist
-                   gq0(i,k,ntinc) = ni_mp(i,k)/(1.0_kind_phys+qv_mp(i,k))
-                 endif
-               enddo
-             enddo
+            if_convert_dry_rho: if (convert_dry_rho) then
+              do k=1,levs
+                do i=1,im
+                  !> - Convert specific humidity to dry mixing ratio
+                  qv_mp(i,k) = spechum(i,k) / (one-spechum(i,k))
+                  !> - Density of air in kg m-3 and inverse density
+                  rho = con_eps*prsl(i,k) / (con_rd*save_tcp(i,k)*(qv_mp(i,k)+con_eps))
+                  orho = one/rho
+                  if (ntlnc>0) then
+                    !> - Convert moist mixing ratio to dry mixing ratio
+                    qc_mp(i,k) = (clw(i,k,2)-save_qc(i,k)) / (one-spechum(i,k))
+                    !> - Convert number concentration from moist to dry
+                    nc_mp(i,k) = gq0(i,k,ntlnc) / (one-spechum(i,k))
+                    nc_mp(i,k) = max(zero, nc_mp(i,k) + make_DropletNumber(qc_mp(i,k) * rho, nwfa(i,k)*rho) * orho)
+                    !> - Convert number concentrations from dry to moist
+                    gq0(i,k,ntlnc) = nc_mp(i,k) / (one+qv_mp(i,k))
+                  endif
+                  if (ntinc>0) then
+                    !> - Convert moist mixing ratio to dry mixing ratio
+                    qi_mp(i,k) = (clw(i,k,1)-save_qi(i,k)) / (one-spechum(i,k))
+                    !> - Convert number concentration from moist to dry
+                    ni_mp(i,k) = gq0(i,k,ntinc) / (one-spechum(i,k)) 
+                    ni_mp(i,k) = max(zero, ni_mp(i,k) + make_IceNumber(qi_mp(i,k) * rho, save_tcp(i,k)) * orho)
+                    !> - Convert number concentrations from dry to moist
+                    gq0(i,k,ntinc) = ni_mp(i,k) / (one+qv_mp(i,k))
+                  endif
+                enddo
+              enddo
+            else
+              do k=1,levs
+                do i=1,im
+                  !> - Density of air in kg m-3 and inverse density
+                  rho = con_eps*prsl(i,k) / (con_rd*save_tcp(i,k)*(spechum(i,k)+con_eps))
+                  orho = one/rho
+                  if (ntlnc>0) then
+                    !> - Update cloud water mixing ratio
+                    qc_mp(i,k) = (clw(i,k,2)-save_qc(i,k))
+                    !> - Update cloud water number concentration
+                    gq0(i,k,ntlnc) = max(zero, gq0(i,k,ntlnc) + make_DropletNumber(qc_mp(i,k) * rho, nwfa(i,k)*rho) * orho)
+                  endif
+                  if (ntinc>0) then
+                    !> - Update cloud ice mixing ratio
+                    qi_mp(i,k) = (clw(i,k,1)-save_qi(i,k))
+                    !> - Update cloud ice number concentration
+                    gq0(i,k,ntinc) = max(zero, gq0(i,k,ntinc) + make_IceNumber(qi_mp(i,k) * rho, save_tcp(i,k)) * orho)
+                  endif
+                enddo
+              enddo
+            end if if_convert_dry_rho
           endif
 
         else
@@ -831,7 +867,7 @@
       if (cplchm) then
         do k=1,levs
           do i=1,im
-            dqdti(i,k) = dqdti(i,k) * (1.0 / dtf)
+            dqdti(i,k) = dqdti(i,k) * (one / dtf)
           enddo
         enddo
       endif

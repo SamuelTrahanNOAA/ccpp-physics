@@ -6,12 +6,8 @@
       module GFS_MP_generic_pre
       contains
 
-
-!! \section arg_table_GFS_MP_generic_pre_init Argument Table
-!!
-      subroutine GFS_MP_generic_pre_init
+      subroutine GFS_MP_generic_pre_init()
       end subroutine GFS_MP_generic_pre_init
-
 
 !> \section arg_table_GFS_MP_generic_pre_run Argument Table
 !! \htmlinclude GFS_MP_generic_pre_run.html
@@ -26,7 +22,7 @@
       real(kind=kind_phys), dimension(im, levs),        intent(in) :: gt0
       real(kind=kind_phys), dimension(im, levs, ntrac), intent(in) :: gq0
 
-      real(kind=kind_phys), dimension(im, levs),        intent(inout) :: save_t, save_qv
+      real(kind=kind_phys), dimension(im, levs),        intent(inout) :: save_t
       real(kind=kind_phys), dimension(im, levs, ntrac), intent(inout) :: save_q
 
       character(len=*), intent(out) :: errmsg
@@ -48,16 +44,15 @@
 
       if (ldiag3d .or. do_aw) then
         if(qdiag3d) then
-           do k=1,levs
-              do i=1,im
-                 ! Here, gq0(...,1) is used instead of gq0_water_vapor
-                 ! to be consistent with the GFS_MP_generic_post_run
-                 ! code.
-                 save_qv(i,k) = gq0(i,k,1)
+           do n=1,ntrac
+              do k=1,levs
+                 do i=1,im
+                    save_q(i,k,n) = gq0(i,k,n)
+                 enddo
               enddo
            enddo
-        endif
-        if(do_aw) then
+        else if(do_aw) then
+           ! if qdiag3d, all q are saved already
            save_q(1:im,:,1) = gq0(1:im,:,1)
            do n=ntcw,ntcw+nncl-1
               save_q(1:im,:,n) = gq0(1:im,:,n)
@@ -67,9 +62,7 @@
 
       end subroutine GFS_MP_generic_pre_run
 
-!> \section arg_table_GFS_MP_generic_pre_finalize Argument Table
-!!
-      subroutine GFS_MP_generic_pre_finalize
+      subroutine GFS_MP_generic_pre_finalize()
       end subroutine GFS_MP_generic_pre_finalize
 
       end module GFS_MP_generic_pre
@@ -80,9 +73,7 @@
       module GFS_MP_generic_post
       contains
 
-!! \section arg_table_GFS_MP_generic_post_init Argument Table
-!!
-      subroutine GFS_MP_generic_post_init
+      subroutine GFS_MP_generic_post_init()
       end subroutine GFS_MP_generic_post_init
 
 !>\defgroup gfs_calpreciptype GFS Precipitation Type Diagnostics Module
@@ -96,13 +87,15 @@
 !> \section gfs_mp_gen GFS MP Generic Post General Algorithm
 !> @{
       subroutine GFS_MP_generic_post_run(im, levs, kdt, nrcm, ncld, nncl, ntcw, ntrac, imp_physics, imp_physics_gfdl,     &
-        imp_physics_thompson, imp_physics_mg, imp_physics_fer_hires, cal_pre, lssav, ldiag3d, qdiag3d, cplflx, cplchm, con_g, dtf, frain, rainc, rain1,   &
-        rann, xlat, xlon, gt0, gq0, prsl, prsi, phii, tsfc, ice, snow, graupel, save_t, save_qv, rain0, ice0, snow0,      &
+        imp_physics_thompson, imp_physics_mg, imp_physics_fer_hires, cal_pre, cplflx, cplchm, con_g, dtf, frain, rainc,   &
+        rain1, rann, xlat, xlon, gt0, gq0, prsl, prsi, phii, tsfc, ice, snow, graupel, save_t, save_q, rain0, ice0, snow0,&
         graupel0, del, rain, domr_diag, domzr_diag, domip_diag, doms_diag, tprcp, srflag, sr, cnvprcp, totprcp, totice,   &
-        totsnw, totgrp, cnvprcpb, totprcpb, toticeb, totsnwb, totgrpb, dt3dt, dq3dt, rain_cpl, rainc_cpl, snow_cpl, pwat, &
-        do_sppt, ca_global, dtdtr, dtdtc, drain_cpl, dsnow_cpl, lsm, lsm_ruc, lsm_noahmp, raincprv, rainncprv, iceprv, snowprv,      &
-        graupelprv, draincprv, drainncprv, diceprv, dsnowprv, dgraupelprv, dtp, num_dfi_radar, fh_dfi_radar,              &
-        ix_dfi_radar, dfi_radar_tten, radar_tten_limits, dt3dt_dfi_radar, fhour, errmsg, errflg)
+        num_dfi_radar, fh_dfi_radar, ix_dfi_radar, dfi_radar_tten, radar_tten_limits, dt3dt_dfi_radar, fhour,             &
+        totsnw, totgrp, cnvprcpb, totprcpb, toticeb, totsnwb, totgrpb, rain_cpl, rainc_cpl, snow_cpl, pwat,               &
+        drain_cpl, dsnow_cpl, lsm, lsm_ruc, lsm_noahmp, raincprv, rainncprv, iceprv, snowprv,                             &
+        graupelprv, draincprv, drainncprv, diceprv, dsnowprv, dgraupelprv, dtp,                                           &
+        dtend, dtidx, index_of_temperature, index_of_process_mp,ldiag3d, qdiag3d, lssav,                                  &
+        errmsg, errflg)
 !
       use machine, only: kind_phys
 
@@ -111,18 +104,19 @@
       integer, intent(in) :: im, levs, kdt, nrcm, ncld, nncl, ntcw, ntrac
       integer, intent(in) :: imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_mg, imp_physics_fer_hires, num_dfi_radar
       logical, intent(in) :: cal_pre, lssav, ldiag3d, qdiag3d, cplflx, cplchm
+      integer, intent(in) :: index_of_temperature,index_of_process_mp
 
       real(kind=kind_phys),                           intent(in)    :: radar_tten_limits(2)
-      real(kind=kind_phys),                           intent(in)    :: dtf, frain, con_g, fh_dfi_radar(5), fhour
+      real(kind=kind_phys),                           intent(in)    :: fh_dfi_radar(5), fhour
       integer                                                       :: ix_dfi_radar(4)
-      real(kind=kind_phys), dimension(im),            intent(in)    :: rainc, rain1, xlat, xlon, tsfc
-      real(kind=kind_phys), dimension(im),            intent(inout) :: ice, snow, graupel
+      real(kind=kind_phys),                           intent(in)    :: dtf, frain, con_g
+      real(kind=kind_phys), dimension(im),            intent(in)    :: rain1, xlat, xlon, tsfc
+      real(kind=kind_phys), dimension(im),            intent(inout) :: ice, snow, graupel, rainc
       real(kind=kind_phys), dimension(im),            intent(in)    :: rain0, ice0, snow0, graupel0
       real(kind=kind_phys), dimension(im,nrcm),       intent(in)    :: rann
-      real(kind=kind_phys), dimension(im,levs),       intent(inout) :: gt0
-      real(kind=kind_phys), dimension(im,levs),       intent(in)    :: prsl, save_t, save_qv, del
+      real(kind=kind_phys), dimension(im,levs),       intent(in)    :: gt0, prsl, save_t, del
       real(kind=kind_phys), dimension(im,levs+1),     intent(in)    :: prsi, phii
-      real(kind=kind_phys), dimension(im,levs,ntrac), intent(in)    :: gq0
+      real(kind=kind_phys), dimension(im,levs,ntrac), intent(in)    :: gq0, save_q
 
       real(kind=kind_phys), dimension(:,:,:), pointer, intent(in)   :: dfi_radar_tten
 
@@ -132,13 +126,10 @@
                                                                  totprcpb, toticeb, totsnwb, totgrpb, rain_cpl, rainc_cpl,   &
                                                                  snow_cpl, pwat
 
-      real(kind=kind_phys), dimension(:,:),     intent(inout) :: dt3dt, dt3dt_dfi_radar ! only if ldiag3d
-      real(kind=kind_phys), dimension(:,:),     intent(inout) :: dq3dt ! only if ldiag3d and qdiag3d
+      real(kind=kind_phys), dimension(:,:,:),   intent(inout) :: dtend ! only if ldiag3d
+      integer,         dimension(:,:), intent(in)    :: dtidx
 
       ! Stochastic physics / surface perturbations
-      logical, intent(in) :: do_sppt, ca_global
-      real(kind=kind_phys), dimension(im,levs), intent(inout) :: dtdtr
-      real(kind=kind_phys), dimension(im,levs), intent(in)    :: dtdtc
       real(kind=kind_phys), dimension(im),      intent(inout) :: drain_cpl
       real(kind=kind_phys), dimension(im),      intent(inout) :: dsnow_cpl
 
@@ -162,16 +153,16 @@
       integer, intent(out) :: errflg
 
       ! DH* TODO: CLEANUP, all of these should be coming in through the argument list
-      real(kind=kind_phys), parameter :: con_p001= 0.001d0
-      real(kind=kind_phys), parameter :: con_day = 86400.0d0
-      real(kind=kind_phys), parameter :: rainmin = 1.0d-13
-      real(kind=kind_phys), parameter :: p850    = 85000.0d0
+      real(kind=kind_phys), parameter :: con_p001= 0.001_kind_phys
+      real(kind=kind_phys), parameter :: con_day = 86400.0_kind_phys
+      real(kind=kind_phys), parameter :: rainmin = 1.0e-13_kind_phys
+      real(kind=kind_phys), parameter :: p850    = 85000.0_kind_phys
       ! *DH
 
-      integer :: i, k, ic, itime
+      integer :: i, k, ic, itrac, idtend
 
-      real(kind=kind_phys), parameter :: zero = 0.0d0, one = 1.0d0
-      real(kind=kind_phys) :: crain, csnow, onebg, tem, total_precip, ttend
+      real(kind=kind_phys), parameter :: zero = 0.0_kind_phys, one = 1.0_kind_phys
+      real(kind=kind_phys) :: crain, csnow, onebg, tem, total_precip, tem1, tem2, ttend
       real(kind=kind_phys), dimension(im) :: domr, domzr, domip, doms, t850, work1
 
       ! Initialize CCPP error handling variables
@@ -179,7 +170,7 @@
       errflg = 0
 
       onebg = one/con_g
-
+      
       do i = 1, im
         rain(i) = rainc(i) + frain * rain1(i) ! time-step convective plus explicit
       enddo
@@ -193,7 +184,7 @@
       ! physics timestep, while Diag%{rain,rainc} and all totprecip etc
       ! are on the dynamics timestep. Confusing, but works if frain=1. *DH
       if (imp_physics == imp_physics_gfdl) then
-        tprcp   = max(0., rain)               ! clu: rain -> tprcp
+        tprcp   = max(zero, rain)               ! clu: rain -> tprcp
         !graupel = frain*graupel0
         !ice     = frain*ice0
         !snow    = frain*snow0
@@ -202,13 +193,13 @@
         snow    = snow0
       ! Do it right from the beginning for Thompson
       else if (imp_physics == imp_physics_thompson) then
-        tprcp   = max (0.,rainc + frain * rain1) ! time-step convective and explicit precip
+        tprcp   = max (zero, rainc + frain * rain1) ! time-step convective and explicit precip
         graupel = frain*graupel0              ! time-step graupel
         ice     = frain*ice0                  ! time-step ice
         snow    = frain*snow0                 ! time-step snow
 
       else if (imp_physics == imp_physics_fer_hires) then
-        tprcp   = max (0.,rain) ! time-step convective and explicit precip
+        tprcp   = max (zero, rain) ! time-step convective and explicit precip
         ice     = frain*rain1*sr                  ! time-step ice
       end if
       
@@ -222,7 +213,7 @@
         !Note (GJF): Precipitation LWE thicknesses are multiplied by the frain factor, and are thus on the dynamics time step, but the conversion as written
         !            (with dtp in the denominator) assumes the rate is calculated on the physics time step. This only works as expected when dtf=dtp (i.e. when frain=1).
         if (lsm == lsm_noahmp) then
-          tem = 1.0 / (dtp*con_p001) !GJF: This conversion was taken from GFS_physics_driver.F90, but should denominator also have the frain factor?
+          tem = one / (dtp*con_p001) !GJF: This conversion was taken from GFS_physics_driver.F90, but should denominator also have the frain factor?
           draincprv(:)   = tem * raincprv(:)
           drainncprv(:)  = tem * rainncprv(:)
           dsnowprv(:)    = tem * snowprv(:)
@@ -243,11 +234,11 @@
 
         if (imp_physics /= imp_physics_gfdl .and. imp_physics /= imp_physics_thompson) then
           do i=1,im
-            tprcp(i)  = max(0.0, rain(i) )
-            if(doms(i) > 0.0 .or. domip(i) > 0.0) then
-              srflag(i) = 1.
+            tprcp(i)  = max(zero, rain(i) )
+            if(doms(i) > zero .or. domip(i) > zero) then
+              srflag(i) = one
             else
-              srflag(i) = 0.
+              srflag(i) = zero
             end if
           enddo
         endif
@@ -269,6 +260,7 @@
          exit
       enddo
       if_radar: if(itime<=num_dfi_radar) then
+         ! FIXME: THE DT3DT STUFF HERE IS WRONG
          radar_k: do k=3,levs-2
             radar_i: do i=1,im
                ! if(dfi_radar_tten(i,k,itime)>-19) then
@@ -292,42 +284,6 @@
          enddo radar_k
       endif if_radar
 
-      if (lssav) then
-!        if (Model%me == 0) print *,'in phys drive, kdt=',Model%kdt, &
-!          'totprcpb=', Diag%totprcpb(1),'totprcp=',Diag%totprcp(1), &
-!          'rain=',Diag%rain(1)
-        do i=1,im
-          cnvprcp (i) = cnvprcp (i) + rainc(i)
-          totprcp (i) = totprcp (i) + rain(i)
-          totice  (i) = totice  (i) + ice(i)
-          totsnw  (i) = totsnw  (i) + snow(i)
-          totgrp  (i) = totgrp  (i) + graupel(i)
-
-          cnvprcpb(i) = cnvprcpb(i) + rainc(i)
-          totprcpb(i) = totprcpb(i) + rain(i)
-          toticeb (i) = toticeb (i) + ice(i)
-          totsnwb (i) = totsnwb (i) + snow(i)
-          totgrpb (i) = totgrpb (i) + graupel(i)
-        enddo
-
-        if (ldiag3d) then
-          if(itime>num_dfi_radar) then
-             do k=1,levs
-                do i=1,im
-                   dt3dt(i,k) = dt3dt(i,k) + (gt0(i,k)-save_t(i,k)) * frain
-                enddo
-             enddo
-          endif
-          if (qdiag3d) then
-             do k=1,levs
-                do i=1,im
-                   dq3dt(i,k) = dq3dt(i,k) + (gq0(i,k,1)-save_qv(i,k)) * frain
-                enddo
-             enddo
-          endif
-        endif
-      endif
-
       t850(1:im) = gt0(1:im,1)
 
       do k = 1, levs-1
@@ -347,19 +303,21 @@
 !! and determine explicit rain/snow by snow/ice/graupel coming out directly from MP
 !! and convective rainfall from the cumulus scheme if the surface temperature is below
 !! \f$0^oC\f$.
+
       if (imp_physics == imp_physics_gfdl .or. imp_physics == imp_physics_thompson) then
+
 ! determine convective rain/snow by surface temperature
 ! determine large-scale rain/snow by rain/snow coming out directly from MP
        
         if (lsm /= lsm_ruc) then
           do i = 1, im
             !tprcp(i)  = max(0.0, rain(i) )! clu: rain -> tprcp ! DH now lines 245-250
-            srflag(i) = 0.                     ! clu: default srflag as 'rain' (i.e. 0)
-            if (tsfc(i) >= 273.15) then
+            srflag(i) = zero                     ! clu: default srflag as 'rain' (i.e. 0)
+            if (tsfc(i) >= 273.15_kind_phys) then
               crain = rainc(i)
-              csnow = 0.0
+              csnow = zero
             else
-              crain = 0.0
+              crain = zero
               csnow = rainc(i)
             endif
 !            if (snow0(i,1)+ice0(i,1)+graupel0(i,1)+csnow > rain0(i,1)+crain) then
@@ -379,30 +337,76 @@
         endif ! lsm==lsm_ruc
       elseif( .not. cal_pre) then
         if (imp_physics == imp_physics_mg) then          ! MG microphysics
-          tem = con_day / (dtp * con_p001)               ! mm / day
           do i=1,im
-            tprcp(i)  = max(0.0, rain(i) )     ! clu: rain -> tprcp
-            if (rain(i)*tem > rainmin) then
-              srflag(i) = max(zero, min(one, (rain(i)-rainc(i))*sr(i)/rain(i)))
+            if (rain(i) > rainmin) then
+              tem1 = max(zero, (rain(i)-rainc(i))) * sr(i)
+              tem2 = one / rain(i)
+              if (t850(i) > 273.16_kind_phys) then
+                srflag(i) = max(zero, min(one, tem1*tem2))
+              else
+                srflag(i) = max(zero, min(one, (tem1+rainc(i))*tem2))
+              endif
             else
-              srflag(i) = 0.0
+              srflag(i) = zero
+              rain(i)   = zero
+              rainc(i)  = zero
             endif
+            tprcp(i)  = max(zero, rain(i))
           enddo
-        else
+        else                                             ! not GFDL or MG or Thompson microphysics
           do i = 1, im
-            tprcp(i)  = max(0.0, rain(i) )     ! clu: rain -> tprcp
-            srflag(i) = 0.0                    ! clu: default srflag as 'rain' (i.e. 0)
-            if (t850(i) <= 273.16) then
-              srflag(i) = 1.0                  ! clu: set srflag to 'snow' (i.e. 1)
-            endif
+            tprcp(i)  = max(zero, rain(i))
+            srflag(i) = sr(i)
           enddo
         endif
       endif
 
+      if_save_fields: if (lssav) then
+!        if (Model%me == 0) print *,'in phys drive, kdt=',Model%kdt, &
+!          'totprcpb=', Diag%totprcpb(1),'totprcp=',Diag%totprcp(1), &
+!          'rain=',Diag%rain(1)
+        do i=1,im
+          cnvprcp (i) = cnvprcp (i) + rainc(i)
+          totprcp (i) = totprcp (i) + rain(i)
+          totice  (i) = totice  (i) + ice(i)
+          totsnw  (i) = totsnw  (i) + snow(i)
+          totgrp  (i) = totgrp  (i) + graupel(i)
+
+          cnvprcpb(i) = cnvprcpb(i) + rainc(i)
+          totprcpb(i) = totprcpb(i) + rain(i)
+          toticeb (i) = toticeb (i) + ice(i)
+          totsnwb (i) = totsnwb (i) + snow(i)
+          totgrpb (i) = totgrpb (i) + graupel(i)
+        enddo
+
+        if_tendency_diagnostics: if (ldiag3d) then
+           idtend = dtidx(index_of_temperature,index_of_process_mp)
+           if(idtend>=1) then
+              do k=1,levs
+                 do i=1,im
+                    dtend(i,k,idtend) = dtend(i,k,idtend) + (gt0(i,k)-save_t(i,k)) * frain
+                 enddo
+              enddo
+           endif
+           if_tracer_diagnostics: if (qdiag3d) then
+              dtend_q: do itrac=1,ntrac
+                 idtend = dtidx(itrac+100,index_of_process_mp)
+                 if(idtend>=1) then
+                    do k=1,levs
+                       do i=1,im
+                          dtend(i,k,idtend) = dtend(i,k,idtend) + (gq0(i,k,itrac)-save_q(i,k,itrac)) * frain
+                       enddo
+                    enddo
+                 endif
+              enddo dtend_q
+           endif if_tracer_diagnostics
+        endif if_tendency_diagnostics
+      endif if_save_fields
+
       if (cplflx .or. cplchm) then
         do i = 1, im
-          drain_cpl(i) = rain(i) * (one-srflag(i))
-          dsnow_cpl(i) = rain(i) * srflag(i)
+          dsnow_cpl(i)= max(zero, rain(i) * srflag(i))
+          drain_cpl(i)= max(zero, rain(i) - dsnow_cpl(i))
           rain_cpl(i) = rain_cpl(i) + drain_cpl(i)
           snow_cpl(i) = snow_cpl(i) + dsnow_cpl(i)
         enddo
@@ -414,10 +418,10 @@
         enddo
       endif
 
-      pwat(:) = 0.0
+      pwat(:) = zero
       do k = 1, levs
         do i=1, im
-          work1(i) = 0.0
+          work1(i) = zero
         enddo
         if (ncld > 0) then
           do ic = ntcw, ntcw+nncl-1
@@ -434,17 +438,11 @@
         pwat(i) = pwat(i) * onebg
       enddo
 
-      ! Stochastic physics / surface perturbations
-      if (do_sppt .or. ca_global) then
-!--- radiation heating rate
-        dtdtr(1:im,:) = dtdtr(1:im,:) + dtdtc(1:im,:)*dtf
-      endif
 
-    end subroutine GFS_MP_generic_post_run
+      end subroutine GFS_MP_generic_post_run
 !> @}
 
-!> \section arg_table_GFS_MP_generic_post_finalize Argument Table
-!!
-      subroutine GFS_MP_generic_post_finalize
+      subroutine GFS_MP_generic_post_finalize()
       end subroutine GFS_MP_generic_post_finalize
+
       end module GFS_MP_generic_post

@@ -40,7 +40,10 @@
      &  dusfc,dvsfc,dtsfc,dqsfc,                    &
      &  dkt,xkzm_m, xkzm_h,xkzm_s, gamt,gamq,       &
      &  con_cp,con_g,con_rd,                        &
-     &  me, lprnt, errmsg, errflg )
+     &  me, lprnt, gen_tend, ldiag3d, dtend, dtidx, &
+     &  index_of_temperature, index_of_x_wind,      &
+     &  index_of_y_wind, index_of_process_pbl,      &
+     &  ntqv, errmsg, errflg )
 
 !
 
@@ -75,11 +78,16 @@
       character(len=*), intent(out) :: errmsg
       integer, intent(out) :: errflg
 
+      real(kind=kind_phys), intent(inout), optional :: dtend(:,:,:)
+      integer, intent(in) :: dtidx(:,:)
+      integer, intent(in) :: index_of_temperature, index_of_x_wind, &
+     &                       index_of_y_wind, index_of_process_pbl, ntqv
+
 !MYJ-1D
       integer,intent(in) :: im, levs
       integer,intent(in) :: kdt, me
       integer,intent(in) :: ntrac,ntke,ntcw,ntiw,ntrw,ntsw,ntgl
-      logical,intent(in) :: restart,do_myjsfc,lprnt
+      logical,intent(in) :: restart,do_myjsfc,lprnt,ldiag3d,gen_tend
       real(kind=kind_phys),intent(in) :: con_cp, con_g, con_rd
       real(kind=kind_phys),intent(in) :: dt_phs, xkzm_m, xkzm_h, xkzm_s
 
@@ -105,8 +113,6 @@
               phii, prsi
       real(kind=kind_phys),dimension(im,levs),intent(in) ::    &
      &        ugrs, vgrs, tgrs, prsl
-!      real(kind=kind_phys),dimension(im,levs),intent(inout) :: &
-!             dudt, dvdt, dtdt, dkt
       real(kind=kind_phys),dimension(im,levs),intent(inout) :: &
              dudt, dvdt, dtdt
       real(kind=kind_phys),dimension(im,levs-1),intent(out) :: &
@@ -154,6 +160,7 @@
 !      real(kind=kind_phys), dimension(im,levs,ntrac) ::    &
 !     &        qgrs_myj
       real(kind=kind_phys),dimension(im,levs) :: dkt2
+      integer :: uidx, vidx, tidx, qidx
 
       ! Initialize CCPP error handling variables
       errmsg = ''
@@ -576,6 +583,21 @@
             dqdt(i,k,ntcw)=dqdt(i,k,ntcw)+rqcblten(i,k1)
          end do
       end do
+      if (ldiag3d .and. .not. gen_tend) then
+        uidx = dtidx(index_of_x_wind,index_of_process_pbl)
+        vidx = dtidx(index_of_y_wind,index_of_process_pbl)
+        tidx = dtidx(index_of_temperature,index_of_process_pbl)
+        qidx = dtidx(ntqv+100,index_of_process_pbl)
+        ! NOTE: The code that was here before was wrong. It replaced the
+        ! cumulative value with the instantaneous value.
+        do k=1,levs
+           k1=levs+1-k
+           if(uidx>=1) dtend(:,k,uidx)=dtend(:,k,uidx)+rublten(:,k1)*dt_phs
+           if(vidx>=1) dtend(:,k,vidx)=dtend(:,k,vidx)+rvblten(:,k1)*dt_phs
+           if(tidx>=1) dtend(:,k,tidx)=dtend(:,k,tidx)+rthblten(:,k1)*exner(:,k1)*dt_phs
+           if(qidx>=1) dtend(:,k,qidx)=dtend(:,k,qidx)+rqvblten(:,k1)*dt_phs
+        end do
+      end if
 
       if (lprnt1) then
 
