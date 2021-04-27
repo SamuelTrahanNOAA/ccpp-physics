@@ -12,7 +12,8 @@
 !> \section arg_table_GFS_MP_generic_pre_run Argument Table
 !! \htmlinclude GFS_MP_generic_pre_run.html
 !!
-      subroutine GFS_MP_generic_pre_run(im, levs, ldiag3d, qdiag3d, do_aw, ntcw, nncl, ntrac, gt0, gq0, save_t, save_qv, save_q, num_dfi_radar, errmsg, errflg)
+      subroutine GFS_MP_generic_pre_run(im, levs, ldiag3d, qdiag3d, do_aw, ntcw, nncl, ntrac, gt0, gq0, &
+           save_t, save_qv, save_q, num_dfi_radar, errmsg, errflg)
 !
       use machine,               only: kind_phys
 
@@ -94,7 +95,7 @@
         totsnw, totgrp, cnvprcpb, totprcpb, toticeb, totsnwb, totgrpb, rain_cpl, rainc_cpl, snow_cpl, pwat,               &
         drain_cpl, dsnow_cpl, lsm, lsm_ruc, lsm_noahmp, raincprv, rainncprv, iceprv, snowprv,                             &
         graupelprv, draincprv, drainncprv, diceprv, dsnowprv, dgraupelprv, dtp,                                           &
-        dtend, dtidx, index_of_temperature, index_of_process_mp,ldiag3d, qdiag3d, lssav,                                  &
+        dtend, dtidx, index_of_temperature, index_of_process_mp, index_of_process_dfi_radar, ldiag3d, qdiag3d, lssav,     &
         errmsg, errflg)
 !
       use machine, only: kind_phys
@@ -104,7 +105,7 @@
       integer, intent(in) :: im, levs, kdt, nrcm, ncld, nncl, ntcw, ntrac
       integer, intent(in) :: imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_mg, imp_physics_fer_hires, num_dfi_radar
       logical, intent(in) :: cal_pre, lssav, ldiag3d, qdiag3d, cplflx, cplchm
-      integer, intent(in) :: index_of_temperature,index_of_process_mp
+      integer, intent(in) :: index_of_temperature,index_of_process_mp,index_of_process_dfi_radar
 
       real(kind=kind_phys),                           intent(in)    :: radar_tten_limits(2)
       real(kind=kind_phys),                           intent(in)    :: fh_dfi_radar(5), fhour
@@ -274,14 +275,38 @@
                  ! add radar temp tendency
                  ! there is radar coverage
                  gt0(i,k) = save_t(i,k) + ttend*dtp
-                 if(ldiag3d) then
-                    dt3dt_dfi_radar(i,k) = dt3dt_dfi_radar(i,k) + (gt0(i,k)-save_t(i,k)) * frain
-                 endif
-              elseif(ldiag3d) then
-                 dt3dt(i,k) = dt3dt(i,k) + (gt0(i,k)-save_t(i,k)) * frain
               endif if_active
             enddo radar_i
          enddo radar_k
+
+         if(ldiag3d) then
+            ! Split temperature tendencies between MP and DFI, based
+            ! on which one affected each gridpoint.
+            idtend = dtidx(index_of_temperature,index_of_process_dfi_radar)
+            if(idtend>1) then
+               do k=3,levs-2
+                  do i=1,im
+                     if (dfi_radar_tten(i,k,itime)>-19) then
+                        dtend(i,k,idtend) = dtend(i,k,idtend) + (gt0(i,k)-save_t(i,k))*frain
+                     endif
+                  enddo
+               enddo
+            endif
+            idtend = dtidx(index_of_temperature,index_of_process_mp)
+            if(idtend>1) then
+               dtend(:,1:2,idtend) = dtend(:,1:2,idtend) + (gt0(:,1:2)-save_t(:,1:2))*frain
+               do k=3,levs-2
+                  do i=1,im
+                     ! Temperature tendencies are from MP iff DFI was not applied.
+                     if (.not. (dfi_radar_tten(i,k,itime)>-19)) then
+                        dtend(i,k,idtend) = dtend(i,k,idtend) + (gt0(i,k)-save_t(i,k))*frain
+                     endif
+                  enddo
+               enddo
+               dtend(:,levs-1:levs,idtend) = dtend(:,levs-1:levs,idtend) + &
+                    (gt0(:,levs-1:levs)-save_t(:,levs-1:levs))*frain
+            endif
+         endif
       endif if_radar
 
       t850(1:im) = gt0(1:im,1)
@@ -380,13 +405,17 @@
         enddo
 
         if_tendency_diagnostics: if (ldiag3d) then
-           idtend = dtidx(index_of_temperature,index_of_process_mp)
-           if(idtend>=1) then
-              do k=1,levs
-                 do i=1,im
-                    dtend(i,k,idtend) = dtend(i,k,idtend) + (gt0(i,k)-save_t(i,k)) * frain
+           if(itime<=num_dfi_radar) then
+              ! Code that handles DFI radar already incremented dtend MP temperature tendency.
+           else
+              idtend = dtidx(index_of_temperature,index_of_process_mp)
+              if(idtend>=1) then
+                 do k=1,levs
+                    do i=1,im
+                       dtend(i,k,idtend) = dtend(i,k,idtend) + (gt0(i,k)-save_t(i,k)) * frain
+                    enddo
                  enddo
-              enddo
+              endif
            endif
            if_tracer_diagnostics: if (qdiag3d) then
               dtend_q: do itrac=1,ntrac
