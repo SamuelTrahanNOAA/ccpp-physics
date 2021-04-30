@@ -33,7 +33,10 @@
                     landmask,heat,evap,wspd,br,                                &
                     g,rd,cp,rv,ep1,ep2,xlv,                                    &
                     dusfc,dvsfc,dtsfc,dqsfc,                                   &
-                    dt,kpbl1d,u10,v10,errmsg,errflg   )
+                    dt,kpbl1d,u10,v10,lssav,ldiag3d,qdiag3d,                   &
+                    flag_for_pbl_generic_tend,ntoz,ntqv,dtend,dtidx,           &
+                    index_of_temperature,index_of_x_wind,index_of_y_wind,      &
+                    index_of_process_pbl,errmsg,errflg   )
 
    use machine , only : kind_phys
 !
@@ -59,7 +62,7 @@
 !
 !-------------------------------------------------------------------------------------
 !  input variables
-   integer,  intent(in   )   ::     im,km,ntrac,ndiff,ntcw,ntiw
+   integer,  intent(in   )   ::     im,km,ntrac,ndiff,ntcw,ntiw,ntoz
    real(kind=kind_phys),     intent(in   )   ::     g,cp,rd,rv,ep1,ep2,xlv,dt
 
    real(kind=kind_phys),     dimension( im,km ),                                    &
@@ -76,6 +79,8 @@
                                                                    u10,v10,xmu
    integer,  dimension(im)                                                         ,&
              intent(in   )   ::                                      landmask
+   logical,  intent(in   )   :: lssav, ldiag3d, qdiag3d,                            &
+                                flag_for_pbl_generic_tend
 !
 !----------------------------------------------------------------------------------
 ! input/output variables
@@ -84,6 +89,9 @@
              intent(inout)   ::                                utnp,vtnp,ttnp
    real(kind=kind_phys),     dimension( im,km,ntrac )                             , &
              intent(inout)   ::                                          qtnp
+   real(kind=kind_phys), optional, intent(inout) :: dtend(:,:,:)
+   integer, intent(in) :: dtidx(:,:), ntqv, index_of_temperature,                  &
+        index_of_x_wind, index_of_y_wind, index_of_process_pbl
 !
 !---------------------------------------------------------------------------------
 ! output variables
@@ -189,6 +197,7 @@
                dsdzu,dsdzv,wm3,dthx,dqx,wspd10,ross,tem1,dsig,tvcon,conpr,     &
                prfac,prfac2,phim8z,radsum,tmp1,templ,rvls,temps,ent_eff,    &
                rcldb,bruptmp,radflux
+   integer                 ::  idtend
 !
 !-------------------------------------------------------------------------------
 !
@@ -847,6 +856,12 @@
        dtsfc(i) = dtsfc(i)+ttend*cont*del(i,k)
      enddo
    enddo
+   if(lssav .and. ldiag3d .and. .not. flag_for_pbl_generic_tend) then
+     idtend = dtidx(index_of_temperature,index_of_process_pbl)
+     if(idtend>=1) then
+       dtend(:,:,idtend) = dtend(:,:,idtend) + dtstep*(f1-thx+300.)*rdt*pi2d
+     endif
+   endif
 !
 !     compute tridiagonal matrix elements for moisture, clouds, and gases
 !
@@ -955,6 +970,12 @@
        dqsfc(i) = dqsfc(i)+qtend*conq*del(i,k)
      enddo
    enddo
+   if(lssav .and. ldiag3d .and. qdiag3d .and. .not. flag_for_pbl_generic_tend) then
+     idtend = dtidx(ntqv+100,index_of_process_pbl)
+     if(idtend>=1) then
+       dtend(:,:,idtend) = dtend(:,:,idtend) + dtstep*(f3(:,:,1)-qx(:,:,1))*rdt
+     endif
+   endif
 !
    if(ndiff.ge.2) then
      do ic = 2,ndiff
@@ -965,6 +986,13 @@
          enddo
        enddo
      enddo
+     if(lssav .and. ldiag3d .and. ntoz>0 .and. qdiag3d .and.         &
+  &               .not. flag_for_pbl_generic_tend) then
+       idtend = dtidx(100+ntoz,index_of_process_pbl)
+       if(idtend>=1) then
+         dtend(:,:,idtend) = dtend(:,:,idtend) + f3(:,:,ntoz)-qx(:,:,ntoz)
+       endif
+     endif
    endif
 !
 !     compute tridiagonal matrix elements for momentum
@@ -1046,6 +1074,17 @@
        dvsfc(i) = dvsfc(i) + vtend*conwrc*del(i,k)
      enddo
    enddo
+   if(lssav .and. ldiag3d .and. .not. flag_for_pbl_generic_tend) then
+     idtend = dtidx(index_of_x_wind,index_of_process_pbl)
+     if(idtend>=1) then
+       dtend(:,:,idtend) = dtend(:,:,idtend) + dtstep*(f1-ux)*rdt
+     endif
+
+     idtend = dtidx(index_of_y_wind,index_of_process_pbl)
+     if(idtend>=1) then
+       dtend(:,:,idtend) = dtend(:,:,idtend) + dtstep*(f2-vx)*rdt
+     endif
+   endif
 !
 !---- end of vertical diffusion
 !
