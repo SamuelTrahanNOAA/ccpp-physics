@@ -2947,6 +2947,7 @@ CONTAINS
        khdz(k)  = rhoz(k)*dfh(k)
        kmdz(k)  = rhoz(k)*dfm(k)
     ENDDO
+    rhoz(kte+1)=rhoz(kte)
     khdz(kte+1)=rhoz(kte+1)*dfh(kte)
     kmdz(kte+1)=rhoz(kte+1)*dfm(kte)
 
@@ -3132,7 +3133,7 @@ CONTAINS
            &    0.5*dtz(k)*(s_aw(k)-s_aw(k+1))
        c(k)=  -dtz(k)*khdz(k+1)*rhoinv(k) - 0.5*dtz(k)*s_aw(k+1)
        d(k)=thl(k) + tcd(k)*delt + dtz(k)*(s_awthl(k)-s_awthl(k+1)) + &
-          &       + diss_heat(k)*delt*dheat_opt + &
+          &         diss_heat(k)*delt*dheat_opt + &
           &         sub_thl(k)*delt + det_thl(k)*delt
     ENDDO
 
