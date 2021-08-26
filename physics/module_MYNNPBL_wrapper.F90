@@ -1,10 +1,11 @@
+#define RRFS_smoke
 !> \file module_MYNNPBL_wrapper.F90
 !!  This file contains all of the code related to running the MYNN 
 !! eddy-diffusivity mass-flux scheme. 
 
 !>\ingroup gsd_mynn_edmf
 !> The following references best describe the code within
-!!    Olson et al. (2018, NOAA Technical Memorandum)
+!!    Olson et al. (2019, NOAA Technical Memorandum)
 !!    Nakanishi and Niino (2009 ) \cite NAKANISHI_2009
       MODULE mynnedmf_wrapper
 
@@ -51,6 +52,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &  qgrs_ozone,                     &
      &  qgrs_water_aer_num_conc,        &
      &  qgrs_ice_aer_num_conc,          &
+     &  qgrs_smoke_num_conc,            &
      &  prsl,exner,                     &
      &  slmsk,tsurf,qsfc,ps,            &
      &  ust,ch,hflx,qflx,wspd,rb,       &
@@ -85,11 +87,11 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &  flag_for_pbl_generic_tend,                         &
      &  du3dt_PBL, du3dt_OGWD, dv3dt_PBL, dv3dt_OGWD,      &
      &  do3dt_PBL, dq3dt_PBL, dt3dt_PBL,                   &
-     &  htrsw, htrlw, xmu,                                 &
+     &  htrsw, htrlw,                                      &
      &  grav_settling, bl_mynn_tkebudget, bl_mynn_tkeadvect, &
      &  bl_mynn_cloudpdf, bl_mynn_mixlength,               &
      &  bl_mynn_edmf, bl_mynn_edmf_mom, bl_mynn_edmf_tke,  &
-     &  bl_mynn_edmf_part, bl_mynn_cloudmix, bl_mynn_mixqt,&
+     &  bl_mynn_cloudmix, bl_mynn_mixqt,                   &
      &  bl_mynn_output,                                    &
      &  icloud_bl, do_mynnsfclay,                          &
      &  imp_physics, imp_physics_gfdl,                     &
@@ -200,7 +202,6 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &       bl_mynn_edmf,                                  &
      &       bl_mynn_edmf_mom,                              &
      &       bl_mynn_edmf_tke,                              &
-     &       bl_mynn_edmf_part,                             &
      &       bl_mynn_cloudmix,                              &
      &       bl_mynn_mixqt,                                 &
      &       bl_mynn_tkebudget,                             &
@@ -236,7 +237,8 @@ SUBROUTINE mynnedmf_wrapper_run(        &
       REAL(kind=kind_phys) :: tem
 
 !MYNN-3D
-      real(kind=kind_phys), dimension(im,levs+1), intent(in) :: phii
+      real(kind=kind_phys), dimension(im,levs+1), intent(in)    ::       &
+     &        phii
       real(kind=kind_phys), dimension(im,levs  ), intent(inout) ::       &
      &        dtdt, dudt, dvdt,                                          &
      &        dqdt_water_vapor, dqdt_liquid_cloud, dqdt_ice_cloud,       &
@@ -261,12 +263,13 @@ SUBROUTINE mynnedmf_wrapper_run(        &
     &        qgrs_ozone,                                                 &
     &        qgrs_water_aer_num_conc,                                    &
     &        qgrs_ice_aer_num_conc
+     real(kind=kind_phys), dimension(im,levs), intent(inout) ::          &
+             qgrs_smoke_num_conc
      real(kind=kind_phys), dimension(im,levs), intent(out) ::            &
     &        Tsq, Qsq, Cov, exch_h, exch_m
      real(kind=kind_phys), dimension(:,:), intent(inout) ::              &
     &        du3dt_PBL, du3dt_OGWD, dv3dt_PBL, dv3dt_OGWD,               &
     &        do3dt_PBL, dq3dt_PBL, dt3dt_PBL
-    real(kind=kind_phys), dimension(im), intent(in) :: xmu
     real(kind=kind_phys), dimension(im, levs), intent(in) :: htrsw, htrlw
      !LOCAL
       real(kind=kind_phys), dimension(im,levs) ::                        &
@@ -280,7 +283,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
 
 !MYNN-CHEM arrays
       real(kind=kind_phys), dimension(im,nchem) :: chem3d
-      real(kind=kind_phys), dimension(im,ndvel) :: vd3d
+      real(kind=kind_phys), dimension(im,ndvel) :: vd3d,vd
       REAL(kind=kind_phys), DIMENSION( levs, nchem ) :: chem1
       REAL(kind=kind_phys), DIMENSION( levs+1, nchem ) :: s_awchem1
       REAL(kind=kind_phys), DIMENSION( ndvel ) :: vd1
@@ -288,12 +291,10 @@ SUBROUTINE mynnedmf_wrapper_run(        &
 !MYNN-2D
       real(kind=kind_phys), dimension(im), intent(in) ::                 &
      &        dx,zorl,slmsk,tsurf,qsfc,ps,                               &
-     &        hflx,qflx,ust,wspd,rb
-
-      real(kind=kind_phys), dimension(:), intent(in) ::                  &
-     &        dusfc_cice,dvsfc_cice,dtsfc_cice,dqsfc_cice,recmol
+     &        hflx,qflx,ust,wspd,rb,recmol
 
       real(kind=kind_phys), dimension(im), intent(in) ::                 &
+     &        dusfc_cice,dvsfc_cice,dtsfc_cice,dqsfc_cice,               &
      &        stress_ocn,hflx_ocn,qflx_ocn,                              &
      &        oceanfrac,fice
 
@@ -321,6 +322,9 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &        uoce,voce,vdfg,znt,ts
 
       real, dimension(im) :: dusfci1,dvsfci1,dtsfci1,dqsfci1
+      REAL, DIMENSION(im) ::FRP_MEAN,EMIS_ANT_NO
+      LOGICAL, PARAMETER :: mynn_chem_vertmx = .true.
+      LOGICAL, PARAMETER :: enh_vermix = .true.
 
       ! Initialize CCPP error handling variables
       errmsg = ''
@@ -342,6 +346,10 @@ SUBROUTINE mynnedmf_wrapper_run(        &
          initflag=0
          !print*,"in MYNN, initflag=",initflag
       endif
+
+      FRP_MEAN = 0.
+      EMIS_ANT_NO = 0.
+      vd = 0. ! hli for chem dry deposition, 0 temperally
 
   ! Assign variables for each microphysics scheme
         if (imp_physics == imp_physics_wsm6) then
@@ -539,11 +547,6 @@ SUBROUTINE mynnedmf_wrapper_run(        &
            else
              rmol(i)=ABS(rb(i))*1./(dz(i,1)*0.5)
            endif
-           !if (rb(i) .ge. 0.)then
-           !  rmol(i)=rb(i)*8./(dz(i,1)*0.5)
-           !else
-           !  rmol(i)=MAX(rb(i)*5.,-10.)/(dz(i,1)*0.5)
-           !endif
          endif
          ts(i)=tsurf(i)/exner(i,1)  !theta
 !        qsfc(i)=qss(i)
@@ -596,7 +599,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
          print*,"bl_mynn_tkebudget=",bl_mynn_tkebudget," bl_mynn_tkeadvect=",bl_mynn_tkeadvect
          print*,"bl_mynn_cloudpdf=",bl_mynn_cloudpdf," bl_mynn_mixlength=",bl_mynn_mixlength
          print*,"bl_mynn_edmf=",bl_mynn_edmf," bl_mynn_edmf_mom=",bl_mynn_edmf_mom
-         print*,"bl_mynn_edmf_tke=",bl_mynn_edmf_tke," bl_mynn_edmf_part=",bl_mynn_edmf_part
+         print*,"bl_mynn_edmf_tke=",bl_mynn_edmf_tke
          print*,"bl_mynn_cloudmix=",bl_mynn_cloudmix," bl_mynn_mixqt=",bl_mynn_mixqt
          print*,"icloud_bl=",icloud_bl
          print*,"T:",t3d(1,1),t3d(1,2),t3d(1,levs)
@@ -644,9 +647,14 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &             wspd=wspd,uoce=uoce,voce=voce,vdfg=vdfg,            & !input
      &             qke=QKE,sh3d=Sh3d,                                  & !output
      &             qke_adv=qke_adv,bl_mynn_tkeadvect=bl_mynn_tkeadvect,&
-#if (WRF_CHEM == 1)
-     &             chem3d=chem,vd3d=vd,nchem=nchem,kdvel=kdvel,        &
-     &             ndvel=ndvel,num_vert_mix=num_vert_mix,              &
+!#if (WRF_CHEM == 1)
+!     &            chem3d=chem,vd3d=vd (for dyr deposition velocity),nchem=nchem,kdvel=kdvel,        &
+#ifdef RRFS_smoke
+     &             chem3d=qgrs_smoke_num_conc,vd3d=vd,nchem=nchem,     &
+     &             kdvel=kdvel,ndvel=ndvel,num_vert_mix=num_vert_mix,  &
+     &             mynn_chem_vertmx=mynn_chem_vertmx,                  &
+     &             FRP_MEAN=FRP_MEAN,EMIS_ANT_NO=EMIS_ANT_NO,          &
+     &             enh_vermix=enh_vermix,                              &
 #endif
      &             Tsq=tsq,Qsq=qsq,Cov=cov,                            & !output
      &             RUBLTEN=RUBLTEN,RVBLTEN=RVBLTEN,RTHBLTEN=RTHBLTEN,  & !output

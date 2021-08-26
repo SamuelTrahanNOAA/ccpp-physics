@@ -6,6 +6,8 @@
 !>\defgroup module_sf_mynn_mod GSD MYNN SFC Module
 MODULE module_sf_mynn
 
+  use machine , only : kind_phys
+
 !-------------------------------------------------------------------
 !Modifications implemented by Joseph Olson NOAA/GSD/AMB - CU/CIRES
 !The following overviews the current state of this scheme::
@@ -87,26 +89,26 @@ MODULE module_sf_mynn
   IMPLICIT NONE
 !-------------------------------------------------------------------
 !For non-WRF
-!   REAL    , PARAMETER :: g            = 9.81
-!   REAL    , PARAMETER :: r_d          = 287.
-!   REAL    , PARAMETER :: cp           = 7.*r_d/2.
-!   REAL    , PARAMETER :: r_v          = 461.6
-!   REAL    , PARAMETER :: cpv          = 4.*r_v
-!   REAL    , PARAMETER :: rcp          = r_d/cp
-!   REAL    , PARAMETER :: XLV          = 2.5E6
-!   REAL    , PARAMETER :: XLF          = 3.50E5
-   REAL    , PARAMETER :: p1000mb      = 100000.
-!   REAL    , PARAMETER :: EP_2         = r_d/r_v
+!   REAL(KIND=KIND_PHYS)    , PARAMETER :: g            = 9.81
+!   REAL(KIND=KIND_PHYS)    , PARAMETER :: r_d          = 287.
+!   REAL(KIND=KIND_PHYS)    , PARAMETER :: cp           = 7.*r_d/2.
+!   REAL(KIND=KIND_PHYS)    , PARAMETER :: r_v          = 461.6
+!   REAL(KIND=KIND_PHYS)    , PARAMETER :: cpv          = 4.*r_v
+!   REAL(KIND=KIND_PHYS)    , PARAMETER :: rcp          = r_d/cp
+!   REAL(KIND=KIND_PHYS)    , PARAMETER :: XLV          = 2.5E6
+!   REAL(KIND=KIND_PHYS)    , PARAMETER :: XLF          = 3.50E5
+   REAL(KIND=KIND_PHYS)    , PARAMETER :: p1000mb      = 100000.
+!   REAL(KIND=KIND_PHYS)    , PARAMETER :: EP_2         = r_d/r_v
 
-  REAL, PARAMETER :: xlvcp=xlv/cp, ep_3=1.-ep_2 
-  REAL, PARAMETER :: wmin=0.1    ! Minimum wind speed
-  REAL, PARAMETER :: VCONVC=1.25
-  REAL, PARAMETER :: onethird = 1./3.
-  REAL, PARAMETER :: sqrt3 = 1.7320508075688773
-  REAL, PARAMETER :: atan1 = 0.785398163397     !in radians
-  REAL, PARAMETER :: log01=log(0.01), log05=log(0.05), log07=log(0.07)
-  REAL, PARAMETER :: SNOWZ0=0.011
-  REAL, PARAMETER :: COARE_OPT=3.0  ! 3.0 or 3.5
+  REAL(KIND=KIND_PHYS), PARAMETER :: xlvcp=xlv/cp, ep_3=1.-ep_2 
+  REAL(KIND=KIND_PHYS), PARAMETER :: wmin=0.1    ! Minimum wind speed
+  REAL(KIND=KIND_PHYS), PARAMETER :: VCONVC=1.25
+  REAL(KIND=KIND_PHYS), PARAMETER :: onethird = 1./3.
+  REAL(KIND=KIND_PHYS), PARAMETER :: sqrt3 = 1.7320508075688773
+  REAL(KIND=KIND_PHYS), PARAMETER :: atan1 = 0.785398163397     !in radians
+  REAL(KIND=KIND_PHYS), PARAMETER :: log01=log(0.01), log05=log(0.05), log07=log(0.07)
+  REAL(KIND=KIND_PHYS), PARAMETER :: SNOWZ0=0.011
+  REAL(KIND=KIND_PHYS), PARAMETER :: COARE_OPT=3.0  ! 3.0 or 3.5
   !For debugging purposes:
   INTEGER, PARAMETER :: debug_code = 0  !0: no extra ouput
                                         !1: some step-by-step output
@@ -116,7 +118,7 @@ MODULE module_sf_mynn
                ! these in FV3. They will be written over anyway.
                ! Computing the fluxes here is leftover from the WRF world.
 
-  REAL,   DIMENSION(0:1000 ),SAVE :: psim_stab,psim_unstab, &
+  REAL(KIND=KIND_PHYS),   DIMENSION(0:1000 ),SAVE :: psim_stab,psim_unstab, &
                                      psih_stab,psih_unstab
 
 CONTAINS
@@ -279,9 +281,9 @@ CONTAINS
                                        ims,ime, jms,jme, kms,kme, &
                                        its,ite, jts,jte, kts,kte
       INTEGER,  INTENT(IN)   ::        itimestep,iter
-      REAL,     INTENT(IN)   ::        SVP1,SVP2,SVP3,SVPT0
-      REAL,     INTENT(IN)   ::        EP1,EP2,KARMAN
-      REAL,     INTENT(IN)   ::        CP,G,ROVCP,R,XLV !,DX
+      REAL(KIND=KIND_PHYS),     INTENT(IN)   ::        SVP1,SVP2,SVP3,SVPT0
+      REAL(KIND=KIND_PHYS),     INTENT(IN)   ::        EP1,EP2,KARMAN
+      REAL(KIND=KIND_PHYS),     INTENT(IN)   ::        CP,G,ROVCP,R,XLV !,DX
 !NAMELIST/CONFIGURATION OPTIONS:
       INTEGER,  INTENT(IN)   ::        ISFFLX, LSM
       INTEGER,  OPTIONAL,  INTENT(IN)   :: ISFTCFLX, IZ0TLND
@@ -292,12 +294,12 @@ CONTAINS
 
 !Input data
       integer, dimension(ims:ime), intent(in) :: vegtype
-      real,    dimension(ims:ime), intent(in) ::       &
+      real(kind=kind_phys),    dimension(ims:ime), intent(in) ::       &
      &                    sigmaf,shdmax,z0pert,ztpert
 !===================================
 ! 3D VARIABLES
 !===================================
-      REAL,     DIMENSION( ims:ime, kms:kme, jms:jme )           , &
+      REAL(KIND=KIND_PHYS),     DIMENSION( ims:ime, kms:kme, jms:jme )           , &
                 INTENT(IN   )   ::                           dz8w, &
                                                              QV3D, &
                                                               P3D, &
@@ -306,24 +308,24 @@ CONTAINS
                                                           U3D,V3D, &
                                                         th3d,pi3d
 
-      REAL, DIMENSION( ims:ime, kms:kme, jms:jme ), OPTIONAL,      &
+      REAL(KIND=KIND_PHYS), DIMENSION( ims:ime, kms:kme, jms:jme ), OPTIONAL,      &
                 INTENT(IN) ::                      pattern_spp_pbl
 !===================================
 ! 2D VARIABLES
 !===================================
-      REAL,     DIMENSION( ims:ime, jms:jme )                    , &
+      REAL(KIND=KIND_PHYS),     DIMENSION( ims:ime, jms:jme )                    , &
                 INTENT(IN   )               ::             MAVAIL, &
                                                              PBLH, &
                                                             XLAND, &
                                                            PSFCPA, &
                                                                DX
 
-      REAL,     DIMENSION( ims:ime, jms:jme )                    , &
+      REAL(KIND=KIND_PHYS),     DIMENSION( ims:ime, jms:jme )                    , &
                 INTENT(OUT  )               ::            U10,V10, &
                                                         TH2,T2,Q2
 
 
-      REAL,     DIMENSION( ims:ime, jms:jme )                    , &
+      REAL(KIND=KIND_PHYS),     DIMENSION( ims:ime, jms:jme )                    , &
                 INTENT(INOUT)               ::           HFLX,HFX, &
                                                          QFLX,QFX, &
                                                                LH, &
@@ -346,12 +348,12 @@ CONTAINS
       LOGICAL, DIMENSION( ims:ime ), INTENT(IN)    ::              &
      &                          wet,       dry,       icy
 
-      REAL, DIMENSION( ims:ime ), INTENT(IN)    ::                 &
+      REAL(KIND=KIND_PHYS), DIMENSION( ims:ime ), INTENT(IN)    ::                 &
      &                    tskin_ocn, tskin_lnd, tskin_ice,         &
      &                    tsurf_ocn, tsurf_lnd, tsurf_ice,         &
      &                    snowh_ocn, snowh_lnd, snowh_ice
 
-      REAL, DIMENSION( ims:ime), INTENT(INOUT) ::                  &
+      REAL(KIND=KIND_PHYS), DIMENSION( ims:ime), INTENT(INOUT) ::                  &
      &                      ZNT_ocn,   ZNT_lnd,   ZNT_ice,         &
      &                      UST_ocn,   UST_lnd,   UST_ice,         &
      &                       cm_ocn,    cm_lnd,    cm_ice,         &
@@ -369,12 +371,12 @@ CONTAINS
 
 !ADDITIONAL OUTPUT
 !JOE-begin
-      REAL,     DIMENSION( ims:ime, jms:jme )    ::   qstar
+      REAL(KIND=KIND_PHYS),     DIMENSION( ims:ime, jms:jme )    ::   qstar
 !JOE-end
 !===================================
 ! 1D LOCAL ARRAYS
 !===================================
-      REAL,     DIMENSION( its:ite ) ::                   U1D,V1D, & !level1 winds
+      REAL(KIND=KIND_PHYS),     DIMENSION( its:ite ) ::                   U1D,V1D, & !level1 winds
                                                         U1D2,V1D2, & !level2 winds
                                                              QV1D, &
                                                               P1D, &
@@ -382,7 +384,7 @@ CONTAINS
                                                            dz8w1d, & !level 1 height
                                                            dz2w1d    !level 2 height
 
-      REAL,     DIMENSION( its:ite ) ::                  rstoch1D
+      REAL(KIND=KIND_PHYS),     DIMENSION( its:ite ) ::                  rstoch1D
 
       INTEGER ::  I,J,K,itf,jtf,ktf
 !-----------------------------------------------------------
@@ -550,10 +552,10 @@ CONTAINS
                                      its,ite, jts,jte, kts,kte, &
                                      J, itimestep, iter
 
-      REAL,     PARAMETER  :: XKA=2.4E-5   !molecular diffusivity
-      REAL,     PARAMETER  :: PRT=1.       !prandlt number
-      REAL,     INTENT(IN) :: SVP1,SVP2,SVP3,SVPT0,EP1,EP2
-      REAL,     INTENT(IN) :: KARMAN,CP,G,ROVCP,R,XLV !,DX
+      REAL(KIND=KIND_PHYS),     PARAMETER  :: XKA=2.4E-5   !molecular diffusivity
+      REAL(KIND=KIND_PHYS),     PARAMETER  :: PRT=1.       !prandlt number
+      REAL(KIND=KIND_PHYS),     INTENT(IN) :: SVP1,SVP2,SVP3,SVPT0,EP1,EP2
+      REAL(KIND=KIND_PHYS),     INTENT(IN) :: KARMAN,CP,G,ROVCP,R,XLV !,DX
 
 !-----------------------------
 ! NAMELIST OPTIONS
@@ -567,26 +569,26 @@ CONTAINS
 
 !Input data
       integer, dimension(ims:ime), intent(in) :: vegtype
-      real,    dimension(ims:ime), intent(in) ::       &
+      real(kind=kind_phys),    dimension(ims:ime), intent(in) ::       &
      &                    sigmaf,shdmax,z0pert,ztpert
 
 !-----------------------------
 ! 1D ARRAYS
 !-----------------------------
-      REAL,     DIMENSION( ims:ime ), INTENT(IN)    ::     MAVAIL, &
+      REAL(KIND=KIND_PHYS),     DIMENSION( ims:ime ), INTENT(IN)    ::     MAVAIL, &
                                                              PBLH, &
                                                             XLAND, &
                                                            PSFCPA, &
                                                                DX
 
-      REAL,     DIMENSION( its:ite ), INTENT(IN)   ::     U1D,V1D, &
+      REAL(KIND=KIND_PHYS),     DIMENSION( its:ite ), INTENT(IN)   ::     U1D,V1D, &
                                                         U1D2,V1D2, &
                                                          QV1D,P1D, &
                                                               T1D, &
                                                            dz8w1d, &
                                                            dz2w1d
 
-      REAL,     DIMENSION( ims:ime ), INTENT(INOUT) ::   HFLX,HFX, &
+      REAL(KIND=KIND_PHYS),     DIMENSION( ims:ime ), INTENT(INOUT) ::   HFLX,HFX, &
                                                       QFLX,QFX,LH, &
                                                          MOL,RMOL, &
                                                          QGH,QSFC, &
@@ -605,12 +607,12 @@ CONTAINS
       LOGICAL, DIMENSION( ims:ime ), INTENT(IN)    ::              &
      &                          wet,       dry,       icy
 
-      REAL,     DIMENSION( ims:ime ), INTENT(in)    ::             &
+      REAL(KIND=KIND_PHYS),     DIMENSION( ims:ime ), INTENT(in)    ::             &
      &                    tskin_ocn, tskin_lnd, tskin_ice,         &
      &                    tsurf_ocn, tsurf_lnd, tsurf_ice,         &
      &                    snowh_ocn, snowh_lnd, snowh_ice
 
-      REAL,     DIMENSION( ims:ime ), INTENT(inout) ::             &
+      REAL(KIND=KIND_PHYS),     DIMENSION( ims:ime ), INTENT(inout) ::             &
      &                      ZNT_ocn,   ZNT_lnd,   ZNT_ice,         &
      &                      UST_ocn,   UST_lnd,   UST_ice,         &
      &                       cm_ocn,    cm_lnd,    cm_ice,         &
@@ -625,20 +627,20 @@ CONTAINS
      &                     QFLX_ocn,  QFLX_lnd,  QFLX_ice,         &
      &                     qsfc_ocn,  qsfc_lnd,  qsfc_ice
 
-      REAL,     DIMENSION( its:ite ), INTENT(IN)   ::     rstoch1D
+      REAL(KIND=KIND_PHYS),     DIMENSION( its:ite ), INTENT(IN)   ::     rstoch1D
 
       ! DIAGNOSTIC OUTPUT
-      REAL,     DIMENSION( ims:ime ), INTENT(OUT)   ::    U10,V10, &
+      REAL(KIND=KIND_PHYS),     DIMENSION( ims:ime ), INTENT(OUT)   ::    U10,V10, &
                                                         TH2,T2,Q2
 
 !--------------------------------------------
 !JOE-additinal output
-      REAL,     DIMENSION( ims:ime ) ::                wstar,qstar
+      REAL(KIND=KIND_PHYS),     DIMENSION( ims:ime ) ::                wstar,qstar
 !JOE-end
 !----------------------------------------------------------------
 ! LOCAL VARS
 !----------------------------------------------------------------
-      REAL, DIMENSION(its:ite) :: &
+      REAL(KIND=KIND_PHYS), DIMENSION(its:ite) :: &
                  ZA, &    !Height of lowest 1/2 sigma level(m)
                 ZA2, &    !Height of 2nd lowest 1/2 sigma level(m)
               THV1D, &    !Theta-v at lowest 1/2 sigma (K)
@@ -674,12 +676,12 @@ CONTAINS
 
       INTEGER ::  N,I,K,L,yesno
 
-      REAL    ::  PL,E1,TABS
-      REAL    ::  WSPD_lnd, WSPD_ice, WSPD_ocn
-      REAL    ::  DTHVDZ,DTHVM,VCONV,ZOL2,ZOL10,ZOLZA,ZOLZ0
-      REAL    ::  DTG,DTTHX,PSIQ,PSIQ2,PSIQ10,PSIT10
-      REAL    ::  FLUXC,VSGD
-      REAL    ::  restar,VISC,DQG,OLDUST,OLDTST
+      REAL(KIND=KIND_PHYS) ::  PL,E1,TABS
+      REAL(KIND=KIND_PHYS) ::  WSPD_lnd, WSPD_ice, WSPD_ocn
+      REAL(KIND=KIND_PHYS) ::  DTHVDZ,DTHVM,VCONV,ZOL2,ZOL10,ZOLZA,ZOLZ0
+      REAL(KIND=KIND_PHYS) ::  DTG,DTTHX,PSIQ,PSIQ2,PSIQ10,PSIT10
+      REAL(KIND=KIND_PHYS) ::  FLUXC,VSGD
+      REAL(KIND=KIND_PHYS) ::  restar,VISC,DQG,OLDUST,OLDTST
 
 !-------------------------------------------------------------------
       IF (debug_code >= 1) THEN
@@ -1091,7 +1093,7 @@ CONTAINS
                                        rstoch1D(i),spp_pbl)
              ENDIF
           ELSEIF ( ISFTCFLX .EQ. 2 ) THEN
-             CALL garratt_1992(ZT_ocn(i),ZQ_ocn(i),ZNTstoch_ocn(i),restar,2.0)
+             CALL garratt_1992(ZT_ocn(i),ZQ_ocn(i),ZNTstoch_ocn(i),restar,2.0_kind_phys)
           ELSEIF ( ISFTCFLX .EQ. 3 ) THEN
              IF (COARE_OPT .EQ. 3.0) THEN
                 CALL fairall_etal_2003(ZT_ocn(i),ZQ_ocn(i),restar,UST_ocn(i),visc,&
@@ -1158,13 +1160,13 @@ CONTAINS
           IF ( PRESENT(IZ0TLND) ) THEN
              IF ( IZ0TLND .LE. 1 ) THEN
                 CALL zilitinkevich_1995(ZNTstoch_lnd(i),ZT_lnd(i),ZQ_lnd(i),restar,&
-                      UST_lnd(I),KARMAN,1.0,IZ0TLND,spp_pbl,rstoch1D(i))
+                      UST_lnd(I),KARMAN,1.0_kind_phys,IZ0TLND,spp_pbl,rstoch1D(i))
              ELSEIF ( IZ0TLND .EQ. 2 ) THEN
                 CALL Yang_2008(ZNTSTOCH_lnd(i),ZT_lnd(i),ZQ_lnd(i),UST_lnd(i),MOL(I),&
                               qstar(I),restar,visc)
              ELSEIF ( IZ0TLND .EQ. 3 ) THEN
                 !Original MYNN in WRF-ARW used this form:
-                CALL garratt_1992(ZT_lnd(i),ZQ_lnd(i),ZNTSTOCH_lnd(i),restar,1.0)
+                CALL garratt_1992(ZT_lnd(i),ZQ_lnd(i),ZNTSTOCH_lnd(i),restar,1.0_kind_phys)
              ELSEIF ( IZ0TLND .EQ. 4 ) THEN
                 !GFS:
                 CALL GFS_zt_lnd(ZT_lnd(i),ZNTSTOCH_lnd(i),sigmaf(i),ztpert(i),UST_lnd(i))
@@ -1173,7 +1175,7 @@ CONTAINS
           ELSE
              !DEFAULT TO ZILITINKEVICH
              CALL zilitinkevich_1995(ZNTSTOCH_lnd(i),ZT_lnd(i),ZQ_lnd(i),restar,&
-                         UST_lnd(I),KARMAN,1.0,0,spp_pbl,rstoch1D(i))
+                         UST_lnd(I),KARMAN,1.0_kind_phys,0,spp_pbl,rstoch1D(i))
           ENDIF
        ENDIF
 
@@ -2151,14 +2153,14 @@ END SUBROUTINE SFCLAY1D_mynn
         & landsea,IZ0TLND2,spp_pbl,rstoch)
 
        IMPLICIT NONE
-       REAL, INTENT(IN) :: Z_0,restar,ustar,KARMAN,landsea
+       REAL(KIND=KIND_PHYS), INTENT(IN) :: Z_0,restar,ustar,KARMAN,landsea
        INTEGER, OPTIONAL, INTENT(IN)::  IZ0TLND2
-       REAL, INTENT(OUT) :: Zt,Zq
-       REAL :: CZIL  !=0.100 in Chen et al. (1997)
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: Zt,Zq
+       REAL(KIND=KIND_PHYS) :: CZIL  !=0.100 in Chen et al. (1997)
                      !=0.075 in Zilitinkevich (1995)
                      !=0.500 in Lemone et al. (2008)
        INTEGER,  INTENT(IN)  ::    spp_pbl
-       REAL,     INTENT(IN)  ::    rstoch
+       REAL(KIND=KIND_PHYS),     INTENT(IN)  ::    rstoch
 
 
        IF (landsea-1.5 .GT. 0) THEN    !WATER
@@ -2219,10 +2221,10 @@ END SUBROUTINE SFCLAY1D_mynn
     !corrects a small-bias in Z_0 (AHW real-time 2012).
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: ustar
-       REAL, INTENT(OUT)  :: Z_0
-       REAL :: ZW, ZN1, ZN2
-       REAL, PARAMETER :: G=9.81, OZO=1.59E-5
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: ustar
+       REAL(KIND=KIND_PHYS), INTENT(OUT)  :: Z_0
+       REAL(KIND=KIND_PHYS) :: ZW, ZN1, ZN2
+       REAL(KIND=KIND_PHYS), PARAMETER :: G=9.81, OZO=1.59E-5
 
        !OLD FORM: Z_0 = 10.*EXP(-10./(ustar**onethird))
        !NEW FORM:
@@ -2246,10 +2248,10 @@ END SUBROUTINE SFCLAY1D_mynn
    SUBROUTINE Taylor_Yelland_2001(Z_0,ustar,wsp10)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: ustar,wsp10
-       REAL, INTENT(OUT) :: Z_0
-       REAL, parameter  :: g=9.81, pi=3.14159265
-       REAL :: hs, Tp, Lp
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: ustar,wsp10
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: Z_0
+       REAL(KIND=KIND_PHYS), parameter  :: g=9.81, pi=3.14159265
+       REAL(KIND=KIND_PHYS) :: hs, Tp, Lp
 
        !hs is the significant wave height
         hs = 0.0248*(wsp10**2.)
@@ -2274,11 +2276,11 @@ END SUBROUTINE SFCLAY1D_mynn
    SUBROUTINE charnock_1955(Z_0,ustar,wsp10,visc,zu)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: ustar, visc, wsp10, zu
-       REAL, INTENT(OUT) :: Z_0
-       REAL, PARAMETER   :: G=9.81, CZO2=0.011
-       REAL              :: CZC    !variable charnock "constant"   
-       REAL              :: wsp10m ! logarithmically calculated 10 m
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: ustar, visc, wsp10, zu
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: Z_0
+       REAL(KIND=KIND_PHYS), PARAMETER   :: G=9.81, CZO2=0.011
+       REAL(KIND=KIND_PHYS) :: CZC    !variable charnock "constant"   
+       REAL(KIND=KIND_PHYS) :: wsp10m ! logarithmically calculated 10 m
 
        wsp10m = wsp10*log(10./1e-4)/log(zu/1e-4)
        CZC = CZO2 + 0.007*MIN(MAX((wsp10m-10.)/8., 0.), 1.0)
@@ -2299,12 +2301,12 @@ END SUBROUTINE SFCLAY1D_mynn
    SUBROUTINE edson_etal_2013(Z_0,ustar,wsp10,visc,zu)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: ustar, visc, wsp10, zu
-       REAL, INTENT(OUT) :: Z_0
-       REAL, PARAMETER   :: G=9.81
-       REAL, PARAMETER   :: m=0.017, b=-0.005
-       REAL              :: CZC    ! variable charnock "constant"
-       REAL              :: wsp10m ! logarithmically calculated 10 m
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: ustar, visc, wsp10, zu
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: Z_0
+       REAL(KIND=KIND_PHYS), PARAMETER   :: G=9.81
+       REAL(KIND=KIND_PHYS), PARAMETER   :: m=0.017, b=-0.005
+       REAL(KIND=KIND_PHYS) :: CZC    ! variable charnock "constant"
+       REAL(KIND=KIND_PHYS) :: wsp10m ! logarithmically calculated 10 m
 
        wsp10m = wsp10*log(10/1e-4)/log(zu/1e-4)
        wsp10m = MIN(19., wsp10m)
@@ -2329,10 +2331,10 @@ END SUBROUTINE SFCLAY1D_mynn
    SUBROUTINE garratt_1992(Zt,Zq,Z_0,Ren,landsea)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: Ren, Z_0,landsea
-       REAL, INTENT(OUT) :: Zt,Zq
-       REAL :: Rq
-       REAL, PARAMETER  :: e=2.71828183
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: Ren, Z_0,landsea
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: Zt,Zq
+       REAL(KIND=KIND_PHYS) :: Rq
+       REAL(KIND=KIND_PHYS), PARAMETER  :: e=2.71828183
 
        IF (landsea-1.5 .GT. 0) THEN    !WATER
 
@@ -2365,9 +2367,9 @@ END SUBROUTINE SFCLAY1D_mynn
     SUBROUTINE fairall_etal_2003(Zt,Zq,Ren,ustar,visc,rstoch,spp_pbl)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)   :: Ren,ustar,visc,rstoch
+       REAL(KIND=KIND_PHYS), INTENT(IN)   :: Ren,ustar,visc,rstoch
        INTEGER, INTENT(IN):: spp_pbl
-       REAL, INTENT(OUT)  :: Zt,Zq
+       REAL(KIND=KIND_PHYS), INTENT(OUT)  :: Zt,Zq
 
        IF (Ren .le. 2.) then
 
@@ -2409,9 +2411,9 @@ END SUBROUTINE SFCLAY1D_mynn
     SUBROUTINE fairall_etal_2014(Zt,Zq,Ren,ustar,visc,rstoch,spp_pbl)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: Ren,ustar,visc,rstoch
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: Ren,ustar,visc,rstoch
        INTEGER, INTENT(IN):: spp_pbl
-       REAL, INTENT(OUT) :: Zt,Zq
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: Zt,Zq
 
        !Zt = (5.5e-5)*(Ren**(-0.60))
        Zt = MIN(1.6E-4, 5.8E-5/(Ren**0.72))
@@ -2456,14 +2458,14 @@ END SUBROUTINE SFCLAY1D_mynn
        SUBROUTINE Yang_2008(Z_0,Zt,Zq,ustar,tstar,qst,Ren,visc)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: Z_0, Ren, ustar, tstar, qst, visc
-       REAL              :: ht,     &! roughness height at critical Reynolds number
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: Z_0, Ren, ustar, tstar, qst, visc
+       REAL(KIND=KIND_PHYS) :: ht,     &! roughness height at critical Reynolds number
                             tstar2, &! bounded T*, forced to be non-positive
                             qstar2, &! bounded q*, forced to be non-positive
                             Z_02,   &! bounded Z_0 for variable Renc2 calc
                             Renc2    ! variable Renc, function of Z_0
-       REAL, INTENT(OUT) :: Zt,Zq
-       REAL, PARAMETER  :: Renc=300., & !old constant Renc
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: Zt,Zq
+       REAL(KIND=KIND_PHYS), PARAMETER  :: Renc=300., & !old constant Renc
                            beta=1.5,  & !important for diurnal variation
                            m=170.,    & !slope for Renc2 function
                            b=691.       !y-intercept for Renc2 function
@@ -2489,10 +2491,10 @@ END SUBROUTINE SFCLAY1D_mynn
 !  Taken from the GFS (sfc_diff.f) for comparison
     SUBROUTINE GFS_z0_lnd(z0max,shdmax,z1,vegtype,ivegsrc,z0pert)
 
-        REAL, INTENT(OUT)  :: z0max
-        REAL, INTENT(IN)   :: shdmax,z1,z0pert
+        REAL(KIND=KIND_PHYS), INTENT(OUT)  :: z0max
+        REAL(KIND=KIND_PHYS), INTENT(IN)   :: shdmax,z1,z0pert
         INTEGER, INTENT(IN):: vegtype,ivegsrc
-        REAL :: tem1, tem2
+        REAL(KIND=KIND_PHYS) :: tem1, tem2
 
 !            z0max = max(1.0e-6, min(0.01 * z0max, z1))
 !already converted into meters in the wrapper
@@ -2548,10 +2550,10 @@ END SUBROUTINE SFCLAY1D_mynn
 !  Taken from the GFS (sfc_diff.f) for comparison
     SUBROUTINE GFS_zt_lnd(ztmax,z0max,sigmaf,ztpert,ustar_lnd)
 
-        REAL, INTENT(OUT)  :: ztmax
-        REAL, INTENT(IN)   :: z0max,sigmaf,ztpert,ustar_lnd
-        REAL :: czilc, tem1, tem2
-        REAL, PARAMETER    :: ca = 0.4
+        REAL(KIND=KIND_PHYS), INTENT(OUT)  :: ztmax
+        REAL(KIND=KIND_PHYS), INTENT(IN)   :: z0max,sigmaf,ztpert,ustar_lnd
+        REAL(KIND=KIND_PHYS) :: czilc, tem1, tem2
+        REAL(KIND=KIND_PHYS), PARAMETER    :: ca = 0.4
 
 !           czilc = 10.0 ** (- (0.40/0.07) * z0) ! fei's canopy height dependance of czil
            czilc = 0.8
@@ -2575,13 +2577,13 @@ END SUBROUTINE SFCLAY1D_mynn
 !--------------------------------------------------------------------
     SUBROUTINE GFS_z0_ocn(z0rl_ocn,ustar_ocn,WSPD,z1,sfc_z0_type,redrag)
 
-        REAL, INTENT(OUT)  :: z0rl_ocn
-        REAL, INTENT(INOUT):: ustar_ocn
-        REAL, INTENT(IN)   :: wspd,z1
+        REAL(KIND=KIND_PHYS), INTENT(OUT)  :: z0rl_ocn
+        REAL(KIND=KIND_PHYS), INTENT(INOUT):: ustar_ocn
+        REAL(KIND=KIND_PHYS), INTENT(IN)   :: wspd,z1
         LOGICAL, INTENT(IN):: redrag
         INTEGER, INTENT(IN):: sfc_z0_type
-        REAL :: z0,z0max,wind10m
-        REAL, PARAMETER    :: charnock = 0.014, z0s_max=.317e-2 
+        REAL(KIND=KIND_PHYS) :: z0,z0max,wind10m
+        REAL(KIND=KIND_PHYS), PARAMETER    :: charnock = 0.014, z0s_max=.317e-2 
 
 !            z0           = 0.01 * z0rl_ocn
 !Already converted to meters in the wrapper
@@ -2627,11 +2629,11 @@ END SUBROUTINE SFCLAY1D_mynn
 !--------------------------------------------------------------------
     SUBROUTINE GFS_zt_ocn(ztmax,z0rl_ocn,restar,WSPD,z1,sfc_z0_type)
 
-        REAL, INTENT(OUT)  :: ztmax
-        REAL, INTENT(IN)   :: wspd,z1,z0rl_ocn,restar
+        REAL(KIND=KIND_PHYS), INTENT(OUT)  :: ztmax
+        REAL(KIND=KIND_PHYS), INTENT(IN)   :: wspd,z1,z0rl_ocn,restar
         INTEGER, INTENT(IN):: sfc_z0_type
-        REAL :: z0,z0max,wind10m,rat,ustar_ocn
-        REAL, PARAMETER    :: charnock = 0.014, z0s_max=.317e-2
+        REAL(KIND=KIND_PHYS) :: z0,z0max,wind10m,rat,ustar_ocn
+        REAL(KIND=KIND_PHYS), PARAMETER    :: charnock = 0.014, z0s_max=.317e-2
 
 !            z0           = 0.01 * z0rl_ocn
 !Already converted to meters in the wrapper
@@ -2728,9 +2730,9 @@ END SUBROUTINE SFCLAY1D_mynn
 ! uref(m/s)   :   wind speed at 10-m height        
 ! znott(meter):   scalar roughness scale over water
 !
-      REAL, INTENT(IN) :: uref
-      REAL, INTENT(OUT):: znott
-      real, parameter  :: p00 =  1.100000000000000e-04,&
+      REAL(KIND=KIND_PHYS), INTENT(IN) :: uref
+      REAL(KIND=KIND_PHYS), INTENT(OUT):: znott
+      real(kind=kind_phys), parameter  :: p00 =  1.100000000000000e-04,&
      &      p15 = -9.144581627678278e-10, p14 =  7.020346616456421e-08,&
      &      p13 = -2.155602086883837e-06, p12 =  3.333848806567684e-05,&
      &      p11 = -2.628501274963990e-04, p10 =  8.634221567969181e-04,&
@@ -2795,10 +2797,10 @@ END SUBROUTINE SFCLAY1D_mynn
 ! znotm(meter):   areodynamical roughness scale over water
 !
 
-      REAL, INTENT(IN) :: uref
-      REAL, INTENT(OUT):: znotm
+      REAL(KIND=KIND_PHYS), INTENT(IN) :: uref
+      REAL(KIND=KIND_PHYS), INTENT(OUT):: znotm
 
-      real, parameter  :: p13 = -1.296521881682694e-02,&
+      real(kind=kind_phys), parameter  :: p13 = -1.296521881682694e-02,&
      &      p12 =  2.855780863283819e-01, p11 = -1.597898515251717e+00,&
      &      p10 = -8.396975715683501e+00,&
 
@@ -2842,10 +2844,10 @@ END SUBROUTINE SFCLAY1D_mynn
 ! znott(meter):   scalar roughness scale over water
 !
 
-      REAL, INTENT(IN) :: uref
-      REAL, INTENT(OUT):: znott
+      REAL(KIND=KIND_PHYS), INTENT(IN) :: uref
+      REAL(KIND=KIND_PHYS), INTENT(OUT):: znott
 
-      real, parameter  :: p00 =  1.100000000000000e-04,                &
+      real(kind=kind_phys), parameter  :: p00 =  1.100000000000000e-04,                &
 
      &      p15 = -9.193764479895316e-10, p14 =  7.052217518653943e-08,&
      &      p13 = -2.163419217747114e-06, p12 =  3.342963077911962e-05,&
@@ -2902,15 +2904,15 @@ END SUBROUTINE SFCLAY1D_mynn
     SUBROUTINE Andreas_2002(Z_0,bvisc,ustar,Zt,Zq)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: Z_0, bvisc, ustar
-       REAL, INTENT(OUT) :: Zt, Zq
-       REAL :: Ren2, zntsno
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: Z_0, bvisc, ustar
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: Zt, Zq
+       REAL(KIND=KIND_PHYS) :: Ren2, zntsno
 
-       REAL, PARAMETER  :: bt0_s=1.25,  bt0_t=0.149,  bt0_r=0.317,  &
+       REAL(KIND=KIND_PHYS), PARAMETER  :: bt0_s=1.25,  bt0_t=0.149,  bt0_r=0.317,  &
                            bt1_s=0.0,   bt1_t=-0.55,  bt1_r=-0.565, &
                            bt2_s=0.0,   bt2_t=0.0,    bt2_r=-0.183
 
-       REAL, PARAMETER  :: bq0_s=1.61,  bq0_t=0.351,  bq0_r=0.396,  &
+       REAL(KIND=KIND_PHYS), PARAMETER  :: bq0_s=1.61,  bq0_t=0.351,  bq0_r=0.396,  &
                            bq1_s=0.0,   bq1_t=-0.628, bq1_r=-0.512, &
                            bq2_s=0.0,   bq2_t=0.0,    bq2_r=-0.180
 
@@ -2951,9 +2953,9 @@ END SUBROUTINE SFCLAY1D_mynn
     SUBROUTINE PSI_Hogstrom_1996(psi_m, psi_h, zL, Zt, Z_0, Za)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: zL, Zt, Z_0, Za
-       REAL, INTENT(OUT) :: psi_m, psi_h
-       REAL  :: x, x0, y, y0, zmL, zhL
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: zL, Zt, Z_0, Za
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: psi_m, psi_h
+       REAL(KIND=KIND_PHYS) :: x, x0, y, y0, zmL, zhL
 
        zmL = Z_0*zL/Za  
        zhL = Zt*zL/Za
@@ -2989,9 +2991,9 @@ END SUBROUTINE SFCLAY1D_mynn
     SUBROUTINE PSI_DyerHicks(psi_m, psi_h, zL, Zt, Z_0, Za)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: zL, Zt, Z_0, Za
-       REAL, INTENT(OUT) :: psi_m, psi_h
-       REAL  :: x, x0, y, y0, zmL, zhL
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: zL, Zt, Z_0, Za
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: psi_m, psi_h
+       REAL(KIND=KIND_PHYS) :: x, x0, y, y0, zmL, zhL
 
        zmL = Z_0*zL/Za  !Zo/L
        zhL = Zt*zL/Za   !Zt/L
@@ -3027,9 +3029,9 @@ END SUBROUTINE SFCLAY1D_mynn
     SUBROUTINE PSI_Beljaars_Holtslag_1991(psi_m, psi_h, zL)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: zL
-       REAL, INTENT(OUT) :: psi_m, psi_h
-       REAL, PARAMETER  :: a=1., b=0.666, c=5., d=0.35
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: zL
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: psi_m, psi_h
+       REAL(KIND=KIND_PHYS), PARAMETER  :: a=1., b=0.666, c=5., d=0.35
 
        IF (zL .lt. 0.) THEN  !UNSTABLE
 
@@ -3059,9 +3061,9 @@ END SUBROUTINE SFCLAY1D_mynn
     SUBROUTINE PSI_Zilitinkevich_Esau_2007(psi_m, psi_h, zL)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: zL
-       REAL, INTENT(OUT) :: psi_m, psi_h
-       REAL, PARAMETER  :: Cm=3.0, Ct=2.5
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: zL
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: psi_m, psi_h
+       REAL(KIND=KIND_PHYS), PARAMETER  :: Cm=3.0, Ct=2.5
 
        IF (zL .lt. 0.) THEN  !UNSTABLE
 
@@ -3088,10 +3090,10 @@ END SUBROUTINE SFCLAY1D_mynn
     SUBROUTINE PSI_Businger_1971(psi_m, psi_h, zL)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: zL
-       REAL, INTENT(OUT) :: psi_m, psi_h
-       REAL  :: x, y
-       REAL, PARAMETER  ::  Pi180 = 3.14159265/180.
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: zL
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: psi_m, psi_h
+       REAL(KIND=KIND_PHYS) :: x, y
+       REAL(KIND=KIND_PHYS), PARAMETER  ::  Pi180 = 3.14159265/180.
 
        IF (zL .lt. 0.) THEN  !UNSTABLE
 
@@ -3124,9 +3126,9 @@ END SUBROUTINE SFCLAY1D_mynn
     SUBROUTINE PSI_Suselj_Sood_2010(psi_m, psi_h, zL)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: zL
-       REAL, INTENT(OUT) :: psi_m, psi_h
-       REAL, PARAMETER  :: Rfc=0.19, Ric=0.183, PHIT=0.8
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: zL
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: psi_m, psi_h
+       REAL(KIND=KIND_PHYS), PARAMETER  :: Rfc=0.19, Ric=0.183, PHIT=0.8
 
        IF (zL .gt. 0.) THEN  !STABLE
 
@@ -3154,8 +3156,8 @@ END SUBROUTINE SFCLAY1D_mynn
     ! The returned values are the combination of psi((za+zo)/L) - psi(z0/L)
 
        IMPLICIT NONE
-       REAL, INTENT(IN)  :: zL,z0L
-       REAL, INTENT(OUT) :: psim1,psih1
+       REAL(KIND=KIND_PHYS), INTENT(IN)  :: zL,z0L
+       REAL(KIND=KIND_PHYS), INTENT(OUT) :: psim1,psih1
 
        psim1 = -6.1*LOG(zL + (1.+ zL**2.5)**0.4)  &
                -6.1*LOG(z0L + (1.+ z0L**2.5)**0.4)
@@ -3173,16 +3175,16 @@ END SUBROUTINE SFCLAY1D_mynn
     !and Holtslag (1991) for stable conditions.
 
        IMPLICIT NONE
-       REAL, INTENT(OUT)  :: zL
-       REAL, INTENT(IN) :: Rib, zaz0, z0zt
-       REAL :: alfa, beta, zaz02, z0zt2
-       REAL, PARAMETER  :: au11=0.045, bu11=0.003, bu12=0.0059, &
+       REAL(KIND=KIND_PHYS), INTENT(OUT)  :: zL
+       REAL(KIND=KIND_PHYS), INTENT(IN) :: Rib, zaz0, z0zt
+       REAL(KIND=KIND_PHYS) :: alfa, beta, zaz02, z0zt2
+       REAL(KIND=KIND_PHYS), PARAMETER  :: au11=0.045, bu11=0.003, bu12=0.0059, &
                           &bu21=-0.0828, bu22=0.8845, bu31=0.1739, &
                           &bu32=-0.9213, bu33=-0.1057
-       REAL, PARAMETER  :: aw11=0.5738, aw12=-0.4399, aw21=-4.901,&
+       REAL(KIND=KIND_PHYS), PARAMETER  :: aw11=0.5738, aw12=-0.4399, aw21=-4.901,&
                           &aw22=52.50, bw11=-0.0539, bw12=1.540, &
                           &bw21=-0.669, bw22=-3.282
-       REAL, PARAMETER  :: as11=0.7529, as21=14.94, bs11=0.1569,&
+       REAL(KIND=KIND_PHYS), PARAMETER  :: as11=0.7529, as21=14.94, bs11=0.1569,&
                           &bs21=-0.3091, bs22=-1.303
           
        !set limits according to Li et al (2010), p 157.
@@ -3227,7 +3229,7 @@ END SUBROUTINE SFCLAY1D_mynn
 
     END SUBROUTINE Li_etal_2010
 !-------------------------------------------------------------------
-      REAL function zolri(ri,za,z0,zt,zol1)
+      REAL(kind=kind_phys) function zolri(ri,za,z0,zt,zol1)
 
       ! This iterative algorithm was taken from the revised surface layer 
       ! scheme in WRF-ARW, written by Pedro Jimenez and Jimy Dudhia and 
@@ -3236,8 +3238,8 @@ END SUBROUTINE SFCLAY1D_mynn
       ! zt is necessary input for the Dyer-Hicks functions used in MYNN.
 
       IMPLICIT NONE
-      REAL, INTENT(IN) :: ri,za,z0,zt,zol1
-      REAL :: x1,x2,fx1,fx2
+      REAL(KIND=KIND_PHYS), INTENT(IN) :: ri,za,z0,zt,zol1
+      REAL(KIND=KIND_PHYS) :: x1,x2,fx1,fx2
       INTEGER :: n
 
       if (ri.lt.0.)then
@@ -3281,7 +3283,7 @@ END SUBROUTINE SFCLAY1D_mynn
       return
       end function
 !-------------------------------------------------------------------
-      REAL function zolri2(zol2,ri2,za,z0,zt)
+      REAL(kind=kind_phys) function zolri2(zol2,ri2,za,z0,zt)
 
       ! INPUT: =================================
       ! zol2 - estimated z/L
@@ -3293,9 +3295,9 @@ END SUBROUTINE SFCLAY1D_mynn
       ! zolri2 - updated estimate of z/L
 
       IMPLICIT NONE
-      REAL, INTENT(IN) :: ri2,za,z0,zt
-      REAL, INTENT(INOUT) :: zol2
-      REAL :: zol20,zol3,psim1,psih1,psix2,psit2
+      REAL(KIND=KIND_PHYS), INTENT(IN) :: ri2,za,z0,zt
+      REAL(KIND=KIND_PHYS), INTENT(INOUT) :: zol2
+      REAL(KIND=KIND_PHYS) :: zol20,zol3,psim1,psih1,psix2,psit2
 
       if(zol2*ri2 .lt. 0.)zol2=0.  ! limit zol2 - must be same sign as ri2
 
@@ -3325,7 +3327,7 @@ END SUBROUTINE SFCLAY1D_mynn
    SUBROUTINE psi_init
 
     INTEGER                   ::      N
-    REAL                      ::      zolf
+    REAL(KIND=KIND_PHYS) ::      zolf
 
     DO N=0,1000
        ! stable function tables
@@ -3343,8 +3345,8 @@ END SUBROUTINE SFCLAY1D_mynn
 ! ==================================================================
 ! ... integrated similarity functions ...
 !                                                                                                                                                 
-   REAL function psim_stable_full(zolf)
-        REAL :: zolf   
+   REAL(kind=kind_phys) function psim_stable_full(zolf)
+        REAL(KIND=KIND_PHYS) :: zolf   
 
         !psim_stable_full=-6.1*log(zolf+(1+zolf**2.5)**(1./2.5))
         psim_stable_full=-6.1*log(zolf+(1+zolf**2.5)**0.4) 
@@ -3352,8 +3354,8 @@ END SUBROUTINE SFCLAY1D_mynn
         return
    end function
 
-   REAL function psih_stable_full(zolf)
-        REAL :: zolf
+   REAL(kind=kind_phys) function psih_stable_full(zolf)
+        REAL(KIND=KIND_PHYS) :: zolf
 
         !psih_stable_full=-5.3*log(zolf+(1+zolf**1.1)**(1./1.1))
         psih_stable_full=-5.3*log(zolf+(1+zolf**1.1)**0.9090909090909090909)
@@ -3361,12 +3363,12 @@ END SUBROUTINE SFCLAY1D_mynn
         return
    end function
 
-   REAL function psim_unstable_full(zolf)
-        REAL :: zolf,x,ym,psimc,psimk
+   REAL(kind=kind_phys) function psim_unstable_full(zolf)
+        REAL(KIND=KIND_PHYS) :: zolf,x,ym,psimc,psimk
 
         x=(1.-16.*zolf)**.25
-        !psimk=2*ALOG(0.5*(1+X))+ALOG(0.5*(1+X*X))-2.*ATAN(X)+2.*ATAN(1.)
-        psimk=2.*ALOG(0.5*(1+X))+ALOG(0.5*(1+X*X))-2.*ATAN(X)+2.*atan1
+        !psimk=2*LOG(0.5*(1+X))+LOG(0.5*(1+X*X))-2.*ATAN(X)+2.*ATAN(1.)
+        psimk=2.*LOG(0.5*(1+X))+LOG(0.5*(1+X*X))-2.*ATAN(X)+2.*atan1
 
         ym=(1.-10.*zolf)**onethird
         !psimc=(3./2.)*log((ym**2.+ym+1.)/3.)-sqrt(3.)*ATAN((2.*ym+1)/sqrt(3.))+4.*ATAN(1.)/sqrt(3.)
@@ -3377,8 +3379,8 @@ END SUBROUTINE SFCLAY1D_mynn
         return
    end function
 
-   REAL function psih_unstable_full(zolf)
-        REAL :: zolf,y,yh,psihc,psihk
+   REAL(kind=kind_phys) function psih_unstable_full(zolf)
+        REAL(KIND=KIND_PHYS) :: zolf,y,yh,psihc,psihk
 
         y=(1.-16.*zolf)**.5
         !psihk=2.*log((1+y)/2.)
@@ -3395,9 +3397,9 @@ END SUBROUTINE SFCLAY1D_mynn
 !=================================================================
 ! look-up table functions
 !=================================================================
-   REAL function psim_stable(zolf)
+   REAL(kind=kind_phys) function psim_stable(zolf)
         integer :: nzol
-        real    :: rzol,zolf
+        real(kind=kind_phys) :: rzol,zolf
 
         nzol = int(zolf*100.)
         rzol = zolf*100. - nzol
@@ -3410,9 +3412,9 @@ END SUBROUTINE SFCLAY1D_mynn
       return
    end function
 
-   REAL function psih_stable(zolf)
+   REAL(kind=kind_phys) function psih_stable(zolf)
         integer :: nzol
-        real    :: rzol,zolf
+        real(kind=kind_phys) :: rzol,zolf
 
         nzol = int(zolf*100.)
         rzol = zolf*100. - nzol
@@ -3425,9 +3427,9 @@ END SUBROUTINE SFCLAY1D_mynn
       return
    end function
 
-   REAL function psim_unstable(zolf)
+   REAL(kind=kind_phys) function psim_unstable(zolf)
         integer :: nzol
-        real    :: rzol,zolf
+        real(kind=kind_phys) :: rzol,zolf
 
         nzol = int(-zolf*100.)
         rzol = -zolf*100. - nzol
@@ -3440,9 +3442,9 @@ END SUBROUTINE SFCLAY1D_mynn
       return
    end function
 
-   REAL function psih_unstable(zolf)
+   REAL(kind=kind_phys) function psih_unstable(zolf)
         integer :: nzol
-        real    :: rzol,zolf
+        real(kind=kind_phys) :: rzol,zolf
 
         nzol = int(-zolf*100.)
         rzol = -zolf*100. - nzol

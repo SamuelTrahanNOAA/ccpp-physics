@@ -533,7 +533,7 @@
 
       endif ! nvdiff == ntrac
 
-      if (cplchm) then
+      if (cplchm) then 
         do i = 1, im
           tem  = prsl(i,1) / (rd*t1(i)*(one+fvirt*max(q1(i), qmin)))
           ushfsfci(i) = -cp * tem * hflx(i) ! upward sensible heat flux
