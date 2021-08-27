@@ -399,7 +399,7 @@ contains
     do i=its,ite
       wdgust(i)=sqrt(u10m(i)**2+v10m(i)**2)
       snoweq(i)=max((25.-snow(i)*1000.)/25.,0.)
-      hwp(i)=44.09*wdgust(i)**1.82*(t2m(i)-dpt2m(i))**0.61*(1.-smc(i,1))**14.0*snoweq(i)*sigmaf(i)
+      !hwp(i)=44.09*wdgust(i)**1.82*(t2m(i)-dpt2m(i))**0.61*(1.-smc(i,1))**14.0*snoweq(i)*sigmaf(i)
     enddo
     
 !-------------------------------------
