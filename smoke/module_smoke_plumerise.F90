@@ -146,31 +146,17 @@ CONTAINS
 !         IF (PLUMERISE_flag == 1) iloop=nveg_agreg
 
     !lp_veg:  do iveg_ag=1,iloop
-
     FRP = max(1000.,plume_fre(imean_frp))
 
-        !- loop over the minimum and maximum heat fluxes/FRP
+    !- loop over the minimum and maximum heat fluxes/FRP
     lp_minmax: do imm=1,2
-
-   !     IF(PLUMERISE_flag == 2 ) THEN
-            if(imm==1 ) then
-               !for imm = 1 => lower injection height
-               !burnt_area = max(1.0e4,plume_fre(imean_fsize))            ! - 0.5*plume_fre(istd_fsize))
-               !FRP = max(1000.,0.75*plume_fre(imean_frp))                    ! - 0.5*plume_fre(istd_frp ))
-               burnt_area = 0.75* 0.00021* plume_fre(imean_frp)             ! - 0.5*plume_fre(istd_fsize))
-     !          FRP = 1000.  ! 05/11/2021 for testing purpose
-
-            elseif(imm==2 ) then
-               !for imm = 2 => higher injection height
-               burnt_area = 1.25* 0.00021* plume_fre(imean_frp)
-
-               !burnt_area = max(1.0e4,plume_fre(imean_fsize))            !+ 0.5*plume_fre(istd_fsize))
-               !FRP = max(1000.,1.25*plume_fre(imean_frp))                    !   + 0.5*plume_fre(istd_frp ))
-!               burnt_area = 1.0e4            ! - 0.5*plume_fre(istd_fsize))
-!               FRP = 1000.  ! 05/11/2021 for testing purpose
-            endif
-    !    ENDIF
-
+        if(imm==1 ) then
+          burnt_area = 0.7* 0.00021* FRP          ! - 0.5*plume_fre(istd_fsize))
+        elseif(imm==2 ) then
+          burnt_area = 1.3* 0.00021* FRP
+        endif
+        burnt_area= max(1.0e4,burnt_area)
+        
         IF (dbg_opt .AND. icall<20) THEN
             WRITE(*,*) 'plumerise: m1,ktau ', m1,ktau
             WRITE(*,*) 'plumerise: imm, burnt_area ', imm, burnt_area
