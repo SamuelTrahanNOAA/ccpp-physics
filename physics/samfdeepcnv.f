@@ -134,6 +134,7 @@
 !
 !------local variables
       integer              i, indx, jmn, k, kk, km1, n
+      logical :: really_do_ca
 !     integer              latd,lond
 !
       real(kind=kind_phys) clamd,   tkemx,   tkemn,   dtke,
@@ -286,6 +287,8 @@ c    &            .743,.813,.886,.947,1.138,1.377,1.896/
       errmsg = ''
       errflg = 0
 
+      really_do_ca = do_ca .and. .not. ca_sgs_emis
+
 ! Initialize local variables
       xmb    = 0.0
       xmbmax = 0.0
@@ -356,7 +359,7 @@ c
         endif
       enddo
 
-      if(do_ca .and. .not. ca_sgs_emis)then
+      if(really_do_ca)then
         do i=1,im
           rainevap(i) = 0.
         enddo
@@ -707,7 +710,7 @@ c
         if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
       enddo
 !!
-      if(do_ca .and. ca_trigger)then
+      if(really_do_ca .and. ca_trigger)then
       do i=1,im
          if(ca_deep(i) > nthresh) then
           cnvflg(i) = .true.
@@ -766,7 +769,7 @@ c
         endif
       enddo
 !!
-      if(do_ca .and. ca_trigger)then
+      if(really_do_ca .and. ca_trigger)then
       do i=1,im
          if(ca_deep(i) > nthresh) then
           cnvflg(i) = .true.
@@ -822,7 +825,7 @@ c
 !
       else
 !
-         if(do_ca .and. ca_entr)then
+         if(really_do_ca .and. ca_entr)then
             do i=1,im
                if(cnvflg(i)) then
                   if(ca_deep(i) > nthresh)then
@@ -1092,7 +1095,7 @@ c
         endif
       enddo
 !!
-      if(do_ca .and. ca_trigger)then
+      if(really_do_ca .and. ca_trigger)then
       do i=1,im
          if(ca_deep(i) > nthresh) then
           cnvflg(i) = .true.
@@ -1174,7 +1177,7 @@ c
        enddo
       endif !hwrf_samfdeep
 !!
-      if(do_ca .and. ca_trigger)then
+      if(really_do_ca .and. ca_trigger)then
       do i=1,im
          if(ca_deep(i) > nthresh) then
           cnvflg(i) = .true.
@@ -1217,7 +1220,7 @@ c
         endif
       enddo
 !!
-      if(do_ca .and. ca_trigger)then
+      if(really_do_ca .and. ca_trigger)then
       do i=1,im
          if(ca_deep(i) > nthresh) then
           cnvflg(i) = .true.
@@ -2572,7 +2575,7 @@ c
         endif
       enddo
 !
-      if (do_ca .and. ca_closure)then
+      if (really_do_ca .and. ca_closure)then
       do i = 1, im
         if(cnvflg(i)) then
            if (ca_deep(i) > nthresh) then
@@ -2767,7 +2770,7 @@ c             if(islimsk(i) == 1) evef = 0.
       enddo
 
 !LB:                                                                                                                                                                                                                                                  
-      if(do_ca .and. .not. ca_sgs_emis)then
+      if(really_do_ca .and. .not. ca_sgs_emis)then
          do i = 1,im
             rainevap(i)=delqev(i)
          enddo

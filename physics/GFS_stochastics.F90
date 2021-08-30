@@ -36,7 +36,7 @@
                                       rain, rainc, tprcp, totprcp, cnvprcp,              &
                                       totprcpb, cnvprcpb, cplflx,                        &
                                       rain_cpl, snow_cpl, drain_cpl, dsnow_cpl,          &
-                                      ntcw,ntrw,ntsw,ntiw,ntgl,                          &
+                                      ntcw,ntrw,ntsw,ntiw,ntgl, do_sppt_emis,            &
                                       errmsg, errflg)
 
          use machine,               only: kind_phys
@@ -48,6 +48,7 @@
          integer,                               intent(in)    :: kdt
          real(kind_phys),                       intent(in)    :: delt     
          logical,                               intent(in)    :: do_sppt
+         logical,                               intent(in)    :: do_sppt_emis
          logical,                               intent(in)    :: pert_mp
          logical,                               intent(in)    :: do_ca
          logical,                               intent(in)    :: ca_global
@@ -121,7 +122,7 @@
          errmsg = ''
          errflg = 0
 
-         if (do_sppt) then
+         if (do_sppt .or. do_sppt_emis) then
            do k=1,km
              do i=1,im
                sppt_vwt=1.0
@@ -145,7 +146,12 @@
                   sppt_wts(i,k)=(sppt_wts(i,k)-1)*sppt_vwt+1.0
                endif
                sppt_wts_inv(i,k)=sppt_wts(i,k)
-
+             enddo
+           enddo
+         endif
+         if (do_sppt) then
+           do k=1,km
+             do i=1,im
                upert = (gu0(i,k) - ugrs(i,k))   * sppt_wts(i,k)
                vpert = (gv0(i,k) - vgrs(i,k))   * sppt_wts(i,k)
                tpert = (gt0(i,k) - tgrs(i,k) - (delt*dtdtnp(i,k))) * sppt_wts(i,k)

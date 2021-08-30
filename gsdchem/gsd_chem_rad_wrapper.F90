@@ -98,7 +98,6 @@ contains
     real(kind_phys), dimension(ims:im, kms:kme, jms:jme, 1:num_ext_coef) :: ext_coeff
     real(kind_phys), dimension(ims:im, kms:kme, jms:jme, 1:num_bscat_coef) :: bscat_coeff
     real(kind_phys), dimension(ims:im, kms:kme, jms:jme, 1:num_asym_par)   :: asym_par
-    real(kind_phys), dimension(im) :: aod2d
     real(kind_phys), dimension(im, kte, 1:nbands) :: ext_cof, sscal, asymp
 
 !>-- local variables
@@ -210,11 +209,9 @@ contains
             end do
           end do
         end do
-        aod2d(its:ite) = aod(its:ite,1)
+        abem(:,7) = aod(its:ite,1)
       end if
     endif
-
-    abem(:,7)=aod2d(:)
 
 !>---- feedback to radiation
     if (cplchm_rad_opt) then
