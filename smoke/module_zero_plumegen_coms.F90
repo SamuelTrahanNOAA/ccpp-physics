@@ -50,6 +50,7 @@ module module_zero_plumegen_coms
     REAL(kind=kind_phys) :: rad_t (nkp)
 
     REAL(kind=kind_phys) :: ztop_(ntime)
+    integer :: testval
   contains
     procedure :: set_to_zero => plumegen_coms_zero
   end type plumegen_coms
@@ -79,6 +80,7 @@ contains
   type(plumegen_coms) function plumegen_coms_constructor() result(this)
     implicit none
     call plumegen_coms_zero(this)
+    this%testval=3314
   end function plumegen_coms_constructor
 
   subroutine plumegen_coms_zero(this)

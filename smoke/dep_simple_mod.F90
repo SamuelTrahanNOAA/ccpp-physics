@@ -496,7 +496,7 @@ is_so2 : &
 !              Pasadena, CA  91125
 !     Modified by Winfried Seidl (August 1997)
 !       Fraunhofer-Institut fuer Atmosphaerische Umweltforschung
-!                    Garmisch-Partenkirchen, data-82467
+!                    Garmisch-Partenkirchen, D-82467
 !          for use of Wesely and Erisman surface resistances
 !     Inputs:
 !        Ustar  : The grid average friction velocity (m/s)

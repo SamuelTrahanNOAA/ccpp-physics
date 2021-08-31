@@ -220,8 +220,8 @@ contains
     ! -- set control flags
     call_plume       = (biomass_burn_opt == BURN_OPT_ENABLE) .and. (plumerisefire_frq > 0)
     if (call_plume) &
-       call_plume    = ktau>=2 .and. ((mod(int(curr_secs), max(1, 60*plumerisefire_frq)) == 0)         &
-                        .or. (ktau == 2))
+       call_plume    = (mod(int(curr_secs), max(1, 60*plumerisefire_frq)) == 0)         &
+                        .or. (ktau == 2)
                        !.or. (ktau == 1)
     scale_fire_emiss = .false.
 

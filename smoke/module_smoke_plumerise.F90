@@ -454,11 +454,13 @@ coms%area = burnt_area! area of burn, m^2
 
 !ELSEIF ( PLUMERISE_flag == 2) THEN
     ! "beta" factor converts FRP to convective energy
-    if(coms%area<1e-6) then
-      heat_fluxW = 0
-    else
-      heat_fluxW = beta*(FRP/coms%area)/0.55 ! in W/m^2
-    endif
+    heat_fluxW = beta*(FRP/coms%area)/0.55 ! in W/m^2
+! FIXME: These five lines were not in the known-working version. Delete them?
+!    if(coms%area<1e-6) then
+!      heat_fluxW = 0
+!    else
+!      heat_fluxW = beta*(FRP/coms%area)/0.55 ! in W/m^2
+!    endif
 
 !ENDIF
 
@@ -519,7 +521,7 @@ COMS%FMOIST   = MOIST / 100.       !- fuel moisture fraction
 !     except for the first few minutes for stability
   ICOUNT = 1  
 !
-  if(COMS%MDUR > NTIME) STOP 'Increase time duration (ntime) in min - see file "plumerise_mod.f90"'
+  if(COMS%MDUR > NTIME) STOP 'Increase time duration (ntime) in min - see file "module_zero_plumegen_coms.F90"'
 
   DO WHILE (ICOUNT.LE.COMS%MDUR)                             
 !  COMS%HEATING (ICOUNT) = HEAT * EFFLOAD / COMS%TDUR  ! W/m**2 
@@ -688,7 +690,8 @@ rmaxtime = float(coms%maxtime)
 
 !-- set model top integration
     coms%nm1 = min(kmt, kkmax + deltak)
-                                    
+!sam 81  format('nm1=',I0,' from kmt=',I0,' kkmax=',I0,' deltak=',I0)
+!sam     write(0,81) coms%nm1,kmt,kkmax,deltak
 !-- set timestep
     !coms%dt = (coms%zm(2)-coms%zm(1)) / (coms%tstpf * wmax)  
     coms%dt = min(5.,(coms%zm(2)-coms%zm(1)) / (coms%tstpf * wmax))
@@ -745,7 +748,11 @@ rmaxtime = float(coms%maxtime)
         ES      = ESAT_PR (COMS%T(COMS%L))            !BLOB SATURATION VAPOR PRESSURE, EM KPA
         COMS%QSAT(COMS%L) = (EPS * ES) / (COMS%PE(COMS%L) - ES)  !BLOB SATURATION LWC G/G DRY AIR
         COMS%EST (COMS%L) = ES  
-        COMS%RHO (COMS%L) = max(1e-12,3483.8 * COMS%PE (COMS%L) / COMS%T (COMS%L)) ! AIR PARCEL DENSITY , G/M**3
+!sam         if(.not.coms%pe(coms%L)>0 .or. .not. coms%T(coms%L)>200) then
+!sam 1304      format('(1304) bad input to rho at L=',I0,' with pe=',F12.5,' T=',F12.5)
+!sam           write(0,1304) coms%L,coms%PE(coms%L),coms%T(coms%L)
+!sam         endif
+        COMS%RHO (COMS%L) = 3483.8 * COMS%PE (COMS%L) / COMS%T (COMS%L) ! AIR PARCEL DENSITY , G/M**3
 !srf18jun2005
 !	IF (COMS%W(COMS%L) .ge. 0.) COMS%DQSDZ = (COMS%QSAT(COMS%L  ) - COMS%QSAT(COMS%L-1)) / (COMS%ZT(COMS%L  ) -COMS%ZT(COMS%L-1))
 !	IF (COMS%W(COMS%L) .lt. 0.) COMS%DQSDZ = (COMS%QSAT(COMS%L+1) - COMS%QSAT(COMS%L  )) / (COMS%ZT(COMS%L+1) -COMS%ZT(COMS%L  ))
@@ -792,6 +799,10 @@ rmaxtime = float(coms%maxtime)
      coms%qsat(k) = (eps * es) / (coms%pe(k) - es)  !blob saturation lwc g/g dry air
      coms%est (k) = es  
      coms%txs (k) = coms%t(k) - coms%te(k)
+!sam         if(.not.coms%pe(K)>0 .or. .not. coms%T(K)>200) then
+!sam 1305      format('(1305) bad input to rho at K=',I0,' with pe=',F12.5,' T=',F12.5)
+!sam           write(0,1305) K,coms%PE(K),coms%T(K)
+!sam         endif
      coms%rho (k) = 3483.8 * coms%pe (k) / coms%t (k) ! air parcel density , g/m**3
                                        ! no pressure diff with radius
      if((abs(coms%wc(k))).gt.wmax) wmax = abs(coms%wc(k)) ! keep wmax largest w
@@ -932,13 +943,13 @@ COMS%QC (1) = 0.       !no cloud here
                              
    F = G * R * F * COMS%AREA  !buoyancy flux
                  
-   ZV = max(1e-12,C1 * COMS%RSURF)  !virtual boundary height
+   ZV = C1 * COMS%RSURF  !virtual boundary height
                                    
-   COMS%W (1) = C1 * ( max(0.0,C2 * F) **E1) / ZV**E1  !boundary velocity
+   COMS%W (1) = C1 * ( (C2 * F) **E1) / ZV**E1  !boundary velocity
                                          
-   DENSCOR = C1 * F / G / max(1e-20,C2 * F) **E1 / ZV**E2   !density correction
+   DENSCOR = C1 * F / G / (C2 * F) **E1 / ZV**E2   !density correction
 
-   COMS%T (1) = COMS%TE (1) / max(1e-6,1. - DENSCOR)    !temperature of virtual plume at zsurf
+   COMS%T (1) = COMS%TE (1) / (1. - DENSCOR)    !temperature of virtual plume at zsurf
    
 !
    COMS%WC(1) = COMS%W(1)
@@ -963,6 +974,10 @@ COMS%QC (1) = 0.       !no cloud here
 
    COMS%VISC (1) = COMS%VISCOSITY  
 
+!sam         if(.not.coms%pe(1)>0 .or. .not. coms%T(1)>200) then
+!sam 1306      format('(1306) bad input to rho at 1=',I0,' with pe=',F12.5,' T=',F12.5)
+!sam           write(0,1306) 1,coms%PE(1),coms%T(1)
+!sam         endif
    COMS%RHO (1) = 3483.8 * COMS%PE (1) / COMS%T (1)   !air density at level 1, g/m**3
 
    XWATER = WATER / max(1e-20, COMS%W (1) * COMS%DT * COMS%RHO (1) )   !firewater mixing ratio
@@ -1019,6 +1034,10 @@ COMS%N=kmt
    ES       = ESAT_PR (COMS%T(k))  !blob saturation vapor pressure, em kPa
    COMS%EST  (k) = ES  
    COMS%QSAT (k) = (.622 * ES) / (COMS%PE (k) - ES) !saturation lwc g/g
+!sam         if(.not.coms%pe(k)>0 .or. .not. coms%T(k)>200) then
+!sam 1307      format('(1307) bad input to rho at k=',I0,' with pe=',F12.5,' T=',F12.5)
+!sam           write(0,1307) k,coms%PE(k),coms%T(k)
+!sam         endif
    COMS%RHO  (k) = 3483.8 * COMS%PE (k) / COMS%T (k) 	!dry air density g/m**3    
        COMS%VEL_P(k) = 0.
        coms%rad_p(k) = 0.
@@ -1621,6 +1640,8 @@ type(plumegen_coms), pointer :: coms
 integer m1,k,deltak,kmt,m2
 real(kind=kind_phys) dz1t,dz1m,dz2t,dz2m,d2wdz,d2tdz  ,d2qvdz ,d2qhdz ,d2qcdz ,d2qidz ,d2scdz, &
  d2vel_pdz,d2rad_dz
+!sam real(kind=kind_phys) :: old_tt
+logical, save, volatile :: printed = .false.
 
 
 !srf--- 17/08/2005
@@ -1644,7 +1665,15 @@ do k=2,m2-1
  d2rad_dz =(coms%rad_p  (k + 1) - 2 * coms%rad_p  (k) + coms%rad_p  (k - 1) ) * DZ2T
  
   COMS%WT(k) =   COMS%WT(k) + D2WDZ 
+!sam   old_tt=coms%tt(k)
   COMS%TT(k) =   COMS%TT(k) + D2TDZ                          
+!sam   if(.not. coms%tt(k)>-10 .and. .not. printed) then
+!sam 1924 format("(1924) visc_W Bad TT at k=",I0," TT=",F12.5," old_TT=",F12.5," d2tdz=",F12.5," visc=",F12.5)
+!sam 1925 format("(1925)   T = ",F12.5,",",F12.5,",",F12.5," ZT=",F12.5,",",F12.5)
+!sam      write(0,1924) k, COMS%TT(k), old_TT, d2tdz, coms%visc(k)
+!sam      write(0,1925) coms%T(k-1),coms%T(k),coms%T(k+1),coms%ZT(k-1),coms%ZT(k+1)
+!sam      printed = .true.
+!sam   endif
  COMS%QVT(k) =  COMS%QVT(k) + D2QVDZ 
  COMS%QCT(k) =  COMS%QCT(k) + D2QCDZ 
  COMS%QHT(k) =  COMS%QHT(k) + D2QHDZ 
@@ -1665,8 +1694,9 @@ implicit none
 type(plumegen_coms), pointer :: coms
 integer m1,k
 character(len=*) :: varn
+!sam real(kind_phys) :: old_t
  
-if(varn == 'COMS%W') then
+if(varn == 'W') then
 
  do k=2,m1-1
    COMS%W(k) =  COMS%W(k) +  COMS%WT(k) * COMS%DT  
@@ -1675,7 +1705,12 @@ if(varn == 'COMS%W') then
 
 else 
 do k=2,m1-1
+!sam   old_t = coms%t(k)
    COMS%T(k) =  COMS%T(k) +  COMS%TT(k) * COMS%DT  
+!sam    if(.not. coms%t(k)>200) then
+!sam 1921 format("(1921) update_plumerise Bad T at k=",I0," T=",F12.5," old_T=",F12.5," TT=",F12.5," DT=",F12.5)
+!sam      write(0,1921) k, COMS%T(k), old_T, coms%tt(k), coms%dt
+!sam    endif
 
   COMS%QV(k) = COMS%QV(k) + COMS%QVT(k) * COMS%DT  
 
@@ -1719,7 +1754,10 @@ real(kind=kind_phys), PARAMETER :: VCONST = 5.107387, EPS = 0.622, F0 = 0.75
 real(kind=kind_phys), PARAMETER :: G = 9.81, CP = 1004.
 !
 do k=2,m1-1
-
+!sam   if(.not. coms%rho(k)>1e-20) then
+!sam 33 format('(33) Bad density at k=',I0,' rho=',F12.5,' T=',F12.5,' PE=',F12.5,' test=',I0)
+!sam     write(0,33) k,coms%rho(k),coms%T(k),coms%PE(k),coms%testval
+!sam   endif
    VTC = VCONST * COMS%RHO (k) **.125   ! median volume fallspeed (KTable4)
                                 
 !  hydrometeor assembly velocity calculations (K Table4)

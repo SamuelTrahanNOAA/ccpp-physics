@@ -123,7 +123,8 @@ contains
     ! this%seasonal_pft = wesely_pft()
     ! nullify(this%is_aerosol)
     nullify(this%alpha)
-    call this%dep_init()
+    ! This is not called in the original non-thread-safe code:
+    ! call this%dep_init()
   end function smoke_data_constructor
 
   subroutine smoke_data_destructor(this)
