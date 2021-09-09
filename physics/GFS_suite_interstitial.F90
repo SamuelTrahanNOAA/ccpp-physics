@@ -524,6 +524,7 @@
                prsl, prslk, rhcbot,rhcpbl, rhctop, rhcmax, islmsk,      &
                work1, work2, kpbl, kinver, ras, me, save_lnc, save_inc, &
                ldiag3d, qdiag3d, index_of_process_conv_trans,           &
+               dqdti, rrfs_smoke,                                       &
                clw, rhc, save_qc, save_qi, save_tcp, errmsg, errflg)
 
       use machine, only: kind_phys
@@ -536,6 +537,9 @@
         imp_physics_gfdl, imp_physics_thompson, imp_physics_wsm6,imp_physics_fer_hires, me, index_of_process_conv_trans
       integer,              intent(in   ), dimension(:)     :: islmsk, kpbl, kinver
       logical,              intent(in   )                   :: cscnv, satmedmf, trans_trac, do_shoc, ltaerosol, ras
+      logical,              intent(in   )                   :: rrfs_smoke
+
+      real(kind=kind_phys), dimension(:,:),     intent(inout) :: dqdti ! only provided if rrfs_smoke=true
 
       integer,                                          intent(in) :: ntinc, ntlnc
       logical,                                          intent(in) :: ldiag3d, qdiag3d
@@ -682,6 +686,12 @@
          endif
       endif
 
+      if (rrfs_smoke) then
+        ! This was moved from GFS_DCNV_generic.F90 because that scheme
+        ! is only run if a deep convection scheme is enabled.
+        dqdti = 0
+      endif
+
     end subroutine GFS_suite_interstitial_3_run
 
   end module GFS_suite_interstitial_3
@@ -703,7 +713,7 @@
       ntrw, ntsw, ntrnc, ntsnc, ntgl, ntgnc, ntlnc, ntinc, nn, imp_physics, imp_physics_gfdl, imp_physics_thompson,  &
       imp_physics_zhao_carr, imp_physics_zhao_carr_pdf, convert_dry_rho, dtf, save_qc, save_qi, con_pi, dtidx, dtend,&
       index_of_process_conv_trans, gq0, clw, prsl, save_tcp, con_rd, con_eps, nwfa, spechum, ldiag3d,                &
-      qdiag3d, save_lnc, save_inc, ntk, ntke, errmsg, errflg)
+      dqdti, rrfs_smoke, qdiag3d, save_lnc, save_inc, ntk, ntke, errmsg, errflg)
 
       use machine,               only: kind_phys
       use module_mp_thompson_make_number_concentrations, only: make_IceNumber, make_DropletNumber
@@ -716,7 +726,7 @@
         ntsw, ntrnc, ntsnc, ntgl, ntgnc, ntlnc, ntinc, nn, imp_physics, imp_physics_gfdl, imp_physics_thompson,           &
         imp_physics_zhao_carr, imp_physics_zhao_carr_pdf
 
-      logical,                                  intent(in) :: ltaerosol, convert_dry_rho
+      logical,                                  intent(in) :: ltaerosol, convert_dry_rho, rrfs_smoke
 
       real(kind=kind_phys), intent(in   )                   :: con_pi, dtf
       real(kind=kind_phys), intent(in   ), dimension(:,:)   :: save_qc
@@ -735,6 +745,8 @@
       real(kind=kind_phys),                   intent(in) :: con_rd, con_eps
       real(kind=kind_phys), dimension(:,:),   intent(in) :: nwfa, save_tcp
       real(kind=kind_phys), dimension(:,:),   intent(in) :: spechum
+
+      real(kind=kind_phys), dimension(:,:),   intent(inout) :: dqdti ! only if rrfs_smoke
 
       character(len=*),     intent(  out)                   :: errmsg
       integer,              intent(  out)                   :: errflg
@@ -906,6 +918,15 @@
           enddo
         enddo
       endif   ! end if_ntcw
+
+! dqdt_v : instaneous moisture tendency (kg/kg/sec)
+      if (rrfs_smoke) then
+        do k=1,levs
+          do i=1,im
+            dqdti(i,k) = dqdti(i,k) * (one / dtf)
+          enddo
+        enddo
+      endif
 
     end subroutine GFS_suite_interstitial_4_run
 

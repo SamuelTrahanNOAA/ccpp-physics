@@ -271,8 +271,8 @@ MODULE module_bl_mynn
   REAL, PARAMETER :: scaleaware=1.
 
   !>Temporary switch to deactivate the mixing of chemical species (if WRF_CHEM = 1)
-  LOGICAL, PARAMETER :: mynn_chem_vertmx = .false.
-  LOGICAL, PARAMETER :: enh_vermix = .false.
+  !LOGICAL, PARAMETER :: mynn_chem_vertmx = .false.
+  !LOGICAL, PARAMETER :: enh_vermix = .false.
 
   !>Of the following the options, use one OR the other, not both.
   !>Adding top-down diffusion driven by cloud-top radiative cooling
@@ -4037,11 +4037,11 @@ ENDIF
   END SUBROUTINE mynn_tendencies
 
 ! ==================================================================
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
   SUBROUTINE mynn_mix_chem(kts,kte,i,     &
        grav_settling,                     &
        delt,dz,pblh,                      &
-       nchem, kdvel, ndvel, num_vert_mix, &
+       nchem, kdvel, ndvel,               & !num_vert_mix, &
        chem1, vd1,                        &
        qnc,qni,                           &
        p,exner,                           &
@@ -4064,8 +4064,8 @@ ENDIF
     REAL, DIMENSION(kts:kte), INTENT(IN) :: qni,qnc,&
          &p,exner,dfm,dfh,dfq,dz,tcd,qcd
     REAL, DIMENSION(kts:kte), INTENT(INOUT) :: thl,sqw,sqv,sqc,sqi,rho
-    REAL, INTENT(IN) :: delt,ust,flt,flq,flqv,flqc,qcg
-    INTEGER, INTENT(IN   )   ::   nchem, kdvel, ndvel, num_vert_mix
+    REAL, INTENT(IN) :: delt,ust,flt,flq,flqv,flqc,wspd,qcg
+    INTEGER, INTENT(IN   )   ::   nchem, kdvel, ndvel!, num_vert_mix
     REAL, DIMENSION( kts:kte+1), INTENT(IN) :: s_aw
     REAL, DIMENSION( kts:kte, nchem ), INTENT(INOUT) :: chem1
     REAL, DIMENSION( kts:kte+1,nchem), INTENT(IN) :: s_awchem
@@ -4182,7 +4182,7 @@ ENDIF
     ENDDO
 
   END SUBROUTINE mynn_mix_chem
-#endif
+!#endif
 
 ! ==================================================================
 !>\ingroup gsd_mynn_edmf
@@ -4346,13 +4346,16 @@ ENDIF
        &vdfg,                           & !Katata-added for fog dep
        &Qke, & !TKE_PBL,                            &
        &qke_adv,bl_mynn_tkeadvect,      & !ACF for QKE advection
-#if (WRF_CHEM == 1)
-       chem3d, vd3d, nchem,             & ! WA 7/29/15 For WRF-Chem
-       kdvel, ndvel, num_vert_mix,      &
-       FRP_MEAN,EMIS_ANT_NO,            & ! JLS/RAR to adjust exchange coeffs
-       mynn_chem_vertmx,                & ! JLS/RAR
-       enh_vermix,                      & ! JLS/RAR
-#endif
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+       &nchem,kdvel,ndvel,              &
+       &chem3d, vd3d,                   & ! WA 7/29/15 For WRF-Chem
+       &rrfs_smoke,                     & ! flag for Smoke
+!      &num_vert_mix,                   &
+       &FRP_MEAN,EMIS_ANT_NO,           & ! JLS/RAR to adjust exchange coeffs
+       &mynn_chem_vertmx,               & ! JLS/RAR
+       &enh_vermix,                     & ! JLS/RAR
+!#endif
        &Tsq,Qsq,Cov,                    &
        &RUBLTEN,RVBLTEN,RTHBLTEN,       &
        &RQVBLTEN,RQCBLTEN,RQIBLTEN,     &
@@ -4408,9 +4411,9 @@ ENDIF
 
     LOGICAL, INTENT(in) :: FLAG_QI,FLAG_QNI,FLAG_QC,FLAG_QNC,&
                            FLAG_QNWFA,FLAG_QNIFA
-#if (WRF_CHEM == 1)
-    LOGICAL, INTENT(IN) :: mynn_chem_vertmx,enh_vermix
-#endif
+!#if (WRF_CHEM == 1)
+    LOGICAL, OPTIONAL, INTENT(IN) :: mynn_chem_vertmx,enh_vermix
+!#endif
 
     INTEGER,INTENT(in) :: &
          & IDS,IDE,JDS,JDE,KDS,KDE &
@@ -4496,17 +4499,18 @@ ENDIF
                          qc_bl1D_old,qi_bl1D_old,cldfra_bl1D_old
 
 ! WA 7/29/15 Mix chemical arrays
-#if (WRF_CHEM == 1)
-    INTEGER, INTENT(IN   ) ::   nchem, kdvel, ndvel, num_vert_mix
-    REAL,    DIMENSION( ims:ime, kms:kme, nchem ), INTENT(INOUT), OPTIONAL :: chem3d
-    REAL,    DIMENSION( ims:ime, kdvel, ndvel ), INTENT(IN), OPTIONAL :: vd3d
-    REAL,    DIMENSION(ims:ime), INTENT(IN), OPTIONAL ::FRP_MEAN,EMIS_ANT_NO
-    
-    REAL,    DIMENSION( kts:kte, nchem ) :: chem1
-    REAL,    DIMENSION( kts:kte+1, nchem ) :: s_awchem1
-    REAL,    DIMENSION( ndvel ) :: vd1
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+    INTEGER, INTENT(IN   ) ::   nchem, kdvel, ndvel!, num_vert_mix
+    LOGICAL, OPTIONAL, INTENT(IN   ) ::   rrfs_smoke
+    REAL, OPTIONAL, DIMENSION( ims:ime, kms:kme, nchem ), INTENT(INOUT) :: chem3d
+    REAL, OPTIONAL, DIMENSION( ims:ime, kdvel, ndvel ), INTENT(IN) :: vd3d
+    REAL, OPTIONAL, DIMENSION(ims:ime), INTENT(IN) :: FRP_MEAN,EMIS_ANT_NO
+
+    REAL, ALLOCATABLE, DIMENSION(:,:) :: chem1, s_awchem1
+    REAL, ALLOCATABLE, DIMENSION(:  ) :: vd1
     INTEGER ic
-#endif
+!#endif
 
 !local vars
     INTEGER :: ITF,JTF,KTF, IMD,JMD
@@ -4980,7 +4984,8 @@ ENDIF
              det_u(k)=0.
              det_v(k)=0.
 
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+    IF (present(rrfs_smoke) ) THEN
     IF ( mynn_chem_vertmx ) THEN
       IF (PRESENT(chem3d) .AND. PRESENT(vd3d)) THEN
              ! WA 7/29/15 Set up chemical arrays
@@ -5005,7 +5010,8 @@ ENDIF
              ENDDO
       ENDIF
     ENDIF
-#endif
+    ENDIF
+!#endif
 
              IF (k==kts) THEN
                 zw(k)=0.
@@ -5036,11 +5042,14 @@ ENDIF
           sd_awu1(kte+1)=0.
           sd_awv1(kte+1)=0.
           sd_awqke1(kte+1)=0.
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+          IF (present(rrfs_smoke)) THEN
           DO ic = 1,nchem
              s_awchem1(kte+1,ic)=0.
           ENDDO
-#endif
+          ENDIF
+!#endif
 
 !>  - Call get_pblh() to calculate the hybrid \f$\theta_{vli}-TKE\f$
 !! PBL height diagnostic.
@@ -5165,10 +5174,12 @@ ENDIF
                & sub_u,sub_v,                     &
                & det_thl,det_sqv,det_sqc,         &
                & det_u,det_v,                     &
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+               & rrfs_smoke,                      &
                & nchem,chem1,s_awchem1,           &
                & mynn_chem_vertmx,                &
-#endif
+!#endif
                & qc_bl1D,cldfra_bl1D,             &
                & qc_bl1D_old,cldfra_bl1D_old,     &
                & FLAG_QC,FLAG_QI,                 &
@@ -5276,12 +5287,12 @@ ENDIF
                &bl_mynn_edmf_mom,                &
                &bl_mynn_mixscalars               )
 
-#if (WRF_CHEM == 1)
-    IF ( mynn_chem_vertmx ) THEN
+!#if (WRF_CHEM == 1)
+    IF ( present(mynn_chem_vertmx) ) THEN
           CALL mynn_mix_chem(kts,kte,i,          &
                grav_settling,                    &
                delt, dz1, pblh(i),               &
-               nchem, kdvel, ndvel, num_vert_mix,&
+               nchem, kdvel, ndvel,              & !num_vert_mix,&
                chem1, vd1,                       &
                qnc1,qni1,                        &
                p1, ex1, thl, sqv, sqc, sqi, sqw, &
@@ -5304,7 +5315,7 @@ ENDIF
            ENDDO
         ENDIF
     ENDIF
-#endif
+!#endif
 
  
           CALL retrieve_exchange_coeffs(kts,kte,&
@@ -5753,10 +5764,12 @@ ENDIF
                  & sub_u,sub_v,             &
                  & det_thl,det_sqv,det_sqc, &
                  & det_u,det_v,             &
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+                 & rrfs_smoke,              &
                  & nchem,chem,s_awchem,     &
                  & mynn_chem_vertmx,        &
-#endif
+!#endif
             ! in/outputs - subgrid scale clouds
                  & qc_bl1d,cldfra_bl1d,         &
                  & qc_bl1D_old,cldfra_bl1D_old, &
@@ -5854,16 +5867,21 @@ ENDIF
           ! Note that changing d to -1.7 doubles the area coverage of the largest plumes relative to the smallest plumes.
      REAL :: cn,c,l,n,an2,hux,maxwidth,wspd_pbl,cloud_base,width_flx
 
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+     LOGICAL, INTENT(IN), OPTIONAL :: rrfs_smoke
      INTEGER, INTENT(IN) :: nchem
-     REAL,DIMENSION(kts:kte, nchem) :: chem
-     REAL,DIMENSION(kts:kte+1, nchem) :: s_awchem
-     REAL,DIMENSION(nchem) :: chemn
-     REAL,DIMENSION(KTS:KTE+1,1:NUP, nchem) :: UPCHEM
+     REAL,ALLOCATABLE,INTENT (INOUT), OPTIONAL :: chem(:,:)
+     REAL,ALLOCATABLE,INTENT (INOUT),OPTIONAL :: s_awchem(:,:)
+     LOGICAL, INTENT(IN), OPTIONAL :: mynn_chem_vertmx
+!     REAL,DIMENSION(nchem) :: chemn
+!     REAL,DIMENSION(KTS:KTE+1,1:NUP, nchem) :: UPCHEM
+!     REAL,DIMENSION(KTS:KTE+1, nchem) :: edmf_chem
+     REAL,ALLOCATABLE :: chemn(:)
+     REAL,ALLOCATABLE :: UPCHEM(:,:,:)
+     REAL,ALLOCATABLE :: edmf_chem(:,:)
      INTEGER :: ic
-     REAL,DIMENSION(KTS:KTE+1, nchem) :: edmf_chem
-     LOGICAL, INTENT(IN) :: mynn_chem_vertmx
-#endif
+!#endif
 
   !JOE: add declaration of ERF
    REAL :: ERF
@@ -5925,6 +5943,12 @@ ENDIF
 !     print *,'flq',flq
 !     print *,'pblh',pblh
 
+   if (present( rrfs_smoke )) then
+     allocate ( chemn(nchem) )
+     allocate ( UPCHEM(KTS:KTE+1,1:NUP, nchem) )
+     allocate ( edmf_chem(KTS:KTE+1, nchem) )
+   endif
+
 ! Initialize individual updraft properties
   UPW=0.
   UPTHL=0.
@@ -5940,11 +5964,14 @@ ENDIF
   UPQNI=0.
   UPQNWFA=0.
   UPQNIFA=0.
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+  if (present( rrfs_smoke )) then
     IF ( mynn_chem_vertmx ) THEN
       UPCHEM(KTS:KTE+1,1:NUP,1:nchem)=0.0
     ENDIF
-#endif
+   endif
+!#endif
   ENT=0.001
 ! Initialize mean updraft properties
   edmf_a  =0.
@@ -5953,11 +5980,14 @@ ENDIF
   edmf_thl=0.
   edmf_ent=0.
   edmf_qc =0.
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+  if (present( rrfs_smoke )) then
     IF ( mynn_chem_vertmx ) THEN
       edmf_chem(kts:kte+1,1:nchem) = 0.0
     ENDIF
-#endif
+  endif
+!#endif
 ! Initialize the variables needed for implicit solver
   s_aw=0.
   s_awthl=0.
@@ -5971,11 +6001,14 @@ ENDIF
   s_awqni=0.
   s_awqnwfa=0.
   s_awqnifa=0.
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+  if (present( rrfs_smoke )) then
     IF ( mynn_chem_vertmx ) THEN
       s_awchem(kts:kte+1,1:nchem) = 0.0
     ENDIF
-#endif
+  endif
+!#endif
 ! Initialize explicit tendencies for subsidence & detrainment
   sub_thl = 0.
   sub_sqv = 0.
@@ -6176,7 +6209,9 @@ ENDIF
        UPQNIFA(1,I)=(QNIFA(KTS)*DZ(KTS+1)+QNIFA(KTS+1)*DZ(KTS))/(DZ(KTS)+DZ(KTS+1))
     ENDDO
 
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+   if (present( rrfs_smoke )) then
     IF ( mynn_chem_vertmx ) THEN
       DO I=1,NUP !NUP2
         IF(I > NUP2) exit
@@ -6185,7 +6220,8 @@ ENDIF
         enddo
       ENDDO
     ENDIF
-#endif
+   endif
+!#endif
 
     !Initialize environmental variables which can be modified by detrainment
     DO k=kts,kte
@@ -6262,7 +6298,9 @@ ENDIF
           !Vn  =V(K)  *(1-EntExp)+UPV(K-1,I)*EntExp
           !QKEn=QKE(k)*(1-EntExp)+UPQKE(K-1,I)*EntExp
 
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+   if (present( rrfs_smoke )) then
     IF ( mynn_chem_vertmx ) THEN
           do ic = 1,nchem
              ! Exponential Entrainment:
@@ -6271,7 +6309,8 @@ ENDIF
              chemn(ic)=UPCHEM(k-1,i,ic)*(1.-EntExp) + chem(k,ic)*EntExp
          enddo
     ENDIF
-#endif
+   endif
+!#endif
 
           ! Define pressure at model interface
           Pk    =(P(k)*DZ(k+1)+P(k+1)*DZ(k))/(DZ(k+1)+DZ(k))
@@ -6396,13 +6435,16 @@ ENDIF
              UPQNWFA(K,I)=QNWFAn
              UPQNIFA(K,I)=QNIFAn
              UPA(K,I)=UPA(K-1,I)
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+   if (present( rrfs_smoke )) then
     IF ( mynn_chem_vertmx ) THEN
              do ic = 1,nchem
                 UPCHEM(k,I,ic) = chemn(ic)
              enddo
     ENDIF
-#endif
+   endif
+!#endif
              ktop = MAX(ktop,k)
           ELSE
              exit  !exit k-loop
@@ -6461,7 +6503,9 @@ ENDIF
       ENDDO
       s_awqv(k+1) = s_awqt(k+1)  - s_awqc(k+1)
     ENDDO
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+    if (present( rrfs_smoke )) then
     IF ( mynn_chem_vertmx ) THEN
       DO k=KTS,KTE
         IF(k > KTOP) exit
@@ -6473,7 +6517,8 @@ ENDIF
         ENDDO
       ENDDO
     ENDIF
-#endif
+    endif
+!#endif
 
     IF (scalar_opt > 0) THEN
       DO k=KTS,KTE
@@ -6520,11 +6565,14 @@ ENDIF
        IF (tke_opt > 0) THEN
           s_awqke= s_awqke*adjustment
        ENDIF
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+    if (present( rrfs_smoke )) then
     IF ( mynn_chem_vertmx ) THEN
        s_awchem = s_awchem*adjustment
     ENDIF
-#endif
+    endif
+!#endif
        UPA = UPA*adjustment
     ENDIF
     !Print*,"adjustment=",adjustment," fluxportion=",fluxportion," flt=",flt
@@ -6541,13 +6589,16 @@ ENDIF
         edmf_thl(K)=edmf_thl(K)+UPA(K,i)*UPTHL(K,i)
         edmf_ent(K)=edmf_ent(K)+UPA(K,i)*ENT(K,i)
         edmf_qc(K) =edmf_qc(K) +UPA(K,i)*UPQC(K,i)
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+    if (present( rrfs_smoke )) then
     IF ( mynn_chem_vertmx ) THEN
         do ic = 1,nchem
           edmf_chem(k,ic) = edmf_chem(k,ic) + UPA(K,I)*UPCHEM(k,i,ic)
         enddo
     ENDIF
-#endif
+    endif
+!#endif
       ENDDO
 
       !Note that only edmf_a is multiplied by Psig_w. This takes care of the
@@ -6558,13 +6609,16 @@ ENDIF
         edmf_thl(k)=edmf_thl(k)/edmf_a(k)
         edmf_ent(k)=edmf_ent(k)/edmf_a(k)
         edmf_qc(k)=edmf_qc(k)/edmf_a(k)
-#if (WRF_CHEM == 1)
+!#if (WRF_CHEM == 1)
+!#ifdef RRFS_smoke
+    if (present( rrfs_smoke )) then
     IF ( mynn_chem_vertmx ) THEN
         do ic = 1,nchem
           edmf_chem(k,ic) = edmf_chem(k,ic)/edmf_a(k)
         enddo
     ENDIF
-#endif
+    endif
+!#endif
         edmf_a(k)=edmf_a(k)*Psig_w
 
         !FIND MAXIMUM MASS-FLUX IN THE COLUMN:

@@ -62,6 +62,8 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &  qgrs_ozone,                     &
      &  qgrs_water_aer_num_conc,        &
      &  qgrs_ice_aer_num_conc,          &
+     &  qgrs_smoke_conc,                &
+     &  qgrs_dust_conc,                 &
      &  prsl,exner,                     &
      &  slmsk,tsurf,qsfc,ps,            &
      &  ust,ch,hflx,qflx,wspd,rb,       &
@@ -106,7 +108,8 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &  icloud_bl, do_mynnsfclay,                          &
      &  imp_physics, imp_physics_gfdl,                     &
      &  imp_physics_thompson, imp_physics_wsm6,            &
-     &  ltaerosol, lprnt, errmsg, errflg  )
+     &  ltaerosol, lprnt, frp_avg_hr, rrfs_smoke,          &
+     &  tracer_mixing, enh_vermix, errmsg, errflg  )
 
 ! should be moved to inside the mynn:
       use machine , only : kind_phys
@@ -199,7 +202,8 @@ SUBROUTINE mynnedmf_wrapper_run(        &
   integer, intent(out) :: errflg
 
   LOGICAL, INTENT(IN) :: lssav, ldiag3d, lsidea, qdiag3d
-  LOGICAL, INTENT(IN) :: cplflx
+  LOGICAL, INTENT(IN) :: cplflx, rrfs_smoke
+  real(kind_phys), dimension(:), intent(inout) :: frp_avg_hr
 
 ! NAMELIST OPTIONS (INPUT):
       LOGICAL, INTENT(IN) :: bl_mynn_tkeadvect, ltaerosol,  &
@@ -250,8 +254,8 @@ SUBROUTINE mynnedmf_wrapper_run(        &
       INTEGER :: IDS,IDE,JDS,JDE,KDS,KDE,                                &
      &            IMS,IME,JMS,JME,KMS,KME,                               &
      &            ITS,ITE,JTS,JTE,KTS,KTE
-      INTEGER :: kdvel, num_vert_mix
-      INTEGER, PARAMETER :: nchem=1, ndvel=1
+!     INTEGER, PARAMETER :: num_vert_mix
+      INTEGER, PARAMETER :: nchem=2, ndvel=2, kdvel=1
       REAL(kind=kind_phys) :: tem
 
 !MYNN-3D
@@ -280,6 +284,8 @@ SUBROUTINE mynnedmf_wrapper_run(        &
     &        qgrs_ozone,                                                 &
     &        qgrs_water_aer_num_conc,                                    &
     &        qgrs_ice_aer_num_conc
+     real(kind=kind_phys), dimension(:,:), intent(inout) ::              &
+             qgrs_smoke_conc, qgrs_dust_conc
      real(kind=kind_phys), dimension(:,:), intent(out) ::                &
     &        Tsq, Qsq, Cov, exch_h, exch_m
      real(kind=kind_phys), dimension(:), intent(in) :: xmu
@@ -296,10 +302,13 @@ SUBROUTINE mynnedmf_wrapper_run(        &
       real(kind=kind_phys), allocatable :: old_ozone(:,:)
 
 !MYNN-CHEM arrays
-      real(kind=kind_phys), dimension(im,nchem) :: chem3d
-      real(kind=kind_phys), dimension(im,ndvel) :: vd3d
-      REAL(kind=kind_phys), DIMENSION( levs, nchem ) :: chem1
-      REAL(kind=kind_phys), DIMENSION( levs+1, nchem ) :: s_awchem1
+!      real(kind=kind_phys), dimension(im,nchem) :: chem3d
+!      real(kind=kind_phys), dimension(im,ndvel) :: vd3d
+!      REAL(kind=kind_phys), DIMENSION( levs, nchem ) :: chem1
+!      REAL(kind=kind_phys), DIMENSION( levs+1, nchem ) :: s_awchem1
+!      REAL(kind=kind_phys), DIMENSION( ndvel ) :: vd1
+      real(kind=kind_phys), dimension(im,levs,nchem) :: chem3d
+      real(kind=kind_phys), dimension(im,ndvel) :: vd3d,vd
       REAL(kind=kind_phys), DIMENSION( ndvel ) :: vd1
 
 !MYNN-2D
@@ -328,6 +337,8 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &        dusfc_cpl,dvsfc_cpl,dtsfc_cpl,dqsfc_cpl
       real(kind=kind_phys), dimension(:), intent(inout) ::               &
      &        dusfci_cpl,dvsfci_cpl,dtsfci_cpl,dqsfci_cpl
+      LOGICAL, INTENT(IN) :: tracer_mixing
+      LOGICAL, INTENT(IN) :: enh_vermix
 
      !LOCAL
       real, dimension(im) ::                                             &
@@ -336,6 +347,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
       integer :: idtend
       real, dimension(im) :: dusfci1,dvsfci1,dtsfci1,dqsfci1
       real(kind=kind_phys), allocatable :: save_qke_adv(:,:)
+      REAL, DIMENSION(im) ::FRP_MEAN,EMIS_ANT_NO
 
       ! Initialize CCPP error handling variables
       errmsg = ''
@@ -365,6 +377,10 @@ SUBROUTINE mynnedmf_wrapper_run(        &
          initflag=0
          !print*,"in MYNN, initflag=",initflag
       endif
+
+      FRP_MEAN = 0.
+      EMIS_ANT_NO = 0.
+      vd = 0. ! hli for chem dry deposition, 0 temperally
 
   ! Assign variables for each microphysics scheme
         if (imp_physics == imp_physics_wsm6) then
@@ -651,6 +667,15 @@ SUBROUTINE mynnedmf_wrapper_run(        &
       endif
 
 
+      !> - Call mynn_bl_driver() with or without smoke
+      if (rrfs_smoke) then
+         do k=1,levs
+         do i=1,im
+           chem3d(i,k,1)=qgrs_smoke_conc(i,k)
+           chem3d(i,k,2)=qgrs_dust_conc (i,k)
+         enddo
+         enddo
+
               CALL  mynn_bl_driver(                                    &
      &             initflag=initflag,restart=flag_restart,             &
      &             cycling=cycling,                                    &
@@ -665,10 +690,17 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &             wspd=wspd,uoce=uoce,voce=voce,vdfg=vdfg,            & !input
      &             qke=QKE,sh3d=Sh3d,                                  & !output
      &             qke_adv=qke_adv,bl_mynn_tkeadvect=bl_mynn_tkeadvect,&
-#if (WRF_CHEM == 1)
-     &             chem3d=chem,vd3d=vd,nchem=nchem,kdvel=kdvel,        &
-     &             ndvel=ndvel,num_vert_mix=num_vert_mix,              &
-#endif
+!#if (WRF_CHEM == 1)
+! Tracer part
+     &             nchem=nchem,kdvel=kdvel,ndvel=ndvel,                &
+     &             chem3d=chem3d,vd3d=vd,                              &
+     &             rrfs_smoke=rrfs_smoke,                              &
+!    &             num_vert_mix=num_vert_mix,                          &
+     &             FRP_MEAN=frp_avg_hr,EMIS_ANT_NO=EMIS_ANT_NO,        &
+     &             mynn_chem_vertmx=tracer_mixing,                     &
+     &             enh_vermix=enh_vermix,                              &
+!--------
+!#endif
      &             Tsq=tsq,Qsq=qsq,Cov=cov,                            & !output
      &             RUBLTEN=RUBLTEN,RVBLTEN=RVBLTEN,RTHBLTEN=RTHBLTEN,  & !output
      &             RQVBLTEN=RQVBLTEN,RQCBLTEN=rqcblten,                &
@@ -707,7 +739,71 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &             ,IDS=1,IDE=im,JDS=1,JDE=1,KDS=1,KDE=levs            & !input
      &             ,IMS=1,IME=im,JMS=1,JME=1,KMS=1,KME=levs            & !input
      &             ,ITS=1,ITE=im,JTS=1,JTE=1,KTS=1,KTE=levs)             !input
-
+         do k=1,levs
+         do i=1,im
+           qgrs_smoke_conc(i,k)=chem3d(i,k,1)
+           qgrs_dust_conc (i,k)=chem3d(i,k,2)
+         enddo
+         enddo
+     else
+              CALL  mynn_bl_driver(                                    &
+     &             initflag=initflag,restart=flag_restart,             &
+     &             cycling=cycling,                                    &
+     &             grav_settling=grav_settling,                        &
+     &             delt=delt,dz=dz,dx=dx,znt=znt,                      &
+     &             u=u,v=v,w=w,th=th,sqv3D=sqv,sqc3D=sqc,              &
+     &             sqi3D=sqi,qni=qni,qnc=qnc,                          &
+     &             qnwfa=qnwfa,qnifa=qnifa,ozone=ozone,                &
+     &             p=prsl,exner=exner,rho=rho,T3D=t3d,                 &
+     &             xland=xland,ts=ts,qsfc=qsfc,qcg=qcg,ps=ps,          &
+     &             ust=ust,ch=ch,hfx=hfx,qfx=qfx,rmol=rmol,            &
+     &             wspd=wspd,uoce=uoce,voce=voce,vdfg=vdfg,            & !input
+     &             qke=QKE,sh3d=Sh3d,                                  & !output
+     &             qke_adv=qke_adv,bl_mynn_tkeadvect=bl_mynn_tkeadvect,&
+!#if (WRF_CHEM == 1)
+!     &             chem3d=chem,vd3d=vd,nchem=nchem,kdvel=kdvel,        &
+!     &             ndvel=ndvel,num_vert_mix=num_vert_mix,              &
+!#endif
+     &             nchem=nchem,kdvel=kdvel,ndvel=ndvel,                &
+     &             Tsq=tsq,Qsq=qsq,Cov=cov,                            & !output
+     &             RUBLTEN=RUBLTEN,RVBLTEN=RVBLTEN,RTHBLTEN=RTHBLTEN,  & !output
+     &             RQVBLTEN=RQVBLTEN,RQCBLTEN=rqcblten,                &
+     &             RQIBLTEN=rqiblten,RQNCBLTEN=rqncblten,              & !output
+     &             RQNIBLTEN=rqniblten,RQNWFABLTEN=RQNWFABLTEN,        & !output
+     &             RQNIFABLTEN=RQNIFABLTEN,dozone=dqdt_ozone,          & !output
+     &             EXCH_H=exch_h,EXCH_M=exch_m,                        & !output
+     &             pblh=pblh,KPBL=KPBL                                 & !output
+     &             ,el_pbl=el_pbl                                      & !output
+     &             ,dqke=dqke                                          & !output
+     &             ,qWT=qWT,qSHEAR=qSHEAR,qBUOY=qBUOY,qDISS=qDISS      & !output
+     &             ,WSTAR=wstar,DELTA=delta                            & !unused input
+     &             ,bl_mynn_tkebudget=bl_mynn_tkebudget                & !input parameter
+     &             ,bl_mynn_cloudpdf=bl_mynn_cloudpdf                  & !input parameter
+     &             ,bl_mynn_mixlength=bl_mynn_mixlength                & !input parameter
+     &             ,icloud_bl=icloud_bl                                & !input parameter
+     &             ,qc_bl=qc_bl,qi_bl=qi_bl,cldfra_bl=cldfra_bl        & !output
+     &             ,closure=closure,bl_mynn_edmf=bl_mynn_edmf          & !input parameter
+     &             ,bl_mynn_edmf_mom=bl_mynn_edmf_mom                  & !input parameter
+     &             ,bl_mynn_edmf_tke=bl_mynn_edmf_tke                  & !input parameter
+     &             ,bl_mynn_mixscalars=bl_mynn_mixscalars              & !input parameter
+     &             ,bl_mynn_output=bl_mynn_output                      & !input parameter
+     &             ,bl_mynn_cloudmix=bl_mynn_cloudmix                  & !input parameter
+     &             ,bl_mynn_mixqt=bl_mynn_mixqt                        & !input parameter
+     &             ,edmf_a=edmf_a,edmf_w=edmf_w,edmf_qt=edmf_qt        & !output
+     &             ,edmf_thl=edmf_thl,edmf_ent=edmf_ent,edmf_qc=edmf_qc &!output
+     &             ,sub_thl3D=sub_thl,sub_sqv3D=sub_sqv                &
+     &             ,det_thl3D=det_thl,det_sqv3D=det_sqv                &
+     &             ,nupdraft=nupdraft,maxMF=maxMF                      & !output
+     &             ,ktop_plume=ktop_plume                              & !output
+     &             ,spp_pbl=spp_pbl,pattern_spp_pbl=pattern_spp_pbl    & !input
+     &             ,RTHRATEN=htrlw                                     & !input
+     &             ,FLAG_QI=flag_qi,FLAG_QNI=flag_qni                  & !input
+     &             ,FLAG_QC=flag_qc,FLAG_QNC=flag_qnc                  & !input
+     &             ,FLAG_QNWFA=FLAG_QNWFA,FLAG_QNIFA=FLAG_QNIFA        & !input
+     &             ,IDS=1,IDE=im,JDS=1,JDE=1,KDS=1,KDE=levs            & !input
+     &             ,IMS=1,IME=im,JMS=1,JME=1,KMS=1,KME=levs            & !input
+     &             ,ITS=1,ITE=im,JTS=1,JTE=1,KTS=1,KTE=levs)             !input
+     endif
 
      ! POST MYNN (INTERSTITIAL) WORK:
         !update/save MYNN-only variables

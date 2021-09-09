@@ -270,6 +270,24 @@
   kind = kind_phys
   intent = in
   optional = F
+[qgrs_smoke_conc]
+  standard_name = smoke_tracer_concentration
+  long_name = concentration of smoke
+  units = kg kg-1
+  dimensions = (horizontal_loop_extent,vertical_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
+  optional = F
+[qgrs_dust_conc]
+  standard_name = dust_tracer_concentration
+  long_name = concentration of dust
+  units = kg kg-1
+  dimensions = (horizontal_loop_extent,vertical_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
+  optional = F
 [prsl]
   standard_name = air_pressure
   long_name = mean layer pressure
@@ -1314,6 +1332,39 @@
 [lprnt]
   standard_name = flag_print
   long_name = control flag for diagnostic print out
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+  optional = F
+[frp_avg_hr]
+  standard_name = frp_avg_hourly
+  long_name = hourly avg frp
+  units = mw
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = inout
+  optional = F
+[rrfs_smoke]
+  standard_name = flag_for_rrfs_smoke_coupling
+  long_name = flag controlling rrfs_smoke collection (default off)
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+  optional = F
+[tracer_mixing]
+  standard_name = rrfs_smoke_mynn_tracer_mixing
+  long_name = flag for rrfs smoke mynn tracer mixing
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+  optional = F
+[enh_vermix]
+  standard_name = rrfs_smoke_mynn_enh_vermix
+  long_name = flag for rrfs smoke mynn enh vermix
   units = flag
   dimensions = ()
   type = logical
