@@ -549,48 +549,48 @@
   intent = out
   optional = F
 [seas_opt_in]
-  standard_name = gsd_chem_sea_salt_opt
-  long_name = gsd chem sea salt emission option
+  standard_name = rrfs_smoke_sea_salt_opt
+  long_name = rrfs smoke sea salt emission option
   units = index
   dimensions = ()
   type = integer
   intent = in
   optional = F
 [dust_opt_in]
-  standard_name = gsd_chem_dust_opt
-  long_name = gsd chem dust chem option
+  standard_name = rrfs_smoke_dust_opt
+  long_name = rrfs smoke dust chem option
   units = index
   dimensions = ()
   type = integer
   intent = in
   optional = F
 [biomass_burn_opt_in]
-  standard_name = gsd_chem_biomass_burn_opt
-  long_name = gsd chem biomass burning option
+  standard_name = rrfs_smoke_biomass_burn_opt
+  long_name = rrfs smoke biomass burning option
   units = index
   dimensions = ()
   type = integer
   intent = in
   optional = F
 [drydep_opt_in]
-  standard_name = gsd_chem_drydep_opt
-  long_name = gsd chem dry deposition option
+  standard_name = rrfs_smoke_drydep_opt
+  long_name = rrfs smoke dry deposition option
   units = index
   dimensions = ()
   type = integer
   intent = in
   optional = F
 [plumerise_flag_in]
-  standard_name = gsd_chem_plumerise_flag
-  long_name = gsd chem plumerise option
+  standard_name = rrfs_smoke_plumerise_flag
+  long_name = rrfs smoke plumerise option
   units = index
   dimensions = ()
   type = integer
   intent = in
   optional = F
 [addsmoke_flag_in]
-  standard_name = gsd_chem_addsmoke_flag
-  long_name = gsd chem add smoke option
+  standard_name = rrfs_smoke_addsmoke_flag
+  long_name = rrfs smoke add smoke option
   units = index
   dimensions = ()
   type = integer
@@ -605,7 +605,7 @@
   intent = in
   optional = F
 [dbg_opt_in]
-  standard_name = rrfs_smoke_dbg_opt
+  standard_name = rrfs_smoke_plumerise_debug
   long_name = flag for rrfs smoke plumerise debug
   units = flag
   dimensions = ()
