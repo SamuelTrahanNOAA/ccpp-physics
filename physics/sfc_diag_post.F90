@@ -17,18 +17,19 @@
 #endif
       subroutine sfc_diag_post_run (im, lsm, lsm_noahmp, dry, lssav, dtf, con_eps, con_epsm1, pgr,&
                          t2mmp, q2mp, t2m, q2m, u10m, v10m, tmpmin, tmpmax, spfhmin, spfhmax,&
-                         wind10mmax, u10mmax, v10mmax, dpt2m, errmsg, errflg)
+                         wind10mmax, u10mmax, v10mmax, dpt2m, lake_t2m, lake_q2m, do_clm_lake, &
+                         lakefrac, errmsg, errflg)
 
         use machine,               only: kind_phys
 
         implicit none
 
         integer,                              intent(in) :: im, lsm, lsm_noahmp
-        logical,                              intent(in) :: lssav
+        logical,                              intent(in) :: lssav, do_clm_lake
         real(kind=kind_phys),                 intent(in) :: dtf, con_eps, con_epsm1
         logical             , dimension(:),  intent(in) :: dry
-        real(kind=kind_phys), dimension(:),  intent(in) :: pgr, u10m, v10m
-        real(kind=kind_phys), dimension(:) ,  intent(in) :: t2mmp, q2mp
+        real(kind=kind_phys), dimension(:),  intent(in) :: pgr, u10m, v10m, lakefrac
+        real(kind=kind_phys), dimension(:) ,  intent(in) :: t2mmp, q2mp, lake_q2m, lake_t2m
         real(kind=kind_phys), dimension(:),  intent(inout) :: t2m, q2m, tmpmin, tmpmax, spfhmin, spfhmax
         real(kind=kind_phys), dimension(:),  intent(inout) :: wind10mmax, u10mmax, v10mmax, dpt2m
 
@@ -50,6 +51,15 @@
             endif
           enddo
         endif
+
+        if(do_clm_lake) then
+           do i=1,im
+              if(lakefrac(i)>0.5) then
+                 t2m(i) = lake_t2m(i)
+                 q2m(i) = lake_q2m(i)
+              end if
+           enddo
+        end if
 
         if (lssav) then
           do i=1,im

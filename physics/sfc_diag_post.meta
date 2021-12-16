@@ -186,6 +186,37 @@
   type = real
   kind = kind_phys
   intent = inout
+[lake_t2m]
+  standard_name =  temperature_at_2m_from_clm_lake
+  long_name = temperature at 2m from clm lake
+  units = frac
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+[lake_q2m]
+  standard_name =  specific_humidity_at_2m_from_clm_lake
+  long_name = specific humidity at 2m from clm lake
+  units = frac
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+[do_clm_lake]
+  standard_name = flag_for_clm_lake_surface_scheme
+  long_name = flag for clm lake surface model
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[lakefrac]
+  standard_name = lake_area_fraction
+  long_name = fraction of horizontal grid area occupied by lake
+  units = frac
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP

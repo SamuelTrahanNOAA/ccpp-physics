@@ -28,12 +28,12 @@
   dimensions = ()
   type = logical
   intent = in
-[lkm]
-  standard_name = control_for_lake_surface_scheme
-  long_name = flag for lake surface model
+[do_flake]
+  standard_name = flag_for_flake_surface_scheme
+  long_name = flag for flake surface model
   units = flag
   dimensions = ()
-  type = integer
+  type = logical
   intent = in
 [frac_grid]
   standard_name = flag_for_fractional_landmask

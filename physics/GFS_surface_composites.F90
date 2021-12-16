@@ -27,7 +27,7 @@ contains
 !> \section arg_table_GFS_surface_composites_pre_run Argument Table
 !! \htmlinclude GFS_surface_composites_pre_run.html
 !!
-   subroutine GFS_surface_composites_pre_run (im, flag_init, flag_restart, lkm, frac_grid,                                &
+   subroutine GFS_surface_composites_pre_run (im, flag_init, flag_restart, do_flake, frac_grid,                                &
                                  flag_cice, cplflx, cplice, cplwav2atm, landfrac, lakefrac, lakedepth, oceanfrac, frland, &
                                  dry, icy, lake, use_flake, wet, hice, cice, zorlo, zorll, zorli,                         &
                                  snowd,            snowd_lnd, snowd_ice, tprcp, tprcp_wat,                                &
@@ -40,7 +40,8 @@ contains
       implicit none
 
       ! Interface variables
-      integer,                             intent(in   ) :: im, lkm, kdt
+      integer,                             intent(in   ) :: im, kdt
+      logical,                             intent(in   ) :: do_flake
       logical,                             intent(in   ) :: flag_init, flag_restart, frac_grid, cplflx, cplice, cplwav2atm
       logical, dimension(:),              intent(inout)  :: flag_cice
       logical,              dimension(:), intent(inout)  :: dry, icy, lake, use_flake, wet
@@ -245,7 +246,7 @@ contains
       do i = 1, im
         if ((wet(i) .or. icy(i)) .and. lakefrac(i) > zero) then
           lake(i) = .true.
-          if (lkm == 1 .and. lakefrac(i) >= 0.15 .and. lakedepth(i) > one) then
+          if (do_flake .and. lakefrac(i) >= 0.15 .and. lakedepth(i) > one) then
             use_flake(i) = .true.
           else
             use_flake(i) = .false.
