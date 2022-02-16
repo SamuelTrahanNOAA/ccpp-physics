@@ -28,7 +28,7 @@
 !  ---  inputs:
      &     ( im, hvap, cp, rd, eps, epsm1, rvrdm1, ps, u1, v1, t1, q1,  &
      &       tskin, cm, ch, lseaspray, fm, fm10,                        &
-     &       prsl1, prslki, wet, use_flake, wind,                       &,  ! --- inputs
+     &       prsl1, prslki, wet, lake_is_at, wind,                      &,  ! --- inputs
      &       flag_iter,                                                 &
      &       qsurf, cmm, chh, gflux, evap, hflx, ep,                    &   ! --- outputs
      &       errmsg, errflg                                             &
@@ -42,7 +42,7 @@
 !    call sfc_ocean                                                     !
 !       inputs:                                                         !
 !        ( im, ps, u1, v1, t1, q1, tskin, cm, ch, lseaspray, fm, fm10,  !
-!            prsl1, prslki, wet, use_flake, wind, flag_iter,            !
+!            prsl1, prslki, wet, lake_is_at, wind, flag_iter,           !
 !       outputs:                                                        !
 !            qsurf, cmm, chh, gflux, evap, hflx, ep )                   !
 !                                                                       !
@@ -111,7 +111,7 @@
 ! For sea spray effect
       logical, intent(in) :: lseaspray
 !
-      logical, dimension(:), intent(in) :: flag_iter, wet, use_flake
+      logical, dimension(:), intent(in) :: flag_iter, wet, lake_is_at
 
 !  ---  outputs:
       real (kind=kind_phys), dimension(:), intent(inout) :: qsurf,      &
@@ -154,7 +154,7 @@
 !
 !  --- ...  flag for open water
       do i = 1, im
-        flag(i) = (wet(i) .and. flag_iter(i) .and. .not. use_flake(i))
+        flag(i) = (wet(i) .and. flag_iter(i) .and. .not. lake_is_at(i))
 !  --- ...  initialize variables. all units are supposedly m.k.s. unless specified
 !           ps is in pascals, wind is wind speed,
 !           rho is density, qss is sat. hum. at surface

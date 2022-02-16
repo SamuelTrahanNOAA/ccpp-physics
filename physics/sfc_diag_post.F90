@@ -51,7 +51,7 @@
             endif
           enddo
         endif
-
+if(1==2) then
         if(do_clm_lake) then
            do i=1,im
               if(lakefrac(i)>0.5) then
@@ -60,7 +60,7 @@
               end if
            enddo
         end if
-
+endif
         if (lssav) then
           do i=1,im
             tmpmax(i)  = max(tmpmax(i),t2m(i))

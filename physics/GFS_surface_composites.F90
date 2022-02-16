@@ -29,7 +29,7 @@ contains
 !!
    subroutine GFS_surface_composites_pre_run (im, flag_init, flag_restart, do_flake, frac_grid,                                &
                                  flag_cice, cplflx, cplice, cplwav2atm, landfrac, lakefrac, lakedepth, oceanfrac, frland, &
-                                 dry, icy, lake, use_flake, wet, hice, cice, zorlo, zorll, zorli,                         &
+                                 dry, icy, lake, lake_is_at, wet, hice, cice, zorlo, zorll, zorli,                        &
                                  snowd,            snowd_lnd, snowd_ice, tprcp, tprcp_wat,                                &
                                  tprcp_lnd, tprcp_ice, uustar, uustar_wat, uustar_lnd, uustar_ice,                        &
                                  weasd,            weasd_lnd, weasd_ice, ep1d_ice, tsfc, tsfco, tsfcl, tsfc_wat,          &
@@ -44,7 +44,7 @@ contains
       logical,                             intent(in   ) :: do_flake
       logical,                             intent(in   ) :: flag_init, flag_restart, frac_grid, cplflx, cplice, cplwav2atm
       logical, dimension(:),              intent(inout)  :: flag_cice
-      logical,              dimension(:), intent(inout)  :: dry, icy, lake, use_flake, wet
+      logical,              dimension(:), intent(inout)  :: dry, icy, lake, lake_is_at, wet
       real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakefrac, lakedepth, oceanfrac
       real(kind=kind_phys), dimension(:), intent(inout)  :: cice, hice
       real(kind=kind_phys), dimension(:), intent(  out)  :: frland
@@ -247,13 +247,13 @@ contains
         if ((wet(i) .or. icy(i)) .and. lakefrac(i) > zero) then
           lake(i) = .true.
           if (do_flake .and. lakefrac(i) >= 0.15 .and. lakedepth(i) > one) then
-            use_flake(i) = .true.
+            lake_is_at(i) = .true.
           else
-            use_flake(i) = .false.
+            lake_is_at(i) = .false.
           endif
         else
           lake(i) = .false.
-          use_flake(i) = .false.
+          lake_is_at(i) = .false.
         endif
       enddo
 !

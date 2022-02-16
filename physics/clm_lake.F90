@@ -151,12 +151,14 @@ MODULE clm_lake
                      h2osno2d     ,snowdp2d       ,snl2d        ,z3d             ,&  !h
                      dz3d         ,zi3d           ,h2osoi_vol3d ,h2osoi_liq3d    ,&
                      h2osoi_ice3d ,t_grnd2d       ,t_soisno3d   ,t_lake3d        ,&
-                     savedtke12d  ,lake_icefrac3d                                ,& 
-                     lakefrac                     ,con_cp                        ,&
+                     savedtke12d  ,lake_icefrac3d ,oro          ,lake_is_at      ,& 
+!                    lakefrac                                                    ,&
+                     con_cp                                                      ,&
                      hflx         ,evap           ,grdflx       ,tsk             ,&  !o
                      lake_t2m     ,lake_q2m       ,clm_lake_initialized          ,&
                      ivgtyp       ,isltyp         ,snow         ,use_lakedepth   ,&
-                     restart      ,lakedepth_default                             ,&
+                     restart      ,lakedepth_default, lake_ht   ,lake_rho0       ,&
+                     xidx         ,yidx                                          ,&
                      me           ,master         ,errmsg       ,errflg )
 
       !==============================================================================
@@ -171,12 +173,15 @@ MODULE clm_lake
     CHARACTER(*), INTENT(OUT) :: errmsg
     INTEGER , INTENT (IN) :: im,km,me,master
     LOGICAL, INTENT(IN) :: restart,use_lakedepth
-    LOGICAL, INTENT(INOUT) :: clm_lake_initialized
+    INTEGER, INTENT(INOUT) :: clm_lake_initialized(:)
     REAL(KIND_PHYS),     INTENT(IN)  :: xice_threshold, con_rd,con_g,con_cp,lakedepth_default
     REAL(KIND_PHYS), DIMENSION( : ), INTENT(INOUT)::   XICE
-    REAL(KIND_PHYS), DIMENSION( : ), INTENT(INOUT)::   LAKEFRAC
+    REAL(KIND_PHYS), DIMENSION( : ), INTENT(IN):: ORO
+!   REAL(KIND_PHYS), DIMENSION( : ), INTENT(INOUT)::   LAKEFRAC
  !   INTEGER, INTENT(IN)::   LAKEFLAG
     REAL(KIND_PHYS),    DIMENSION( : ), INTENT(INOUT)    :: SNOW
+
+    LOGICAL, DIMENSION(:), INTENT(IN) :: lake_is_at
     
     REAL(KIND_PHYS),           DIMENSION( :, : ),INTENT(IN)  :: gt0
     REAL(KIND_PHYS),           DIMENSION( :, : ),INTENT(IN)  :: prsi   
@@ -191,10 +196,12 @@ MODULE clm_lake
     REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(IN)  :: rain
     !REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(IN)  :: swdown
     REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(INOUT)  :: albedo
+    REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(INOUT)  :: lake_ht
+    REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(INOUT)  :: lake_rho0
     INTEGER,                   DIMENSION( : )         ,INTENT(INOUT) :: XLAND
     INTEGER, DIMENSION( : ), INTENT(INOUT)       :: IVGTYP,ISLTYP
     REAL(KIND_PHYS),                                                  INTENT(IN)  :: dtp
-    
+    integer, intent(in) :: xidx(:), yidx(:)
     REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: z_lake3d
     REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: dz_lake3d
     REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: watsat3d
@@ -296,22 +303,24 @@ MODULE clm_lake
       errmsg = ' '
       errflg = 0
 
-      if(.not.clm_lake_initialized) then
-        call lakeini(IVGTYP,         ISLTYP,                     SNOW,                 & !i
-                     lake_min_elev,     restart,        lakedepth_default,             &
+      if(sum(clm_lake_initialized(1:IM))<IM) then
+        call lakeini(IVGTYP,         ISLTYP,          gt0,             SNOW,           & !i
+                     lake_min_elev,  restart,         lakedepth_default,               &
                      lakedepth2d,    savedtke12d,     snowdp2d,        h2osno2d,       & !o
                      snl2d,          t_grnd2d,        t_lake3d,        lake_icefrac3d, &
                      z_lake3d,       dz_lake3d,       t_soisno3d,      h2osoi_ice3d,   &
                      h2osoi_liq3d,   h2osoi_vol3d,    z3d,             dz3d,           &
                      zi3d,           watsat3d,        csol3d,          tkmg3d,         &
                      iswater,        xice,            xice_threshold,  xland,   tsk,   &
-                     lakefrac,       use_lakedepth,   con_g,                           &
-                     tkdry3d,        tksatu3d,        im,              phii,           &
+                     lake_is_at,     use_lakedepth,   con_g,           con_rd,         &
+                     tkdry3d,        tksatu3d,        im,              prsi,           &
+                     lake_rho0,      lake_ht,         oro,                             &
+                     xidx,           yidx,                                             &
                      me,             master,          errmsg,          errflg)
         if(errflg/=0) then
           return
         endif
-        clm_lake_initialized=.true.
+        clm_lake_initialized(1:IM)=1
       endif
 
       dtime = dtp/2  ! Two surface scheme timesteps per physics timestep
@@ -336,7 +345,7 @@ MODULE clm_lake
        !   lake_icefrac3d(i,1) = xice(i)
        !   endif
 
-        if (lakefrac(i)>0) THEN
+        if (lake_is_at(i)) THEN
     
            do c = 1,column
      
@@ -405,7 +414,6 @@ MODULE clm_lake
               return ! State is invalid now, so pass error to caller.
             endif
             
-
            do c = 1,column
             rho0 = prsi(i,1)/(con_rd*gt0(i,1))
             HFLX(i)=eflx_sh_tot(i)/(rho0*con_cp)
@@ -4944,16 +4952,18 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
   end subroutine MoninObukIni
 
 ! Due to a CCPP bug, this has to be called from the _run method.
- SUBROUTINE lakeini(IVGTYP,         ISLTYP,                           SNOW,           & !i
-                    lake_min_elev,     restart,        lakedepth_default,             &
+ SUBROUTINE lakeini(IVGTYP,         ISLTYP,          gt0,             SNOW,           & !i
+                    lake_min_elev,  restart,         lakedepth_default,               &
                     lakedepth2d,    savedtke12d,     snowdp2d,        h2osno2d,       & !o
                     snl2d,          t_grnd2d,        t_lake3d,        lake_icefrac3d, &
                     z_lake3d,       dz_lake3d,       t_soisno3d,      h2osoi_ice3d,   &
                     h2osoi_liq3d,   h2osoi_vol3d,    z3d,             dz3d,           &
                     zi3d,           watsat3d,        csol3d,          tkmg3d,         &
                     iswater,        xice,            xice_threshold,  xland,   tsk,   &
-                    lakefrac,       use_lakedepth,   con_g,                           &
-                    tkdry3d,        tksatu3d,        im,              phii,           &
+                    lake_is_at,     use_lakedepth,   con_g,           con_rd,         &
+                    tkdry3d,        tksatu3d,        im,              prsi,           &
+                    lake_rho0,      lake_ht,         oro,                             &
+                    xidx,           yidx,                                             &
                     me,             master,          errmsg,          errflg)
 
    !==============================================================================
@@ -4967,12 +4977,12 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
   CHARACTER(*), INTENT(OUT) :: errmsg
 
   INTEGER , INTENT (IN)    :: im, me, master, iswater
-  REAL(KIND_PHYS),     INTENT(IN)  :: xice_threshold, con_g
+  REAL(KIND_PHYS),     INTENT(IN)  :: xice_threshold, con_g, con_rd
   REAL(KIND_PHYS), DIMENSION( :  ), INTENT(INOUT)::   XICE
-  REAL(KIND_PHYS), DIMENSION( :  ), INTENT(IN)::      TSK
+  REAL(KIND_PHYS), DIMENSION( :  ), INTENT(IN)::      TSK, ORO
   INTEGER, DIMENSION( : )  ,INTENT(INOUT)  :: XLAND
 
-  REAL(kind=kind_phys), DIMENSION( :  ) ::   LAKEFRAC
+  logical, dimension(:), intent(in) :: lake_is_at
   !INTEGER , INTENT (IN) :: lakeflag
   !INTEGER , INTENT (INOUT) :: lake_depth_flag
   LOGICAL, INTENT (IN) ::   use_lakedepth
@@ -4980,8 +4990,11 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
   LOGICAL , INTENT(IN)      ::     restart
   INTEGER, DIMENSION( : ), INTENT(INOUT)       :: IVGTYP,ISLTYP
   REAL(KIND_PHYS),    DIMENSION( : ), INTENT(INOUT)    :: SNOW
+  REAL(kind_phys),    DIMENSION(:,:), INTENT(IN)       :: gt0, prsi
   real(kind_phys),    intent(in)                                      :: lakedepth_default,lake_min_elev
 
+  REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(INOUT)  :: lake_ht
+  REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(INOUT)  :: lake_rho0
   real(kind_phys),    dimension(: ),intent(out)                        :: lakedepth2d,    &
                                                                              savedtke12d
   real(kind_phys),    dimension(: ),intent(out)                        :: snowdp2d,       &
@@ -4993,7 +5006,6 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
                                                                              lake_icefrac3d, &
                                                                              z_lake3d,       &
                                                                              dz_lake3d
-  real(kind_phys),    dimension( :, : ),INTENT(in)                     :: phii
   real(kind_phys),    dimension( :,-nlevsnow+1: ),INTENT(out)   :: t_soisno3d,     &
                                                                              h2osoi_ice3d,   &
                                                                              h2osoi_liq3d,   &
@@ -5006,6 +5018,7 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
                                                                              tkdry3d,        &
                                                                              tksatu3d
   real(kind_phys),    dimension( :,-nlevsnow+0: ),INTENT(out)   :: zi3d            
+  integer, intent(in) :: xidx(:),yidx(:)
 
   !LOGICAL, DIMENSION( : ),intent(out)                      :: lake
   !REAL(KIND_PHYS), OPTIONAL,    DIMENSION( : ), INTENT(IN)    ::  lake_depth ! no separate variable for this in CCPP
@@ -5034,17 +5047,23 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
   integer                  :: isl
   integer                  :: numb_lak    ! for debug
   character*256 :: message
-  real(kind_phys) :: ht
+  real(kind_phys) :: ht, rho0
 
-  write(0,*) 'clm_lake_init'
+  integer, parameter :: xcheck=38
+  integer, parameter :: ycheck=92
+  integer, parameter :: pretend_iswater=17
+
+  if(me==0) then
+    write(0,*) 'clm_lake_init'
+  endif
 
   errmsg = ''
   errflg = 0
 
-  IF ( iswater<0 ) THEN
-308 format('ERROR: iswater = ',I0,' < 0')
-    write(errmsg,308) iswater
-    errflg = iswater
+  IF ( pretend_iswater<0 ) THEN
+308 format('ERROR: pretend_iswater = ',I0,' < 0')
+    write(errmsg,308) pretend_iswater
+    errflg = pretend_iswater
   ENDIF
 
   IF ( RESTART ) RETURN 
@@ -5077,38 +5096,89 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
 
   ! judge whether the grid is lake grid
    numb_lak = 0
+   lake_rho0 = -333
+   lake_ht = -333
+   if(me==master) then
+     print *,'x,y at 1 = ',xidx(1),yidx(1)
+   endif
        do i=1,im
-        IF (.not. lakefrac(i)>0) THEN
-            ht = phii(i,1)/con_g
-            if(ht>=lake_min_elev) then 
-              if ( xice(i).gt.xice_threshold) then   !mchen
-                   ivgtyp(i) = iswater
-                   xland(i) = 0. 
-                   lake_icefrac3d(i,1) = xice(i)
-                   xice(i)=0.0
-               endif
-            endif
+        if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+138         format('x=',I0,' y=',I0,' xice=',F9.3,' ivegtype=',I0,' pretend_iswater=',I0)
+139         format('lake_is_at=',L6,' gt0=',F9.3,' oro=',F9.3,' lake_min_elev=',F9.3)
+            write(0,138) xidx(i),yidx(i),xice(i),ivgtyp(i),pretend_iswater
+            write(0,139) lake_is_at(i),gt0(i,1),oro(i),lake_min_elev
+        endif
+        ! FIXME: IMPLEMENT THIS SOMEHOW
+        ! IF (.not. lake_is_at(i)) THEN
+        !   if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+        !     write(0,*) 'not lake_is_at(i)'
+        !   endif
+        !     rho0 = prsi(i,1)/(con_rd*gt0(i,1))
+        !     ht = oro(i) ! rho0/con_g
+        !     lake_rho0(i) = rho0
+        !     lake_ht(i) = ht
+        !     ! if(ht>=lake_min_elev) then 
+        !     !   if ( xice(i).gt.xice_threshold) then   !mchen
+        !     !     ivgtyp(i) = pretend_iswater
+        !     !     xland(i) = 0. 
+        !     !     lake_icefrac3d(i,1) = xice(i)
+        !     ! !        xice(i)=0.0
+        !     !    endif
+        !     ! endif
 
-            if(ivgtyp(i)==iswater.and.ht>=lake_min_elev) then 
-                lakefrac(i) = 1
-                numb_lak   = numb_lak + 1
-            end if
-        ELSE
+        !     if(ivgtyp(i)==pretend_iswater.and.ht>=lake_min_elev) then 
+        !       if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+        !         write(0,*) 'is water above lake_min_elev'
+        !       endif
+        !       lakefrac(i) = 1
+        !       numb_lak   = numb_lak + 1
+        !       if ( xice(i).gt.xice_threshold) then   !mchen
+        !         if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+        !           write(0,*) 'is ice too'
+        !         endif
+        !         ivgtyp(i) = pretend_iswater
+        !         xland(i) = 0. 
+        !         lake_icefrac3d(i,1) = xice(i)
+        !         !xice(i)=0.0
+        !       else
+        !        if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+        !          write(0,*) 'is also ice'
+        !        endif
+        !       endif
+        !     else
+        !        if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+        !          write(0,*) 'should not set to lake'
+        !        endif
+        !     end if
+        ! ELSE
+        IF(lake_is_at(i)) then
+          if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+            write(0,*) 'already lake_is_at so is lake'
+          endif
+            lake_rho0(i) = -999
+            lake_ht(i) = oro(i) ! -999
             numb_lak   = numb_lak + 1
             if ( xice(i).gt.xice_threshold) then   !mchen
-               ivgtyp(i) = iswater
+                if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+                  write(0,*)'is ice too'
+                endif
+               ivgtyp(i) = pretend_iswater
                xland(i) = 0. 
                lake_icefrac3d(i,1) = xice(i)
-               xice(i)=0.0
+               !xice(i)=0.0
+            else
+                if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+                  write(0,*)'is not ice though'
+                endif
             endif
         ENDIF   ! end if lakeflag=0
        end do
     !print *,"the total number of lake grid is :", numb_lak
        ! initialize lake grid 
-       
+
   DO i = 1,im
 
-     if ( lakefrac(i)>0 ) then
+     if ( lake_is_at(i) ) then
 
        !	t_soisno3d(i,:)      = tsk(i)
        !        t_lake3d(i,:)        = tsk(i)
@@ -5245,7 +5315,7 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
 
   DO i = 1,im
       
-     if ( lakefrac(i)>0 ) then
+     if ( lake_is_at(i) ) then
 
                              ! Soil hydraulic and thermal properties
          isl = ISLTYP(i)   
@@ -5414,7 +5484,7 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
            end if
         end do
 
-    end if   !lakefrac(i)>0
+    end if   !lake_is_at(i)
   ENDDO
 
 END SUBROUTINE lakeini

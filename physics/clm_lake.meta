@@ -271,7 +271,7 @@
   standard_name = snow_level_depth_in_clm_lake_model
   long_name = snow level depth in clm lake model
   units = m
-  dimensions = (horizontal_loop_extent,snow_plus_soil_vertical_dimension_for_clm_lake_model)
+  dimensions = (horizontal_loop_extent,snow_plus_soil_minus_one_vertical_dimension_for_clm_lake_model)
   type = real
   kind = kind_phys
   intent = inout
@@ -279,7 +279,7 @@
   standard_name = snow_level_thickness_in_clm_lake_model
   long_name = snow level thickness in clm lake model
   units = m
-  dimensions = (horizontal_loop_extent,snow_plus_soil_vertical_dimension_for_clm_lake_model)
+  dimensions = (horizontal_loop_extent,snow_plus_soil_minus_one_vertical_dimension_for_clm_lake_model)
   type = real
   kind = kind_phys
   intent = inout
@@ -287,7 +287,7 @@
   standard_name = snow_interface_depth_in_clm_lake_model
   long_name = snow interface_depth in clm lake model
   units = m
-  dimensions = (horizontal_loop_extent,snow_plus_soil_minus_one_vertical_dimension_for_clm_lake_model)
+  dimensions = (horizontal_loop_extent,snow_plus_soil_vertical_dimension_for_clm_lake_model)
   type = real
   kind = kind_phys
   intent = inout
@@ -295,7 +295,7 @@
   standard_name = volumetric_soil_water_in_clm_lake_model
   long_name = volumetric soil water in clm lake model
   units = m3 m-3
-  dimensions = (horizontal_loop_extent,snow_plus_soil_vertical_dimension_for_clm_lake_model)
+  dimensions = (horizontal_loop_extent,snow_plus_soil_minus_one_vertical_dimension_for_clm_lake_model)
   type = real
   kind = kind_phys
   intent = inout
@@ -303,7 +303,7 @@
   standard_name = soil_liquid_water_content_in_clm_lake_model
   long_name = soil liquid water content in clm lake model
   units = kg m-3
-  dimensions = (horizontal_loop_extent,snow_plus_soil_vertical_dimension_for_clm_lake_model)
+  dimensions = (horizontal_loop_extent,snow_plus_soil_minus_one_vertical_dimension_for_clm_lake_model)
   type = real
   kind = kind_phys
   intent = inout
@@ -311,7 +311,7 @@
   standard_name = soil_ice_water_content_in_clm_lake_model
   long_name = soil ice water content in clm lake model
   units = kg m-3
-  dimensions = (horizontal_loop_extent,snow_plus_soil_vertical_dimension_for_clm_lake_model)
+  dimensions = (horizontal_loop_extent,snow_plus_soil_minus_one_vertical_dimension_for_clm_lake_model)
   type = real
   kind = kind_phys
   intent = inout
@@ -327,7 +327,7 @@
   standard_name = soil_or_snow_layer_temperature_from_clm_lake_model
   long_name = soil or snow layer temperature from clm lake model
   units = K
-  dimensions = (horizontal_loop_extent,snow_plus_soil_vertical_dimension_for_clm_lake_model)
+  dimensions = (horizontal_loop_extent,snow_plus_soil_minus_one_vertical_dimension_for_clm_lake_model)
   type = real
   kind = kind_phys
   intent = inout
@@ -352,14 +352,6 @@
   long_name = lake fractional ice cover on clm lake levels
   units = kg m-3
   dimensions = (horizontal_loop_extent,lake_vertical_dimension_for_clm_lake_model)
-  type = real
-  kind = kind_phys
-  intent = inout
-[lakefrac]
-  standard_name = lake_area_fraction
-  long_name = fraction of horizontal grid area occupied by lake
-  units = frac
-  dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
   intent = inout
@@ -423,21 +415,21 @@
   standard_name = flag_for_clm_lake_initialization
   long_name = set to true in clm_lake_run after likeini is called, as a workaround for ccpp limitation
   units = flag
-  dimensions = ()
-  type = logical
+  dimensions = (horizontal_loop_extent)
+  type = integer
   intent = inout
 [ivgtyp]
   standard_name = vegetation_type_classification
   long_name = vegetation type at each grid cell
   units = index
-  dimensions = (horizontal_dimension)
+  dimensions = (horizontal_loop_extent)
   type = integer
   intent = inout
 [isltyp]
   standard_name = soil_type_classification
   long_name = soil type at each grid cell
   units = index
-  dimensions = (horizontal_dimension)
+  dimensions = (horizontal_loop_extent)
   type = integer
   intent = inout
 [snow]
@@ -469,6 +461,51 @@
   dimensions = ()
   type = real
   kind = kind_phys
+  intent = in
+[lake_rho0]
+  standard_name = test_lake_rho0
+  long_name = test_lake_rho0
+  dimensions = (horizontal_loop_extent)
+  units = unitless
+  type = real
+  kind = kind_phys
+  intent = inout
+[lake_ht]
+  standard_name = test_lake_ht
+  long_name = test_lake_ht
+  dimensions = (horizontal_loop_extent)
+  units = unitless
+  type = real
+  kind = kind_phys
+  intent = inout
+[oro]
+  standard_name = height_above_mean_sea_level
+  long_name = height_above_mean_sea_level
+  units = m
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+[lake_is_at]
+  standard_name = flag_for_running_lake_model
+  long_name = flag indicating lake points using a lake model
+  units = flag
+  dimensions = (horizontal_loop_extent)
+  type = logical
+  intent = inout
+[xidx]
+  standard_name = xidx
+  long_name = xidx
+  units = index
+  dimensions = (horizontal_loop_extent)
+  type = integer
+  intent = in
+[yidx]
+  standard_name = yidx
+  long_name = yidx
+  units = index
+  dimensions = (horizontal_loop_extent)
+  type = integer
   intent = in
 [me]
   standard_name = mpi_rank
