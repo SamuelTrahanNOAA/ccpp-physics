@@ -29,7 +29,7 @@
      &     ( im, hvap, cp, hfus, jcal, eps, epsm1, rvrdm1, rd, rhw0,    &  ! --- inputs:
      &       pi, tgice, sbc, ps, u1, v1, t1, q1, tref, cm, ch,          &
      &       lseaspray, fm, fm10,                                       &
-     &       prsl1, prslki, prsik1, prslk1, wet, lake_is_at, xlon,      &
+     &       prsl1, prslki, prsik1, prslk1, wet, use_flake, xlon,       &
      &       sinlat, stress,                                            &
      &       sfcemis, dlwflx, sfcnsw, rain, timestep, kdt, solhr,xcosz, &
      &       wind, flag_iter, flag_guess, nstf_name1, nstf_name4,       &
@@ -49,7 +49,7 @@
 !       inputs:                                                         !
 !          ( im, ps, u1, v1, t1, q1, tref, cm, ch,                      !
 !            lseaspray, fm, fm10,                                       !
-!            prsl1, prslki, wet, lake_is_at, xlon, sinlat, stress,  !
+!            prsl1, prslki, wet, use_flake, xlon, sinlat, stress,  !
 !            sfcemis, dlwflx, sfcnsw, rain, timestep, kdt,solhr,xcosz,  !
 !            wind,  flag_iter, flag_guess, nstf_name1, nstf_name4,      !
 !            nstf_name5, lprnt, ipr, thsfc_loc,                         !
@@ -100,7 +100,7 @@
 !     prsik1   - real,                                             im   !
 !     prslk1   - real,                                             im   !
 !     wet      - logical, =T if any ocn/lake water (F otherwise)   im   !
-!     lake_is_at- logical, =T if lake model should be run          im   !
+!     use_flake- logical, =T if lake model should be run          im   !
 !     icy      - logical, =T if any ice                            im   !
 !     xlon     - real, longitude         (radians)                 im   !
 !     sinlat   - real, sin of latitude                             im   !
@@ -206,7 +206,7 @@
       logical, intent(in) :: lseaspray
 !
       logical, dimension(:), intent(in) :: flag_iter, flag_guess, wet,  &
-     &                                     lake_is_at
+     &                                     use_flake
 !    &,      icy
       logical,                intent(in) :: lprnt
       logical,                intent(in) :: thsfc_loc
@@ -288,7 +288,7 @@ cc
       do_nst = .false.
       do i = 1, im
 !       flag(i) = wet(i) .and. .not.icy(i) .and. flag_iter(i)
-        flag(i) = wet(i) .and. flag_iter(i) .and. .not. lake_is_at(i)
+        flag(i) = wet(i) .and. flag_iter(i) .and. .not. use_flake(i)
         do_nst  = do_nst .or. flag(i)
       enddo
       if (.not. do_nst) return
@@ -297,7 +297,7 @@ cc
 !
       do i=1, im
 !       if(wet(i) .and. .not.icy(i) .and. flag_guess(i)) then
-        if(wet(i) .and. flag_guess(i) .and. .not. lake_is_at(i)) then
+        if(wet(i) .and. flag_guess(i) .and. .not. use_flake(i)) then
           xt_old(i)      = xt(i)
           xs_old(i)      = xs(i)
           xu_old(i)      = xu(i)
@@ -616,7 +616,7 @@ cc
 ! restore nst-related prognostic fields for guess run
       do i=1, im
 !       if (wet(i) .and. .not.icy(i)) then
-        if (wet(i) .and. .not. lake_is_at(i)) then
+        if (wet(i) .and. .not. use_flake(i)) then
           if (flag_guess(i)) then    ! when it is guess of
             xt(i)      = xt_old(i)
             xs(i)      = xs_old(i)
@@ -837,7 +837,7 @@ cc
 ! \section NSST_detailed_post_algorithm Detailed Algorithm
 ! @{
       subroutine sfc_nst_post_run                                       &
-     &     ( im, kdt, rlapse, tgice, wet, lake_is_at, icy, oro,         &
+     &     ( im, kdt, rlapse, tgice, wet, use_flake, icy, oro,          &
      &       oro_uf, nstf_name1,                                        &
      &       nstf_name4, nstf_name5, xt, xz, dt_cool, z_c, tref, xlon,  &
      &       tsurf_wat, tsfc_wat, nthreads, dtzm, errmsg, errflg        &
@@ -852,7 +852,7 @@ cc
 
 !  ---  inputs:
       integer, intent(in) :: im, kdt, nthreads
-      logical, dimension(:), intent(in) :: wet, icy, lake_is_at
+      logical, dimension(:), intent(in) :: wet, icy, use_flake
       real (kind=kind_phys), intent(in) :: rlapse, tgice
       real (kind=kind_phys), dimension(:), intent(in) :: oro, oro_uf
       integer, intent(in) :: nstf_name1, nstf_name4, nstf_name5
@@ -897,7 +897,7 @@ cc
         do i = 1, im
 !         if (wet(i) .and. .not.icy(i)) then
 !         if (wet(i) .and. (frac_grid .or. .not. icy(i))) then
-          if (wet(i) .and. .not. lake_is_at(i)) then
+          if (wet(i) .and. .not. use_flake(i)) then
             tsfc_wat(i) = max(tgice, tref(i) + dtzm(i))
 !           tsfc_wat(i) = max(271.2, tref(i) + dtzm(i)) -  &
 !                           (oro(i)-oro_uf(i))*rlapse

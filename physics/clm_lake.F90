@@ -151,9 +151,9 @@ MODULE clm_lake
                      h2osno2d     ,snowdp2d       ,snl2d        ,z3d             ,&  !h
                      dz3d         ,zi3d           ,h2osoi_vol3d ,h2osoi_liq3d    ,&
                      h2osoi_ice3d ,t_grnd2d       ,t_soisno3d   ,t_lake3d        ,&
-                     savedtke12d  ,lake_icefrac3d ,oro          ,lake_is_at      ,& 
+                     savedtke12d  ,lake_icefrac3d ,oro          ,use_clm_lake      ,& 
 !                    lakefrac                                                    ,&
-                     con_cp                                                      ,&
+                     con_cp       ,wet                                           ,&
                      hflx         ,evap           ,grdflx       ,tsk             ,&  !o
                      lake_t2m     ,lake_q2m       ,clm_lake_initialized          ,&
                      ivgtyp       ,isltyp         ,snow         ,use_lakedepth   ,&
@@ -169,19 +169,20 @@ MODULE clm_lake
     
     !in:
     
-    INTEGER, INTENT(OUT) :: errflg,iswater
+    INTEGER, INTENT(IN) :: iswater
+    INTEGER, INTENT(OUT) :: errflg
     CHARACTER(*), INTENT(OUT) :: errmsg
     INTEGER , INTENT (IN) :: im,km,me,master
-    LOGICAL, INTENT(IN) :: restart,use_lakedepth
+    LOGICAL, INTENT(IN) :: restart,use_lakedepth, wet(:)
     INTEGER, INTENT(INOUT) :: clm_lake_initialized(:)
     REAL(KIND_PHYS),     INTENT(IN)  :: xice_threshold, con_rd,con_g,con_cp,lakedepth_default
-    REAL(KIND_PHYS), DIMENSION( : ), INTENT(INOUT)::   XICE
+    REAL(KIND_PHYS), DIMENSION( : ), INTENT(IN)::   XICE
     REAL(KIND_PHYS), DIMENSION( : ), INTENT(IN):: ORO
 !   REAL(KIND_PHYS), DIMENSION( : ), INTENT(INOUT)::   LAKEFRAC
  !   INTEGER, INTENT(IN)::   LAKEFLAG
-    REAL(KIND_PHYS),    DIMENSION( : ), INTENT(INOUT)    :: SNOW
+    REAL(KIND_PHYS),    DIMENSION( : ), INTENT(IN)    :: SNOW
 
-    LOGICAL, DIMENSION(:), INTENT(IN) :: lake_is_at
+    LOGICAL, DIMENSION(:), INTENT(IN) :: use_clm_lake
     
     REAL(KIND_PHYS),           DIMENSION( :, : ),INTENT(IN)  :: gt0
     REAL(KIND_PHYS),           DIMENSION( :, : ),INTENT(IN)  :: prsi   
@@ -198,8 +199,9 @@ MODULE clm_lake
     REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(INOUT)  :: albedo
     REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(INOUT)  :: lake_ht
     REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(INOUT)  :: lake_rho0
-    INTEGER,                   DIMENSION( : )         ,INTENT(INOUT) :: XLAND
-    INTEGER, DIMENSION( : ), INTENT(INOUT)       :: IVGTYP,ISLTYP
+    INTEGER,                   DIMENSION( : )         ,INTENT(IN) :: XLAND ! FIXME: REMOVE
+    INTEGER, DIMENSION( : ), INTENT(IN)       :: IVGTYP ! FIXME: REMOVE
+    INTEGER, DIMENSION( : ), INTENT(IN)       :: ISLTYP ! FIXME: INTENT(IN)
     REAL(KIND_PHYS),                                                  INTENT(IN)  :: dtp
     integer, intent(in) :: xidx(:), yidx(:)
     REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: z_lake3d
@@ -212,7 +214,7 @@ MODULE clm_lake
     REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(INOUT)  :: lakedepth2d    
     REAL(KIND_PHYS),                                   INTENT(IN)  :: lake_min_elev
 
-    !out:
+    !feedback to atmosphere:
     REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(OUT) :: hflx
     REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(OUT) :: evap
     REAL(KIND_PHYS),           DIMENSION( : )         ,INTENT(OUT) :: GRDFLX
@@ -300,10 +302,18 @@ MODULE clm_lake
       real(kind_phys)  :: rho0               ! air density at surface
       real(kind_phys)  :: qfx                ! mass flux, old WRF qfx(:) variable, (kg/(sm^2))
 
+#ifdef LAKE_DEBUG
+      integer :: lake_points
+#endif
+
+      logical, parameter :: feedback_to_atmosphere = .false. ! FIXME: REMOVE
+
+
       errmsg = ' '
       errflg = 0
 
-      if(sum(clm_lake_initialized(1:IM))<IM) then
+!     if(any(use_clm_lake .and. clm_lake_initialized==0)) then
+        ! Still have some points to initialize
         call lakeini(IVGTYP,         ISLTYP,          gt0,             SNOW,           & !i
                      lake_min_elev,  restart,         lakedepth_default,               &
                      lakedepth2d,    savedtke12d,     snowdp2d,        h2osno2d,       & !o
@@ -312,20 +322,32 @@ MODULE clm_lake
                      h2osoi_liq3d,   h2osoi_vol3d,    z3d,             dz3d,           &
                      zi3d,           watsat3d,        csol3d,          tkmg3d,         &
                      iswater,        xice,            xice_threshold,  xland,   tsk,   &
-                     lake_is_at,     use_lakedepth,   con_g,           con_rd,         &
+                     use_clm_lake,     use_lakedepth,   con_g,           con_rd,         &
                      tkdry3d,        tksatu3d,        im,              prsi,           &
-                     lake_rho0,      lake_ht,         oro,                             &
-                     xidx,           yidx,                                             &
+                     lake_rho0,      lake_ht,         oro,             wet,            &
+                     xidx,           yidx,            clm_lake_initialized,            &
                      me,             master,          errmsg,          errflg)
         if(errflg/=0) then
           return
         endif
-        clm_lake_initialized(1:IM)=1
-      endif
+!     endif
+
+#ifdef LAKE_DEBUG
+      lake_points=0
+#endif
 
       dtime = dtp/2  ! Two surface scheme timesteps per physics timestep
 
-        DO I = 1,im
+        lake_top_loop: DO I = 1,im
+           !        IF (XLAND(I).LT.1) THEN    
+
+       !  if ( xice(i).gt.xice_threshold) then
+       !   ivgtyp(i) = iswater
+       !   xland(i) = 2
+       !   lake_icefrac3d(i,1) = xice(i)
+       !   endif
+
+        if_lake_is_here: if (use_clm_lake(i)) THEN
 
            SFCTMP  = gt0(i,1)
            PBOT    = prsi(i,2)
@@ -337,16 +359,10 @@ MODULE clm_lake
            SOLDN   = DSWSFCI(I)                        ! SOLDN is total incoming solar
            SOLNET  = SOLDN*(1.-ALBEDO(I))              ! use mid-day albedo to determine net downward solar
                                                        ! (no solar zenith angle correction) 
-           !        IF (XLAND(I).LT.1) THEN    
 
-       !  if ( xice(i).gt.xice_threshold) then
-       !   ivgtyp(i) = iswater
-       !   xland(i) = 2
-       !   lake_icefrac3d(i,1) = xice(i)
-       !   endif
-
-        if (lake_is_at(i)) THEN
-    
+#ifdef LAKE_DEBUG
+          lake_points = lake_points+1
+#endif
            do c = 1,column
      
             forc_t(c)          = SFCTMP           ! [K]
@@ -414,25 +430,27 @@ MODULE clm_lake
               return ! State is invalid now, so pass error to caller.
             endif
             
-           do c = 1,column
-            rho0 = prsi(i,1)/(con_rd*gt0(i,1))
-            HFLX(i)=eflx_sh_tot(i)/(rho0*con_cp)
-            ! No equivalent in CCPP:
-            ! LH(I)           = eflx_lh_tot(c)/rho1(i)    ![kg*m/(kg*s)]
-            GRDFLX(I)       = eflx_gnet(c)              ![W/m/m]
-            TSK(I)          = t_grnd(c)                 ![K]
-            lake_t2m(I)     = t_ref2m(c)
-            !TH2(I)          = T2(I)*(1.E5/PSFC)**RCP   ! potential temperature (CCPP doesn't want this)
-            lake_q2m(I)     = q_ref2m(c)               ! [frac] specific humidity
-            albedo(i)       = ( 0.6 * lake_icefrac(c,1) ) + ( (1.0-lake_icefrac(c,1)) * 0.08)  
- 
-            if( tsk(i) >= tfrz ) then
-                qfx         = eflx_lh_tot(c)/hvap
-            else
-                qfx         = eflx_lh_tot(c)/hsub       ! heat flux (W/m^2)=>mass flux(kg/(sm^2))
+            if(feedback_to_atmosphere) then
+              do c = 1,column
+                rho0 = prsi(i,1)/(con_rd*gt0(i,1))
+                HFLX(i)=eflx_sh_tot(i)/(rho0*con_cp)
+                ! No equivalent in CCPP:
+                ! LH(I)           = eflx_lh_tot(c)/rho1(i)    ![kg*m/(kg*s)]
+                GRDFLX(I)       = eflx_gnet(c)              ![W/m/m]
+                TSK(I)          = t_grnd(c)                 ![K]
+                lake_t2m(I)     = t_ref2m(c)
+                !TH2(I)          = T2(I)*(1.E5/PSFC)**RCP   ! potential temperature (CCPP doesn't want this)
+                lake_q2m(I)     = q_ref2m(c)               ! [frac] specific humidity
+                albedo(i)       = ( 0.6 * lake_icefrac(c,1) ) + ( (1.0-lake_icefrac(c,1)) * 0.08)  
+
+                if( tsk(i) >= tfrz ) then
+                  qfx         = eflx_lh_tot(c)/hvap
+                else
+                  qfx         = eflx_lh_tot(c)/hsub       ! heat flux (W/m^2)=>mass flux(kg/(sm^2))
+                endif
+                evap(i) = qfx/rho0
+              enddo
             endif
-            evap(i) = qfx/rho0
-           enddo
 
            ! Renew Lake State Varialbes:(14)
            do c = 1,column
@@ -460,9 +478,12 @@ MODULE clm_lake
         
          enddo
 
-        endif
+        endif if_lake_is_here
         !        ENDIF    ! if xland = 0
-        ENDDO
+        ENDDO lake_top_loop
+#ifdef LAKE_DEBUG
+        print *,'lake points: ',lake_points
+#endif
 
     END SUBROUTINE clm_lake_run
 
@@ -585,7 +606,7 @@ MODULE clm_lake
     real(kind_phys) :: qflx_dew_snow(1)   ! surface dew added to snow pack (mm H2O /s) [+]
     real(kind_phys) :: qflx_dew_grnd(1)   ! ground surface dew formation (mm H2O /s) [+]
     real(kind_phys) :: qflx_rain_grnd_col(1)   !rain on ground after interception (mm H2O/s) [+]
-    
+    begwb = 0    
 
     !    lat  = lat*pie/180  ! [radian]
 
@@ -4960,10 +4981,10 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
                     h2osoi_liq3d,   h2osoi_vol3d,    z3d,             dz3d,           &
                     zi3d,           watsat3d,        csol3d,          tkmg3d,         &
                     iswater,        xice,            xice_threshold,  xland,   tsk,   &
-                    lake_is_at,     use_lakedepth,   con_g,           con_rd,         &
+                    use_clm_lake,     use_lakedepth,   con_g,           con_rd,         &
                     tkdry3d,        tksatu3d,        im,              prsi,           &
-                    lake_rho0,      lake_ht,         oro,                             &
-                    xidx,           yidx,                                             &
+                    lake_rho0,      lake_ht,         oro,             wet,            &
+                    xidx,           yidx,            clm_lake_initialized,            &
                     me,             master,          errmsg,          errflg)
 
    !==============================================================================
@@ -4978,18 +4999,19 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
 
   INTEGER , INTENT (IN)    :: im, me, master, iswater
   REAL(KIND_PHYS),     INTENT(IN)  :: xice_threshold, con_g, con_rd
-  REAL(KIND_PHYS), DIMENSION( :  ), INTENT(INOUT)::   XICE
+  REAL(KIND_PHYS), DIMENSION( :  ), INTENT(IN)::   XICE
   REAL(KIND_PHYS), DIMENSION( :  ), INTENT(IN)::      TSK, ORO
-  INTEGER, DIMENSION( : )  ,INTENT(INOUT)  :: XLAND
+  INTEGER, DIMENSION( : )  ,INTENT(IN)  :: XLAND
+  INTEGER, DIMENSION( : )  ,INTENT(INOUT)  :: clm_lake_initialized
 
-  logical, dimension(:), intent(in) :: lake_is_at
+  logical, dimension(:), intent(in) :: use_clm_lake, wet
   !INTEGER , INTENT (IN) :: lakeflag
   !INTEGER , INTENT (INOUT) :: lake_depth_flag
   LOGICAL, INTENT (IN) ::   use_lakedepth
 
   LOGICAL , INTENT(IN)      ::     restart
-  INTEGER, DIMENSION( : ), INTENT(INOUT)       :: IVGTYP,ISLTYP
-  REAL(KIND_PHYS),    DIMENSION( : ), INTENT(INOUT)    :: SNOW
+  INTEGER, DIMENSION( : ), INTENT(IN)       :: IVGTYP,ISLTYP
+  REAL(KIND_PHYS),    DIMENSION( : ), INTENT(IN)    :: SNOW
   REAL(kind_phys),    DIMENSION(:,:), INTENT(IN)       :: gt0, prsi
   real(kind_phys),    intent(in)                                      :: lakedepth_default,lake_min_elev
 
@@ -5053,9 +5075,11 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
   integer, parameter :: ycheck=92
   integer, parameter :: pretend_iswater=17
 
+#ifdef LAKE_DEBUG
   if(me==0) then
     write(0,*) 'clm_lake_init'
   endif
+#endif
 
   errmsg = ''
   errflg = 0
@@ -5066,156 +5090,9 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
     errflg = pretend_iswater
   ENDIF
 
-  IF ( RESTART ) RETURN 
+  !IF ( RESTART ) RETURN  <--- should be handled by clm_lake_initialized
 
-  DO i = 1,im
-        snowdp2d(i)         = snow(i)*0.005               ! SNOW in kg/m^2 and snowdp in m
-	h2osno2d(i)         = snow(i) ! mm 
-  ENDDO
-
-  ! initialize all the grid with default value 
-  DO i = 1,im
-
-    lakedepth2d(i)             = defval
-    snl2d(i)                   = defval
-    do k = -nlevsnow+1,nlevsoil
-        h2osoi_liq3d(i,k)      = defval
-        h2osoi_ice3d(i,k)      = defval
-	t_soisno3d(i,k)        = defval
-        z3d(i,k)               = defval 
-        dz3d(i,k)              = defval                           
-    enddo
-    do k = 1,nlevlake 
-	t_lake3d(i,k)          = defval
-        lake_icefrac3d(i,k)    = defval
-        z_lake3d(i,k)          = defval
-        dz_lake3d(i,k)         = defval
-    enddo
-
-  ENDDO
-
-  ! judge whether the grid is lake grid
-   numb_lak = 0
-   lake_rho0 = -333
-   lake_ht = -333
-   if(me==master) then
-     print *,'x,y at 1 = ',xidx(1),yidx(1)
-   endif
-       do i=1,im
-        if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
-138         format('x=',I0,' y=',I0,' xice=',F9.3,' ivegtype=',I0,' pretend_iswater=',I0)
-139         format('lake_is_at=',L6,' gt0=',F9.3,' oro=',F9.3,' lake_min_elev=',F9.3)
-            write(0,138) xidx(i),yidx(i),xice(i),ivgtyp(i),pretend_iswater
-            write(0,139) lake_is_at(i),gt0(i,1),oro(i),lake_min_elev
-        endif
-        ! FIXME: IMPLEMENT THIS SOMEHOW
-        ! IF (.not. lake_is_at(i)) THEN
-        !   if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
-        !     write(0,*) 'not lake_is_at(i)'
-        !   endif
-        !     rho0 = prsi(i,1)/(con_rd*gt0(i,1))
-        !     ht = oro(i) ! rho0/con_g
-        !     lake_rho0(i) = rho0
-        !     lake_ht(i) = ht
-        !     ! if(ht>=lake_min_elev) then 
-        !     !   if ( xice(i).gt.xice_threshold) then   !mchen
-        !     !     ivgtyp(i) = pretend_iswater
-        !     !     xland(i) = 0. 
-        !     !     lake_icefrac3d(i,1) = xice(i)
-        !     ! !        xice(i)=0.0
-        !     !    endif
-        !     ! endif
-
-        !     if(ivgtyp(i)==pretend_iswater.and.ht>=lake_min_elev) then 
-        !       if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
-        !         write(0,*) 'is water above lake_min_elev'
-        !       endif
-        !       lakefrac(i) = 1
-        !       numb_lak   = numb_lak + 1
-        !       if ( xice(i).gt.xice_threshold) then   !mchen
-        !         if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
-        !           write(0,*) 'is ice too'
-        !         endif
-        !         ivgtyp(i) = pretend_iswater
-        !         xland(i) = 0. 
-        !         lake_icefrac3d(i,1) = xice(i)
-        !         !xice(i)=0.0
-        !       else
-        !        if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
-        !          write(0,*) 'is also ice'
-        !        endif
-        !       endif
-        !     else
-        !        if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
-        !          write(0,*) 'should not set to lake'
-        !        endif
-        !     end if
-        ! ELSE
-        IF(lake_is_at(i)) then
-          if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
-            write(0,*) 'already lake_is_at so is lake'
-          endif
-            lake_rho0(i) = -999
-            lake_ht(i) = oro(i) ! -999
-            numb_lak   = numb_lak + 1
-            if ( xice(i).gt.xice_threshold) then   !mchen
-                if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
-                  write(0,*)'is ice too'
-                endif
-               ivgtyp(i) = pretend_iswater
-               xland(i) = 0. 
-               lake_icefrac3d(i,1) = xice(i)
-               !xice(i)=0.0
-            else
-                if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
-                  write(0,*)'is not ice though'
-                endif
-            endif
-        ENDIF   ! end if lakeflag=0
-       end do
-    !print *,"the total number of lake grid is :", numb_lak
-       ! initialize lake grid 
-
-  DO i = 1,im
-
-     if ( lake_is_at(i) ) then
-
-       !	t_soisno3d(i,:)      = tsk(i)
-       !        t_lake3d(i,:)        = tsk(i)
-       !        t_grnd2d(i)          = tsk(i)
-       
-       z3d(i,:)             = 0.0
-       dz3d(i,:)            = 0.0
-       zi3d(i,:)            = 0.0
-       h2osoi_liq3d(i,:)    = 0.0
-       h2osoi_ice3d(i,:)    = 0.0
-       lake_icefrac3d(i,:)  = 0.0
-       h2osoi_vol3d(i,:)    = 0.0
-       snl2d(i)             = 0.0
-       if ( use_lakedepth ) then
-
-         if (lakedepth2d(i) > 0.0) then 
-           ! lakedepth2d(i)   = lake_depth(i)
-         else
-           if ( lakedepth_default  > 0.0 ) then
-             lakedepth2d(i)   = lakedepth_default
-           else 
-             lakedepth2d(i)   = spval
-           endif
-         endif
-
-       else
-         if ( lakedepth_default  > 0.0 ) then
-           lakedepth2d(i)   = lakedepth_default
-         else 
-           lakedepth2d(i)   = spval
-         endif
-       endif
-     endif
-
-   ENDDO
-
-
+  init_const: if(sum(clm_lake_initialized(1:im))==0 .and. any(use_clm_lake)) then
 #ifndef EXTRALAKELAYERS   
    !  dzlak(1) = 0.1_kind_phys
    !  dzlak(2) = 1._kind_phys
@@ -5309,182 +5186,340 @@ subroutine FrictionVelocity(pgridcell,forc_hgt,forc_hgt_u,        & !i
       zisoi(j) = 0.5_kind_phys*(zsoi(j)+zsoi(j+1))         !interface depths
    enddo
    zisoi(nlevsoil) = zsoi(nlevsoil) + 0.5_kind_phys*dzsoi(nlevsoil)
+  endif init_const
 
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  DO i=1,im
+    if(.not. use_clm_lake(i) .or. clm_lake_initialized(i)>0) then
+      cycle
+    endif
+
+    snowdp2d(i)         = snow(i)*0.005               ! SNOW in kg/m^2 and snowdp in m
+    h2osno2d(i)         = snow(i) ! mm 
+
+    lakedepth2d(i)             = defval
+    snl2d(i)                   = defval
+    do k = -nlevsnow+1,nlevsoil
+        h2osoi_liq3d(i,k)      = defval
+        h2osoi_ice3d(i,k)      = defval
+	t_soisno3d(i,k)        = defval
+        z3d(i,k)               = defval 
+        dz3d(i,k)              = defval                           
+    enddo
+    do k = 1,nlevlake 
+	t_lake3d(i,k)          = defval
+        lake_icefrac3d(i,k)    = defval
+        z_lake3d(i,k)          = defval
+        dz_lake3d(i,k)         = defval
+    enddo
+    
+    if(wet(i)) then
+      lake_rho0(i) = -999
+    else
+      lake_rho0(i) = prsi(i,1)/(con_rd*gt0(i,1))
+    endif
+    lake_ht(i) = oro(i) ! -999
+    if((wet(i) .or. oro(i)>lake_min_elev) .and. xice(i).gt.xice_threshold) then
+      lake_icefrac3d(i,1) = xice(i)
+    endif
+    
+    !	t_soisno3d(i,:)      = tsk(i)
+    !        t_lake3d(i,:)        = tsk(i)
+    !        t_grnd2d(i)          = tsk(i)
+    
+    z3d(i,:)             = 0.0
+    dz3d(i,:)            = 0.0
+    zi3d(i,:)            = 0.0
+    h2osoi_liq3d(i,:)    = 0.0
+    h2osoi_ice3d(i,:)    = 0.0
+    lake_icefrac3d(i,:)  = 0.0
+    h2osoi_vol3d(i,:)    = 0.0
+    snl2d(i)             = 0.0
+    if ( use_lakedepth ) then
+
+      if (lakedepth2d(i) > 0.0) then 
+        ! lakedepth2d(i)   = lake_depth(i)
+      else
+        if ( lakedepth_default  > 0.0 ) then
+          lakedepth2d(i)   = lakedepth_default
+        else 
+          lakedepth2d(i)   = spval
+        endif
+      endif
+
+    else
+      if ( lakedepth_default  > 0.0 ) then
+        lakedepth2d(i)   = lakedepth_default
+      else 
+        lakedepth2d(i)   = spval
+      endif
+    endif
+
+  ENDDO
+
+! FIXME: REMOVE THIS
+!
+!   ! judge whether the grid is lake grid
+!    numb_lak = 0
+!    lake_rho0 = -333
+!    lake_ht = -333
+!    if(me==master) then
+!      print *,'x,y at 1 = ',xidx(1),yidx(1)
+!    endif
+!    skip: if(1==2) then
+!        do i=1,im
+!         if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+! 138         format('x=',I0,' y=',I0,' xice=',F9.3,' ivegtype=',I0,' pretend_iswater=',I0)
+! 139         format('use_clm_lake=',L6,' gt0=',F9.3,' oro=',F9.3,' lake_min_elev=',F9.3)
+!             write(0,138) xidx(i),yidx(i),xice(i),ivgtyp(i),pretend_iswater
+!             write(0,139) use_clm_lake(i),gt0(i,1),oro(i),lake_min_elev
+!         endif
+!         ! FIXME: IMPLEMENT THIS SOMEHOW
+!         IF (lakefrac(i)==0) THEN
+!           if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+!             write(0,*) 'not use_clm_lake(i)'
+!           endif
+!             rho0 = prsi(i,1)/(con_rd*gt0(i,1))
+!             ht = oro(i) ! rho0/con_g
+!             lake_rho0(i) = rho0
+!             lake_ht(i) = ht
+!             if(ht>=lake_min_elev) then 
+!               if ( xice(i).gt.xice_threshold) then   !mchen
+!                 ivgtyp(i) = pretend_iswater
+!                 xland(i) = 0. 
+!                 lake_icefrac3d(i,1) = xice(i)
+!             !        xice(i)=0.0
+!                endif
+!             endif
+
+!             if(ivgtyp(i)==pretend_iswater.and.ht>=lake_min_elev) then 
+!               if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+!                 write(0,*) 'is water above lake_min_elev'
+!               endif
+!               lakefrac(i) = 1
+!               numb_lak   = numb_lak + 1
+!               if ( xice(i).gt.xice_threshold) then   !mchen
+!                 if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+!                   write(0,*) 'is ice too'
+!                 endif
+!                 ivgtyp(i) = pretend_iswater
+!                 xland(i) = 0. 
+!                 lake_icefrac3d(i,1) = xice(i)
+!                 !xice(i)=0.0
+!               else
+!                if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+!                  write(0,*) 'is also ice'
+!                endif
+!               endif
+!             else
+!                if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+!                  write(0,*) 'should not set to lake'
+!                endif
+!             end if
+!         ELSE
+!           if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+!             write(0,*) 'already use_clm_lake so is lake'
+!           endif
+!             lake_rho0(i) = -999
+!             lake_ht(i) = oro(i) ! -999
+!             numb_lak   = numb_lak + 1
+!             if ( xice(i).gt.xice_threshold) then   !mchen
+!                 if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+!                   write(0,*)'is ice too'
+!                 endif
+!                ivgtyp(i) = pretend_iswater
+!                xland(i) = 0. 
+!                lake_icefrac3d(i,1) = xice(i)
+!                !xice(i)=0.0
+!             else
+!                 if(xidx(i)==xcheck .and. yidx(i)==ycheck) then
+!                   write(0,*)'is not ice though'
+!                 endif
+!             endif
+!         ENDIF   ! end if lakeflag=0
+!        end do
+!     !print *,"the total number of lake grid is :", numb_lak
+!        ! initialize lake grid 
+!      endif skip
 
   !!!!!!!!!!!!!!!!!!begin to initialize lake variables!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   DO i = 1,im
-      
-     if ( lake_is_at(i) ) then
+ 
+    if(.not. use_clm_lake(i) .or. clm_lake_initialized(i)>0) then
+      cycle
+    endif
 
-                             ! Soil hydraulic and thermal properties
-         isl = ISLTYP(i)   
-         if (isl == 14 ) isl = isl + 1 
-         do k = 1,nlevsoil
-            sand3d(i,k)  = sand(isl)
-            clay3d(i,k)  = clay(isl)
-         enddo
+    ! Soil hydraulic and thermal properties
+    isl = ISLTYP(i)   
+    if (isl == 0  ) isl = 14
+    if (isl == 14 ) isl = isl + 1 
+    do k = 1,nlevsoil
+      sand3d(i,k)  = sand(isl)
+      clay3d(i,k)  = clay(isl)
+    enddo
 
-         do k = 1,nlevsoil
-            clay2d(i) = clay3d(i,k)
-            sand2d(i) = sand3d(i,k)
-            watsat3d(i,k) = 0.489_kind_phys - 0.00126_kind_phys*sand2d(i)
-            bd2d(i)    = (1._kind_phys-watsat3d(i,k))*2.7e3_kind_phys
-            xksat2d(i) = 0.0070556_kind_phys *( 10._kind_phys**(-0.884_kind_phys+0.0153_kind_phys*sand2d(i)) ) ! mm/s
-            tkm2d(i) = (8.80_kind_phys*sand2d(i)+2.92_kind_phys*clay2d(i))/(sand2d(i)+clay2d(i))          ! W/(m K)
+    do k = 1,nlevsoil
+      clay2d(i) = clay3d(i,k)
+      sand2d(i) = sand3d(i,k)
+      watsat3d(i,k) = 0.489_kind_phys - 0.00126_kind_phys*sand2d(i)
+      bd2d(i)    = (1._kind_phys-watsat3d(i,k))*2.7e3_kind_phys
+      xksat2d(i) = 0.0070556_kind_phys *( 10._kind_phys**(-0.884_kind_phys+0.0153_kind_phys*sand2d(i)) ) ! mm/s
+      tkm2d(i) = (8.80_kind_phys*sand2d(i)+2.92_kind_phys*clay2d(i))/(sand2d(i)+clay2d(i))          ! W/(m K)
 
-            bsw3d(i,k) = 2.91_kind_phys + 0.159_kind_phys*clay2d(i)
-            bsw23d(i,k) = -(3.10_kind_phys + 0.157_kind_phys*clay2d(i) - 0.003_kind_phys*sand2d(i))
-            psisat3d(i,k) = -(exp((1.54_kind_phys - 0.0095_kind_phys*sand2d(i) + 0.0063_kind_phys*(100.0_kind_phys-sand2d(i)  &
-                              -clay2d(i)))*log(10.0_kind_phys))*9.8e-5_kind_phys)
-            vwcsat3d(i,k) = (50.5_kind_phys - 0.142_kind_phys*sand2d(i) - 0.037_kind_phys*clay2d(i))/100.0_kind_phys
-            hksat3d(i,k) = xksat2d(i)
-            sucsat3d(i,k) = 10._kind_phys * ( 10._kind_phys**(1.88_kind_phys-0.0131_kind_phys*sand2d(i)) )
-            tkmg3d(i,k) = tkm2d(i) ** (1._kind_phys- watsat3d(i,k))
-            tksatu3d(i,k) = tkmg3d(i,k)*0.57_kind_phys**watsat3d(i,k)
-            tkdry3d(i,k) = (0.135_kind_phys*bd2d(i) + 64.7_kind_phys) / (2.7e3_kind_phys - 0.947_kind_phys*bd2d(i))
-            csol3d(i,k) = (2.128_kind_phys*sand2d(i)+2.385_kind_phys*clay2d(i)) / (sand2d(i)+clay2d(i))*1.e6_kind_phys  ! J/(m3 K)
-            watdry3d(i,k) = watsat3d(i,k) * (316230._kind_phys/sucsat3d(i,k)) ** (-1._kind_phys/bsw3d(i,k))
-            watopt3d(i,k) = watsat3d(i,k) * (158490._kind_phys/sucsat3d(i,k)) ** (-1._kind_phys/bsw3d(i,k))
-         end do
-         if (lakedepth2d(i) == spval) then
-            lakedepth2d(i) = zlak(nlevlake) + 0.5_kind_phys*dzlak(nlevlake)
-            z_lake3d(i,1:nlevlake) = zlak(1:nlevlake)
-            dz_lake3d(i,1:nlevlake) = dzlak(1:nlevlake)
-         else
-            depthratio2d(i) = lakedepth2d(i) / (zlak(nlevlake) + 0.5_kind_phys*dzlak(nlevlake)) 
-            z_lake3d(i,1) = zlak(1)
-            dz_lake3d(i,1) = dzlak(1)
-            dz_lake3d(i,2:nlevlake) = dzlak(2:nlevlake)*depthratio2d(i)
-            z_lake3d(i,2:nlevlake) = zlak(2:nlevlake)*depthratio2d(i) + dz_lake3d(i,1)*(1._kind_phys - depthratio2d(i))
-         end if
-         ! initial t_lake3d here
-	t_soisno3d(i,1)      = tsk(i)
-        t_lake3d(i,1)        = tsk(i)
-        t_grnd2d(i)          = 277.0
-        do k = 2, nlevlake
-        if(z_lake3d(i,k).le.depth_c) then 
-         t_soisno3d(i,k)=tsk(i)+(277.0-tsk(i))/depth_c*z_lake3d(i,k)
-         t_lake3d(i,k)=tsk(i)+(277.0-tsk(i))/depth_c*z_lake3d(i,k)
-        else
+      bsw3d(i,k) = 2.91_kind_phys + 0.159_kind_phys*clay2d(i)
+      bsw23d(i,k) = -(3.10_kind_phys + 0.157_kind_phys*clay2d(i) - 0.003_kind_phys*sand2d(i))
+      psisat3d(i,k) = -(exp((1.54_kind_phys - 0.0095_kind_phys*sand2d(i) + 0.0063_kind_phys*(100.0_kind_phys-sand2d(i)  &
+           -clay2d(i)))*log(10.0_kind_phys))*9.8e-5_kind_phys)
+      vwcsat3d(i,k) = (50.5_kind_phys - 0.142_kind_phys*sand2d(i) - 0.037_kind_phys*clay2d(i))/100.0_kind_phys
+      hksat3d(i,k) = xksat2d(i)
+      sucsat3d(i,k) = 10._kind_phys * ( 10._kind_phys**(1.88_kind_phys-0.0131_kind_phys*sand2d(i)) )
+      tkmg3d(i,k) = tkm2d(i) ** (1._kind_phys- watsat3d(i,k))
+      tksatu3d(i,k) = tkmg3d(i,k)*0.57_kind_phys**watsat3d(i,k)
+      tkdry3d(i,k) = (0.135_kind_phys*bd2d(i) + 64.7_kind_phys) / (2.7e3_kind_phys - 0.947_kind_phys*bd2d(i))
+      csol3d(i,k) = (2.128_kind_phys*sand2d(i)+2.385_kind_phys*clay2d(i)) / (sand2d(i)+clay2d(i))*1.e6_kind_phys  ! J/(m3 K)
+      watdry3d(i,k) = watsat3d(i,k) * (316230._kind_phys/sucsat3d(i,k)) ** (-1._kind_phys/bsw3d(i,k))
+      watopt3d(i,k) = watsat3d(i,k) * (158490._kind_phys/sucsat3d(i,k)) ** (-1._kind_phys/bsw3d(i,k))
+    end do
+    if (lakedepth2d(i) == spval) then
+      lakedepth2d(i) = zlak(nlevlake) + 0.5_kind_phys*dzlak(nlevlake)
+      z_lake3d(i,1:nlevlake) = zlak(1:nlevlake)
+      dz_lake3d(i,1:nlevlake) = dzlak(1:nlevlake)
+    else
+      depthratio2d(i) = lakedepth2d(i) / (zlak(nlevlake) + 0.5_kind_phys*dzlak(nlevlake)) 
+      z_lake3d(i,1) = zlak(1)
+      dz_lake3d(i,1) = dzlak(1)
+      dz_lake3d(i,2:nlevlake) = dzlak(2:nlevlake)*depthratio2d(i)
+      z_lake3d(i,2:nlevlake) = zlak(2:nlevlake)*depthratio2d(i) + dz_lake3d(i,1)*(1._kind_phys - depthratio2d(i))
+    end if
+    ! initial t_lake3d here
+    t_soisno3d(i,1)      = tsk(i)
+    t_lake3d(i,1)        = tsk(i)
+    t_grnd2d(i)          = 277.0
+    do k = 2, nlevlake
+      if(z_lake3d(i,k).le.depth_c) then 
+        t_soisno3d(i,k)=tsk(i)+(277.0-tsk(i))/depth_c*z_lake3d(i,k)
+        t_lake3d(i,k)=tsk(i)+(277.0-tsk(i))/depth_c*z_lake3d(i,k)
+      else
 	t_soisno3d(i,k)      = 277.0
         t_lake3d(i,k)        = 277.0
-        end if 
-        enddo
-        !end initial t_lake3d here
-         z3d(i,1:nlevsoil) = zsoi(1:nlevsoil)
-         zi3d(i,0:nlevsoil) = zisoi(0:nlevsoil)
-         dz3d(i,1:nlevsoil) = dzsoi(1:nlevsoil)
-         savedtke12d(i) = tkwat ! Initialize for first timestep.
-   
+      end if
+    enddo
+    !end initial t_lake3d here
+    z3d(i,1:nlevsoil) = zsoi(1:nlevsoil)
+    zi3d(i,0:nlevsoil) = zisoi(0:nlevsoil)
+    dz3d(i,1:nlevsoil) = dzsoi(1:nlevsoil)
+    savedtke12d(i) = tkwat ! Initialize for first timestep.
 
-        if (snowdp2d(i) < 0.01_kind_phys) then
-           snl2d(i) = 0
-           dz3d(i,-nlevsnow+1:0) = 0._kind_phys
-           z3d (i,-nlevsnow+1:0) = 0._kind_phys
-           zi3d(i,-nlevsnow+0:0) = 0._kind_phys
+
+    if (snowdp2d(i) < 0.01_kind_phys) then
+      snl2d(i) = 0
+      dz3d(i,-nlevsnow+1:0) = 0._kind_phys
+      z3d (i,-nlevsnow+1:0) = 0._kind_phys
+      zi3d(i,-nlevsnow+0:0) = 0._kind_phys
+    else
+      if ((snowdp2d(i) >= 0.01_kind_phys) .and. (snowdp2d(i) <= 0.03_kind_phys)) then
+        snl2d(i) = -1
+        dz3d(i,0)  = snowdp2d(i)
+      else if ((snowdp2d(i) > 0.03_kind_phys) .and. (snowdp2d(i) <= 0.04_kind_phys)) then
+        snl2d(i) = -2
+        dz3d(i,-1) = snowdp2d(i)/2._kind_phys
+        dz3d(i, 0) = dz3d(i,-1)
+      else if ((snowdp2d(i) > 0.04_kind_phys) .and. (snowdp2d(i) <= 0.07_kind_phys)) then
+        snl2d(i) = -2
+        dz3d(i,-1) = 0.02_kind_phys
+        dz3d(i, 0) = snowdp2d(i) - dz3d(i,-1)
+      else if ((snowdp2d(i) > 0.07_kind_phys) .and. (snowdp2d(i) <= 0.12_kind_phys)) then
+        snl2d(i) = -3
+        dz3d(i,-2) = 0.02_kind_phys
+        dz3d(i,-1) = (snowdp2d(i) - 0.02_kind_phys)/2._kind_phys
+        dz3d(i, 0) = dz3d(i,-1)
+      else if ((snowdp2d(i) > 0.12_kind_phys) .and. (snowdp2d(i) <= 0.18_kind_phys)) then
+        snl2d(i) = -3
+        dz3d(i,-2) = 0.02_kind_phys
+        dz3d(i,-1) = 0.05_kind_phys
+        dz3d(i, 0) = snowdp2d(i) - dz3d(i,-2) - dz3d(i,-1)
+      else if ((snowdp2d(i) > 0.18_kind_phys) .and. (snowdp2d(i) <= 0.29_kind_phys)) then
+        snl2d(i) = -4
+        dz3d(i,-3) = 0.02_kind_phys
+        dz3d(i,-2) = 0.05_kind_phys
+        dz3d(i,-1) = (snowdp2d(i) - dz3d(i,-3) - dz3d(i,-2))/2._kind_phys
+        dz3d(i, 0) = dz3d(i,-1)
+      else if ((snowdp2d(i) > 0.29_kind_phys) .and. (snowdp2d(i) <= 0.41_kind_phys)) then
+        snl2d(i) = -4
+        dz3d(i,-3) = 0.02_kind_phys
+        dz3d(i,-2) = 0.05_kind_phys
+        dz3d(i,-1) = 0.11_kind_phys
+        dz3d(i, 0) = snowdp2d(i) - dz3d(i,-3) - dz3d(i,-2) - dz3d(i,-1)
+      else if ((snowdp2d(i) > 0.41_kind_phys) .and. (snowdp2d(i) <= 0.64_kind_phys)) then
+        snl2d(i) = -5
+        dz3d(i,-4) = 0.02_kind_phys
+        dz3d(i,-3) = 0.05_kind_phys
+        dz3d(i,-2) = 0.11_kind_phys
+        dz3d(i,-1) = (snowdp2d(i) - dz3d(i,-4) - dz3d(i,-3) - dz3d(i,-2))/2._kind_phys
+        dz3d(i, 0) = dz3d(i,-1)
+      else if (snowdp2d(i) > 0.64_kind_phys) then
+        snl2d(i) = -5
+        dz3d(i,-4) = 0.02_kind_phys
+        dz3d(i,-3) = 0.05_kind_phys
+        dz3d(i,-2) = 0.11_kind_phys
+        dz3d(i,-1) = 0.23_kind_phys
+        dz3d(i, 0)=snowdp2d(i)-dz3d(i,-4)-dz3d(i,-3)-dz3d(i,-2)-dz3d(i,-1)
+      endif
+    end if
+
+    do k = 0, snl2d(i)+1, -1
+      z3d(i,k)    = zi3d(i,k) - 0.5_kind_phys*dz3d(i,k)
+      zi3d(i,k-1) = zi3d(i,k) - dz3d(i,k)
+    end do
+
+    ! 3:subroutine makearbinit
+
+    if (snl2d(i) < 0) then
+      do k = snl2d(i)+1, 0
+        ! Be careful because there may be new snow layers with bad temperatures like 0 even if
+        ! coming from init. con. file.
+        if(arbinit .or. t_soisno3d(i,k) > 300 .or. t_soisno3d(i,k) < 200) t_soisno3d(i,k) = 250._kind_phys
+      enddo
+    end if
+
+    do k = 1, nlevsoil
+      if(arbinit .or. t_soisno3d(i,k) > 1000 .or. t_soisno3d(i,k) < 0) t_soisno3d(i,k) = t_lake3d(i,nlevlake)
+    end do
+
+    do k = 1, nlevlake
+      if(arbinit .or. lake_icefrac3d(i,k) > 1._kind_phys .or. lake_icefrac3d(i,k) < 0._kind_phys) then
+        if(t_lake3d(i,k) >= tfrz) then
+          lake_icefrac3d(i,k) = 0._kind_phys
         else
-           if ((snowdp2d(i) >= 0.01_kind_phys) .and. (snowdp2d(i) <= 0.03_kind_phys)) then
-              snl2d(i) = -1
-              dz3d(i,0)  = snowdp2d(i)
-           else if ((snowdp2d(i) > 0.03_kind_phys) .and. (snowdp2d(i) <= 0.04_kind_phys)) then
-              snl2d(i) = -2
-              dz3d(i,-1) = snowdp2d(i)/2._kind_phys
-              dz3d(i, 0) = dz3d(i,-1)
-           else if ((snowdp2d(i) > 0.04_kind_phys) .and. (snowdp2d(i) <= 0.07_kind_phys)) then
-              snl2d(i) = -2
-              dz3d(i,-1) = 0.02_kind_phys
-              dz3d(i, 0) = snowdp2d(i) - dz3d(i,-1)
-           else if ((snowdp2d(i) > 0.07_kind_phys) .and. (snowdp2d(i) <= 0.12_kind_phys)) then
-              snl2d(i) = -3
-              dz3d(i,-2) = 0.02_kind_phys
-              dz3d(i,-1) = (snowdp2d(i) - 0.02_kind_phys)/2._kind_phys
-              dz3d(i, 0) = dz3d(i,-1)
-           else if ((snowdp2d(i) > 0.12_kind_phys) .and. (snowdp2d(i) <= 0.18_kind_phys)) then
-              snl2d(i) = -3
-              dz3d(i,-2) = 0.02_kind_phys
-              dz3d(i,-1) = 0.05_kind_phys
-              dz3d(i, 0) = snowdp2d(i) - dz3d(i,-2) - dz3d(i,-1)
-           else if ((snowdp2d(i) > 0.18_kind_phys) .and. (snowdp2d(i) <= 0.29_kind_phys)) then
-              snl2d(i) = -4
-              dz3d(i,-3) = 0.02_kind_phys
-              dz3d(i,-2) = 0.05_kind_phys
-              dz3d(i,-1) = (snowdp2d(i) - dz3d(i,-3) - dz3d(i,-2))/2._kind_phys
-              dz3d(i, 0) = dz3d(i,-1)
-           else if ((snowdp2d(i) > 0.29_kind_phys) .and. (snowdp2d(i) <= 0.41_kind_phys)) then
-              snl2d(i) = -4
-              dz3d(i,-3) = 0.02_kind_phys
-              dz3d(i,-2) = 0.05_kind_phys
-              dz3d(i,-1) = 0.11_kind_phys
-              dz3d(i, 0) = snowdp2d(i) - dz3d(i,-3) - dz3d(i,-2) - dz3d(i,-1)
-           else if ((snowdp2d(i) > 0.41_kind_phys) .and. (snowdp2d(i) <= 0.64_kind_phys)) then
-              snl2d(i) = -5
-              dz3d(i,-4) = 0.02_kind_phys
-              dz3d(i,-3) = 0.05_kind_phys
-              dz3d(i,-2) = 0.11_kind_phys
-              dz3d(i,-1) = (snowdp2d(i) - dz3d(i,-4) - dz3d(i,-3) - dz3d(i,-2))/2._kind_phys
-              dz3d(i, 0) = dz3d(i,-1)
-           else if (snowdp2d(i) > 0.64_kind_phys) then
-              snl2d(i) = -5
-              dz3d(i,-4) = 0.02_kind_phys
-              dz3d(i,-3) = 0.05_kind_phys
-              dz3d(i,-2) = 0.11_kind_phys
-              dz3d(i,-1) = 0.23_kind_phys
-              dz3d(i, 0)=snowdp2d(i)-dz3d(i,-4)-dz3d(i,-3)-dz3d(i,-2)-dz3d(i,-1)
-           endif
+          lake_icefrac3d(i,k) = 1._kind_phys
         end if
- 
-        do k = 0, snl2d(i)+1, -1
-           z3d(i,k)    = zi3d(i,k) - 0.5_kind_phys*dz3d(i,k)
-           zi3d(i,k-1) = zi3d(i,k) - dz3d(i,k)
-        end do
+      end if
+    end do
 
-        ! 3:subroutine makearbinit
+    do k = 1,nlevsoil
+      if (arbinit .or. h2osoi_vol3d(i,k) > 10._kind_phys .or. h2osoi_vol3d(i,k) < 0._kind_phys) h2osoi_vol3d(i,k) = 1.0_kind_phys
+      h2osoi_vol3d(i,k) = min(h2osoi_vol3d(i,k),watsat3d(i,k))
 
-        if (snl2d(i) < 0) then
-           do k = snl2d(i)+1, 0
-                ! Be careful because there may be new snow layers with bad temperatures like 0 even if
-                ! coming from init. con. file.
-              if(arbinit .or. t_soisno3d(i,k) > 300 .or. t_soisno3d(i,k) < 200) t_soisno3d(i,k) = 250._kind_phys
-           enddo
-        end if
+      ! soil layers
+      if (t_soisno3d(i,k) <= tfrz) then
+        h2osoi_ice3d(i,k)  = dz3d(i,k)*denice*h2osoi_vol3d(i,k)
+        h2osoi_liq3d(i,k) = 0._kind_phys
+      else
+        h2osoi_ice3d(i,k) = 0._kind_phys
+        h2osoi_liq3d(i,k) = dz3d(i,k)*denh2o*h2osoi_vol3d(i,k)
+      endif
+    enddo
 
-        do k = 1, nlevsoil
-           if(arbinit .or. t_soisno3d(i,k) > 1000 .or. t_soisno3d(i,k) < 0) t_soisno3d(i,k) = t_lake3d(i,nlevlake)
-        end do
+    do k = -nlevsnow+1, 0
+      if (k > snl2d(i)) then
+        h2osoi_ice3d(i,k) = dz3d(i,k)*bdsno
+        h2osoi_liq3d(i,k) = 0._kind_phys
+      end if
+    end do
 
-        do k = 1, nlevlake
-           if(arbinit .or. lake_icefrac3d(i,k) > 1._kind_phys .or. lake_icefrac3d(i,k) < 0._kind_phys) then
-              if(t_lake3d(i,k) >= tfrz) then
-                 lake_icefrac3d(i,k) = 0._kind_phys
-              else
-                 lake_icefrac3d(i,k) = 1._kind_phys
-              end if
-           end if
-        end do
-        
-        do k = 1,nlevsoil
-           if (arbinit .or. h2osoi_vol3d(i,k) > 10._kind_phys .or. h2osoi_vol3d(i,k) < 0._kind_phys) h2osoi_vol3d(i,k) = 1.0_kind_phys
-           h2osoi_vol3d(i,k) = min(h2osoi_vol3d(i,k),watsat3d(i,k))
-
-             ! soil layers
-           if (t_soisno3d(i,k) <= tfrz) then
-              h2osoi_ice3d(i,k)  = dz3d(i,k)*denice*h2osoi_vol3d(i,k)
-              h2osoi_liq3d(i,k) = 0._kind_phys
-           else
-              h2osoi_ice3d(i,k) = 0._kind_phys
-              h2osoi_liq3d(i,k) = dz3d(i,k)*denh2o*h2osoi_vol3d(i,k)
-           endif
-        enddo
-
-        do k = -nlevsnow+1, 0
-           if (k > snl2d(i)) then
-              h2osoi_ice3d(i,k) = dz3d(i,k)*bdsno
-              h2osoi_liq3d(i,k) = 0._kind_phys
-           end if
-        end do
-
-    end if   !lake_is_at(i)
+    clm_lake_initialized(i) = 1
   ENDDO
 
 END SUBROUTINE lakeini

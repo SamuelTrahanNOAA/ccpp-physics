@@ -45,7 +45,7 @@
      &       t0c, rd, ps, t1, q1, delt,                                 &
      &       sfcemis, dlwflx, sfcnsw, sfcdsw, srflag,                   &
      &       cm, ch, prsl1, prslki, prsik1, prslk1, wind,               &
-     &       flag_iter, lake_is_at, lprnt, ipr, thsfc_loc,              &
+     &       flag_iter, use_flake, lprnt, ipr, thsfc_loc,               &
      &       hice, fice, tice, weasd, tsfc_wat, tprcp, tiice, ep,       & !  ---  input/outputs:
      &       snwdph, qss_i, qss_w, snowmt, gflux, cmm, chh,             &
      &       evapi, evapw, hflxi, hflxw, islmsk,                        &
@@ -111,7 +111,7 @@
 !     islimsk  - integer, sea/land/ice mask (=0/1/2)               im   !
 !     wind     - real,                                             im   !
 !     flag_iter- logical,                                          im   !
-!     lake_is_at- logical, true for lakes                          im   !
+!     use_flake- logical, true for lakes                          im   !
 !     thsfc_loc- logical, reference pressure for potential temp    im   !
 !                                                                       !
 !  input/outputs:                                                       !
@@ -167,7 +167,7 @@
       integer, dimension(:), intent(in)  :: islmsk
       real (kind=kind_phys), intent(in)  :: delt
 
-      logical, dimension(im), intent(in) :: flag_iter, lake_is_at
+      logical, dimension(im), intent(in) :: flag_iter, use_flake
 
 !  ---  input/outputs:
       real (kind=kind_phys), dimension(:), intent(inout) :: hice,       &
@@ -215,7 +215,7 @@
       do_sice = .false.
       do i = 1, im
         flag(i) = islmsk(i) == 2 .and. flag_iter(i)                     &
-     &                           .and. .not. lake_is_at(i)
+     &                           .and. .not. use_flake(i)
         do_sice = do_sice .or. flag(i)
 !       if (flag_iter(i) .and. islmsk(i) < 2) then
 !         hice(i) = zero

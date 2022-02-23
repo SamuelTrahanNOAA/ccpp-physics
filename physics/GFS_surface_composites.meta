@@ -35,6 +35,21 @@
   dimensions = ()
   type = logical
   intent = in
+[do_clm_lake]
+  standard_name = flag_for_clm_lake_surface_scheme
+  long_name = flag for clm lake surface model
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[oro]
+  standard_name = height_above_mean_sea_level
+  long_name = height_above_mean_sea_level
+  units = m
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
 [frac_grid]
   standard_name = flag_for_fractional_landmask
   long_name = flag for fractional grid
@@ -131,9 +146,16 @@
   dimensions = (horizontal_loop_extent)
   type = logical
   intent = inout
-[lake_is_at]
-  standard_name = flag_for_running_lake_model
-  long_name = flag indicating lake points using a lake model
+[use_flake]
+  standard_name = flag_for_running_flake_lake_model
+  long_name = flag indicating lake points using the flake lake model
+  units = flag
+  dimensions = (horizontal_loop_extent)
+  type = logical
+  intent = inout
+[use_clm_lake]
+  standard_name = flag_for_running_clm_lake_model
+  long_name = flag indicating lake points using a the clm lake model
   units = flag
   dimensions = (horizontal_loop_extent)
   type = logical
@@ -185,6 +207,14 @@
   type = real
   kind = kind_phys
   intent = inout
+[lake_min_elev]
+  standard_name = minimum_lake_elevation_in_clm_lake_model
+  long_name = minimum lake elevation in clm lake model
+  units = m
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
 [snowd]
   standard_name = lwe_surface_snow
   long_name = water equivalent snow depth
@@ -777,7 +807,7 @@
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
-  intent = in
+  intent = inout
 [oceanfrac]
   standard_name = sea_area_fraction
   long_name = fraction of horizontal grid area occupied by ocean

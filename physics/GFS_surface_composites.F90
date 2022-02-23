@@ -27,9 +27,9 @@ contains
 !> \section arg_table_GFS_surface_composites_pre_run Argument Table
 !! \htmlinclude GFS_surface_composites_pre_run.html
 !!
-   subroutine GFS_surface_composites_pre_run (im, flag_init, flag_restart, do_flake, frac_grid,                                &
+   subroutine GFS_surface_composites_pre_run (im, flag_init, flag_restart, do_flake, do_clm_lake, oro, frac_grid,         &
                                  flag_cice, cplflx, cplice, cplwav2atm, landfrac, lakefrac, lakedepth, oceanfrac, frland, &
-                                 dry, icy, lake, lake_is_at, wet, hice, cice, zorlo, zorll, zorli,                        &
+                                 dry, icy, lake, use_clm_lake,use_flake, wet, hice, cice, zorlo, zorll, zorli, lake_min_elev,         &
                                  snowd,            snowd_lnd, snowd_ice, tprcp, tprcp_wat,                                &
                                  tprcp_lnd, tprcp_ice, uustar, uustar_wat, uustar_lnd, uustar_ice,                        &
                                  weasd,            weasd_lnd, weasd_ice, ep1d_ice, tsfc, tsfco, tsfcl, tsfc_wat,          &
@@ -41,12 +41,13 @@ contains
 
       ! Interface variables
       integer,                             intent(in   ) :: im, kdt
-      logical,                             intent(in   ) :: do_flake
+      logical,                             intent(in   ) :: do_flake, do_clm_lake
       logical,                             intent(in   ) :: flag_init, flag_restart, frac_grid, cplflx, cplice, cplwav2atm
       logical, dimension(:),              intent(inout)  :: flag_cice
-      logical,              dimension(:), intent(inout)  :: dry, icy, lake, lake_is_at, wet
-      real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakefrac, lakedepth, oceanfrac
-      real(kind=kind_phys), dimension(:), intent(inout)  :: cice, hice
+      logical,              dimension(:), intent(inout)  :: dry, icy, lake, use_clm_lake, use_flake, wet
+      real(kind=kind_phys), dimension(:), intent(in   )  :: oro
+      real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakedepth, oceanfrac
+      real(kind=kind_phys), dimension(:), intent(inout)  :: cice, hice, lakefrac
       real(kind=kind_phys), dimension(:), intent(  out)  :: frland
       real(kind=kind_phys), dimension(:), intent(in   )  :: snowd, tprcp, uustar, weasd, qss
 
@@ -55,7 +56,7 @@ contains
                     tprcp_lnd, tprcp_ice, tsfc_wat, tsurf_wat,tsurf_lnd, tsurf_ice,                     &
                     uustar_wat, uustar_lnd, uustar_ice, weasd_lnd, weasd_ice,                           &
                     qss_wat, qss_lnd, qss_ice, ep1d_ice, gflx_ice
-      real(kind=kind_phys),                intent(in   ) :: tgice
+      real(kind=kind_phys),                intent(in   ) :: tgice, lake_min_elev
       integer,              dimension(:), intent(inout)  :: islmsk, islmsk_cice
       real(kind=kind_phys), dimension(:), intent(inout)  :: slmsk
       real(kind=kind_phys),               intent(in   )  :: min_lakeice, min_seaice, huge
@@ -244,16 +245,25 @@ contains
 
 ! to prepare to separate lake from ocean under water category
       do i = 1, im
-        if ((wet(i) .or. icy(i)) .and. lakefrac(i) > zero) then
-          lake(i) = .true.
-          if (do_flake .and. lakefrac(i) >= 0.15 .and. lakedepth(i) > one) then
-            lake_is_at(i) = .true.
+        ! The lakefrac variable is always zero, so do_clm_lake uses a workaround.
+        if(do_clm_lake) then
+          use_flake(i) = .false.
+          use_clm_lake(i) = lakefrac(i)>zero .or. &
+               ((wet(i) .or. icy(i)) .and. oro(i)>=lake_min_elev)
+          lake(i) = use_clm_lake(i)
+          if(use_clm_lake(i)) then
+            lakefrac(i) = 1
           else
-            lake_is_at(i) = .false.
+            lakefrac(i) = 0
           endif
+        elseif ((wet(i) .or. icy(i)) .and. lakefrac(i) > zero) then
+          use_clm_lake(i) = .false.
+          lake(i) = .true.
+          use_flake(i) = do_flake .and. lakefrac(i) >= 0.15 .and. lakedepth(i) > one
         else
+          use_flake(i) = .false.
+          use_clm_lake(i) = .false.
           lake(i) = .false.
-          lake_is_at(i) = .false.
         endif
       enddo
 !

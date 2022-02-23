@@ -27,7 +27,7 @@
 !           (sfcalb)                                                   !
 !                                                                      !
 !      'setemis'    -- set up surface emissivity for lw radiation      !
-!          ( lsm,lsm_noahmp,lsm_ruc,frac_grid,cplice,lake_is_at,       !
+!          ( lsm,lsm_noahmp,lsm_ruc,frac_grid,cplice,use_flake,       !
 !  ---  inputs:
 !            lakefrac,xlon,xlat,slmsk,snodl,snodi,sncovr,sncovr_ice,   !
 !            zorlf,tsknf,tairf,hprif,                                  !
@@ -729,7 +729,7 @@
 !! @{
 !-----------------------------------
       subroutine setemis                                                &
-     &     ( lsm,lsm_noahmp,lsm_ruc,frac_grid,cplice,lake_is_at,        &  !  ---  inputs:
+     &     ( lsm,lsm_noahmp,lsm_ruc,frac_grid,cplice,use_flake,         &  !  ---  inputs:
      &       lakefrac,xlon,xlat,slmsk,snodl,snodi,sncovr,sncovr_ice,    &
      &       zorlf,tsknf,tairf,hprif,                                   &
      &       semis_lnd,semis_ice,semis_wat,IMAX,fracl,fraco,fraci,icy,  &
@@ -792,7 +792,7 @@
       integer, intent(in) :: IMAX
       integer, intent(in) :: lsm, lsm_noahmp, lsm_ruc
       logical, intent(in) :: frac_grid, cplice
-      logical, dimension(:), intent(in) :: lake_is_at
+      logical, dimension(:), intent(in) :: use_flake
       real (kind=kind_phys), dimension(:), intent(in) :: lakefrac
 
       real (kind=kind_phys), dimension(:), intent(in) ::                &
@@ -957,7 +957,7 @@
                 sfcemis_ice = semis_ice(i) ! output from CICE
               endif
             elseif (lsm == lsm_ruc) then
-              if (lake_is_at(i)) then
+              if (use_flake(i)) then
                 if (sncovr_ice(i) > f_zero) then
                   sfcemis_ice = emsref(7) * (f_one-sncovr_ice(i))       &
      &                        + emsref(8) * sncovr_ice(i)
