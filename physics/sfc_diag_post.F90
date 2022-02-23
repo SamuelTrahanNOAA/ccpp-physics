@@ -16,9 +16,9 @@
 !!
 #endif
       subroutine sfc_diag_post_run (im, lsm, lsm_noahmp, dry, lssav, dtf, con_eps, con_epsm1, pgr,&
-                         t2mmp, q2mp, t2m, q2m, u10m, v10m, tmpmin, tmpmax, spfhmin, spfhmax,&
-                         wind10mmax, u10mmax, v10mmax, dpt2m, lake_t2m, lake_q2m, do_clm_lake, &
-                         lakefrac, errmsg, errflg)
+                         t2m, q2m, u10m, v10m, tmpmin, tmpmax, spfhmin, spfhmax,                  &
+                         lake_t2m, lake_q2m, do_clm_lake,                                         &
+                         wind10mmax, u10mmax, v10mmax, dpt2m, errmsg, errflg)
 
         use machine,               only: kind_phys
 
@@ -28,8 +28,7 @@
         logical,                              intent(in) :: lssav, do_clm_lake
         real(kind=kind_phys),                 intent(in) :: dtf, con_eps, con_epsm1
         logical             , dimension(:),  intent(in) :: dry
-        real(kind=kind_phys), dimension(:),  intent(in) :: pgr, u10m, v10m, lakefrac
-        real(kind=kind_phys), dimension(:) ,  intent(in) :: t2mmp, q2mp, lake_q2m, lake_t2m
+        real(kind=kind_phys), dimension(:),  intent(in) :: pgr, u10m, v10m, lake_q2m, lake_t2m
         real(kind=kind_phys), dimension(:),  intent(inout) :: t2m, q2m, tmpmin, tmpmax, spfhmin, spfhmax
         real(kind=kind_phys), dimension(:),  intent(inout) :: wind10mmax, u10mmax, v10mmax, dpt2m
 
