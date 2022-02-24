@@ -17,7 +17,7 @@
 #endif
       subroutine sfc_diag_post_run (im, lsm, lsm_noahmp, dry, lssav, dtf, con_eps, con_epsm1, pgr,&
                          t2m, q2m, u10m, v10m, tmpmin, tmpmax, spfhmin, spfhmax,                  &
-                         lake_t2m, lake_q2m, do_clm_lake,                                         &
+                         lake_t2m, lake_q2m, do_clm_lake, use_clm_lake,                           &
                          wind10mmax, u10mmax, v10mmax, dpt2m, errmsg, errflg)
 
         use machine,               only: kind_phys
@@ -27,7 +27,7 @@
         integer,                              intent(in) :: im, lsm, lsm_noahmp
         logical,                              intent(in) :: lssav, do_clm_lake
         real(kind=kind_phys),                 intent(in) :: dtf, con_eps, con_epsm1
-        logical             , dimension(:),  intent(in) :: dry
+        logical             , dimension(:),  intent(in) :: dry, use_clm_lake
         real(kind=kind_phys), dimension(:),  intent(in) :: pgr, u10m, v10m, lake_q2m, lake_t2m
         real(kind=kind_phys), dimension(:),  intent(inout) :: t2m, q2m, tmpmin, tmpmax, spfhmin, spfhmax
         real(kind=kind_phys), dimension(:),  intent(inout) :: wind10mmax, u10mmax, v10mmax, dpt2m
@@ -42,18 +42,10 @@
         errmsg = ''
         errflg = 0
 
-        if (lsm == lsm_noahmp) then
-          do i=1,im
-            if(dry(i)) then
-              t2m(i) = t2mmp(i)
-              q2m(i) = q2mp(i)
-            endif
-          enddo
-        endif
 if(1==2) then
         if(do_clm_lake) then
            do i=1,im
-              if(lakefrac(i)>0.5) then
+              if(use_clm_lake(i)) then
                  t2m(i) = lake_t2m(i)
                  q2m(i) = lake_q2m(i)
               end if
