@@ -35,7 +35,7 @@ contains
                                  weasd,            weasd_lnd, weasd_ice, ep1d_ice, tsfc, tsfco, tsfcl, tsfc_wat,          &
                                            tisfc, tsurf_wat, tsurf_lnd, tsurf_ice,                                        &
                                  gflx_ice, tgice, islmsk, islmsk_cice, slmsk, qss, qss_wat, qss_lnd, qss_ice,             &
-                                 min_lakeice, min_seaice, kdt, huge, errmsg, errflg)
+                                 min_lakeice, min_seaice, kdt, huge, use_lake_model, errmsg, errflg)
 
       implicit none
 
@@ -45,6 +45,7 @@ contains
       logical,                             intent(in   ) :: flag_init, flag_restart, frac_grid, cplflx, cplice, cplwav2atm
       logical, dimension(:),              intent(inout)  :: flag_cice
       logical,              dimension(:), intent(inout)  :: dry, icy, lake, use_clm_lake, use_flake, wet
+      integer,              dimension(:), intent(inout)  :: use_lake_model
       real(kind=kind_phys), dimension(:), intent(in   )  :: oro
       real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakedepth, oceanfrac
       real(kind=kind_phys), dimension(:), intent(inout)  :: cice, hice, lakefrac
@@ -300,6 +301,20 @@ contains
             endif
           enddo
         endif
+      endif
+
+      if(do_clm_lake .or. do_flake) then
+        use_lake_model=0
+      endif
+
+      if(do_clm_lake) then
+        where(use_clm_lake)
+          use_lake_model=1
+        end where
+      else if(do_flake) then
+        where(use_flake)
+          use_lake_model=1
+        end where
       endif
 
 !     write(0,*)' minmax of ice snow=',minval(snowd_ice),maxval(snowd_ice)

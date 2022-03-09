@@ -514,6 +514,27 @@
   dimensions = (horizontal_loop_extent)
   type = integer
   intent = in
+[clay3d]
+  standard_name = clm_lake_percent_clay
+  long_name = percent clay in clm lake model
+  units = percent
+  dimensions = (horizontal_loop_extent,soil_vertical_dimension_for_clm_lake_model)
+  type = integer
+  intent = inout
+[sand3d]
+  standard_name = clm_lake_percent_sand
+  long_name = percent sand in clm lake model
+  units = percent
+  dimensions = (horizontal_loop_extent,soil_vertical_dimension_for_clm_lake_model)
+  type = integer
+  intent = inout
+[clm_lake_test_var]
+  standard_name = clm_lake_test_var
+  long_name = variable to test clm lake output (FIXME: delete before merging)
+  units = percent
+  dimensions = (horizontal_loop_extent,soil_vertical_dimension_for_clm_lake_model)
+  type = integer
+  intent = inout
 [me]
   standard_name = mpi_rank
   long_name = current MPI-rank

@@ -500,6 +500,13 @@
   type = real
   kind = kind_phys
   intent = in
+[use_lake_model]
+  standard_name = flag_for_running_a_lake_model
+  long_name = integer flag for where a lake model was run (1=yes, 0=no)
+  units = 1
+  dimensions = (horizontal_loop_extent)
+  type = integer
+  intent = out
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP
