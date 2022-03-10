@@ -1,6 +1,8 @@
 !>\file cu_gf_driver.F90
 !! This file is scale-aware Grell-Freitas cumulus scheme driver.
 
+! THIS IS JUST A TEST OF THE CODEOWNERS SUPPORT
+! DO NOT MERGE
 
 module cu_gf_driver
 
