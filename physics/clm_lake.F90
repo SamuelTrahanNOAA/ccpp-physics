@@ -159,7 +159,6 @@ MODULE clm_lake
                      ivgtyp       ,isltyp         ,snow         ,use_lakedepth   ,&
                      restart      ,lakedepth_default, lake_ht   ,lake_rho0       ,&
                      xidx         ,yidx           ,sand3d       ,clay3d          ,&
-                     clm_lake_test_var                                           ,&
                      me           ,master         ,errmsg       ,errflg )
 
       !==============================================================================
@@ -182,7 +181,6 @@ MODULE clm_lake
 !   REAL(KIND_PHYS), DIMENSION( : ), INTENT(INOUT)::   LAKEFRAC
  !   INTEGER, INTENT(IN)::   LAKEFLAG
     REAL(KIND_PHYS),    DIMENSION( : ), INTENT(IN)    :: SNOW
-    REAL(KIND_PHYS),    DIMENSION(:,:), INTENT(inout) :: clm_lake_test_var
 
     LOGICAL, DIMENSION(:), INTENT(IN) :: use_clm_lake
     
@@ -308,7 +306,7 @@ MODULE clm_lake
       integer :: lake_points
 !#endif
       character*255 :: message
-      logical, parameter :: feedback_to_atmosphere = .false. ! FIXME: REMOVE
+      logical, parameter :: feedback_to_atmosphere = .true. ! FIXME: REMOVE
 
 
       errmsg = ' '
@@ -346,16 +344,6 @@ MODULE clm_lake
           return
         endif
 !     endif
-
-      do k=1,nlevsoil
-        do i=1,im
-          if(use_clm_lake(i)) then
-            clm_lake_test_var(i,k) = k
-          else
-            clm_lake_test_var(i,k) = -1
-          endif
-        enddo
-      enddo
 
 !#ifdef LAKE_DEBUG
       lake_points=0

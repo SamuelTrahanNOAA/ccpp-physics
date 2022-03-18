@@ -395,13 +395,13 @@
   kind = kind_phys
   intent = out
 [tsk]
-  standard_name = surface_skin_temperature
-  long_name = surface skin temperature
+  standard_name = sea_surface_temperature
+  long_name = sea surface temperature
   units = K
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
-  intent = out
+  intent = inout
 [lake_t2m]
   standard_name =  temperature_at_2m_from_clm_lake
   long_name = temperature at 2m from clm lake
@@ -524,13 +524,6 @@
 [sand3d]
   standard_name = clm_lake_percent_sand
   long_name = percent sand in clm lake model
-  units = percent
-  dimensions = (horizontal_loop_extent,soil_vertical_dimension_for_clm_lake_model)
-  type = integer
-  intent = inout
-[clm_lake_test_var]
-  standard_name = clm_lake_test_var
-  long_name = variable to test clm lake output (FIXME: delete before merging)
   units = percent
   dimensions = (horizontal_loop_extent,soil_vertical_dimension_for_clm_lake_model)
   type = integer

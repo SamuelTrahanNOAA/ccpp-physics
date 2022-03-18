@@ -47,7 +47,8 @@ contains
       logical,              dimension(:), intent(inout)  :: dry, icy, lake, use_clm_lake, use_flake, wet
       integer,              dimension(:), intent(inout)  :: use_lake_model
       real(kind=kind_phys), dimension(:), intent(in   )  :: oro
-      real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakedepth, oceanfrac
+      real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, oceanfrac
+      real(kind=kind_phys), dimension(:), intent(inout)  :: lakedepth
       real(kind=kind_phys), dimension(:), intent(inout)  :: cice, hice, lakefrac
       real(kind=kind_phys), dimension(:), intent(  out)  :: frland
       real(kind=kind_phys), dimension(:), intent(in   )  :: snowd, tprcp, uustar, weasd, qss
@@ -247,6 +248,14 @@ contains
 ! to prepare to separate lake from ocean under water category
       do i = 1, im
         ! The lakefrac variable is always zero, so do_clm_lake uses a workaround.
+
+        if(((wet(i) .or. icy(i)) .and. oro(i)>=lake_min_elev)) then
+          lakefrac(i) = 1
+          lakedepth(i) = 100
+        else
+          lakefrac(i) = 0
+        endif
+
         if(do_clm_lake) then
           use_flake(i) = .false.
           use_clm_lake(i) = lakefrac(i)>zero .or. &
