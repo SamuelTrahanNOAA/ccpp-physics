@@ -51,6 +51,14 @@
   type = real
   kind = kind_phys
   intent = inout
+[qs]
+  standard_name = snow_mixing_ratio
+  long_name = ratio of mass of snow water to mass of dry air plus vapor (without condensates)
+  units = kg kg-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
 [qc_save]
   standard_name = cloud_condensed_water_mixing_ratio_save
   long_name = ratio of mass of cloud water to mass of dry air plus vapor (without condensates) before entering a physics scheme
@@ -67,6 +75,14 @@
   type = real
   kind = kind_phys
   intent = in
+[qs_save]
+  standard_name = snow_mixing_ratio_save
+  long_name = cloud snow mixing ratio before entering a physics scheme
+  units = kg kg-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP
@@ -76,9 +92,9 @@
   kind = len=*
   intent = out
 [errflg]
-  standard_name = ccpp_error_flag
-  long_name = error flag for error handling in CCPP
-  units = flag
+  standard_name = ccpp_error_code
+  long_name = error code for error handling in CCPP
+  units = 1
   dimensions = ()
   type = integer
   intent = out

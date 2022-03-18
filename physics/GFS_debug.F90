@@ -390,7 +390,7 @@
 #ifdef MPI
          use mpi
 #endif
-#ifdef OPENMP
+#ifdef _OPENMP
          use omp_lib
 #endif
          use GFS_typedefs,          only: GFS_control_type, GFS_statein_type,  &
@@ -437,7 +437,7 @@
          mpisize = 1
          mpicomm = 0
 #endif
-#ifdef OPENMP
+#ifdef _OPENMP
          omprank = OMP_GET_THREAD_NUM()
          ompsize = nthreads
 #else
@@ -445,7 +445,7 @@
          ompsize = 1
 #endif
 
-#ifdef OPENMP
+#ifdef _OPENMP
 !$OMP BARRIER
 #endif
 #ifdef MPI
@@ -593,6 +593,9 @@
                      call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Tbd%acvb'            , Tbd%acvb)
                      call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Tbd%acvt'            , Tbd%acvt)
                      call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Tbd%hpbl'            , Tbd%hpbl)
+                     if (Model%imfdeepcnv .ge. 0 .or. Model%imfshalcnv .ge. 0) then
+                       call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Tbd%ud_mf'         , Tbd%ud_mf)
+                     end if
                      if (Model%do_sppt) then
                        call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Tbd%dtdtnp'        , Tbd%dtdtnp)
                        call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Tbd%dtotprcp'      , Tbd%dtotprcp)
@@ -929,7 +932,7 @@
                         call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Grid%jindx2_tau', Grid%jindx2_tau )
                      endif
                  end if
-#ifdef OPENMP
+#ifdef _OPENMP
 !$OMP BARRIER
 #endif
              end do
@@ -938,7 +941,7 @@
 #endif
          end do
 
-#ifdef OPENMP
+#ifdef _OPENMP
 !$OMP BARRIER
 #endif
 #ifdef MPI
@@ -1043,7 +1046,7 @@
 #ifdef MPI
          use mpi
 #endif
-#ifdef OPENMP
+#ifdef _OPENMP
          use omp_lib
 #endif
          use machine,               only: kind_phys
@@ -1092,7 +1095,7 @@
          mpisize = 1
          mpicomm = 0
 #endif
-#ifdef OPENMP
+#ifdef _OPENMP
          omprank = OMP_GET_THREAD_NUM()
          ompsize = nthreads
 #else
@@ -1100,7 +1103,7 @@
          ompsize = 1
 #endif
 
-#ifdef OPENMP
+#ifdef _OPENMP
 !$OMP BARRIER
 #endif
 #ifdef MPI
@@ -1331,7 +1334,6 @@
                      call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Interstitial%tsurf_ice           ', Interstitial%tsurf_ice               )
                      call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Interstitial%tsurf_land          ', Interstitial%tsurf_land              )
                      call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Interstitial%tsurf_water         ', Interstitial%tsurf_water             )
-                     call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Interstitial%ud_mf               ', Interstitial%ud_mf                   )
                      call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Interstitial%uustar_ice          ', Interstitial%uustar_ice              )
                      call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Interstitial%uustar_land         ', Interstitial%uustar_land             )
                      call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Interstitial%uustar_water        ', Interstitial%uustar_water            )
@@ -1451,7 +1453,7 @@
                          call print_var(mpirank, omprank, blkno, Grid%xlat_d, Grid%xlon_d, 'Interstitial%precip_overlap_param', Interstitial%precip_overlap_param    )
                      end if
                  end if
-#ifdef OPENMP
+#ifdef _OPENMP
 !$OMP BARRIER
 #endif
              end do
@@ -1460,7 +1462,7 @@
 #endif
          end do
 
-#ifdef OPENMP
+#ifdef _OPENMP
 !$OMP BARRIER
 #endif
 #ifdef MPI
