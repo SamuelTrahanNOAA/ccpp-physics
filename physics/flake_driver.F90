@@ -51,7 +51,8 @@
 ! ---- Inputs
             im, ps, t1, q1, wind, min_lakeice,               &
             dlwflx, dswsfc, lakedepth, lakefrac,             &
-            use_flake, snow, xlat, delt, zlvl, elev,         &
+            lkm_flake, lkm_flake_nsst,                       &
+            use_lake_model, snow, xlat, delt, zlvl, elev,          &
             wet, yearlen, julian, imon,                      &
             flag_iter, first_time_step, flag_restart,        &
             weasd,                                           &
@@ -82,7 +83,7 @@
 !==============================================================================
 
       implicit none
-      integer, intent(in) :: im, imon,yearlen
+      integer, intent(in) :: im, imon,yearlen,lkm_flake,lkm_flake_nsst
 !     integer, dimension(im), intent(in) :: islmsk
 
       real (kind=kind_phys), dimension(:), intent(in) :: ps, wind,     &
@@ -103,7 +104,7 @@
       real (kind=kind_phys),  intent(in) :: julian
 
       logical, dimension(:), intent(in) :: flag_iter, wet
-      integer, dimension(:), intent(in) :: use_flake
+      integer, dimension(:), intent(in) :: use_lake_model
       logical,               intent(in) :: flag_restart, first_time_step
 
       character(len=*), intent(out) :: errmsg
@@ -224,7 +225,7 @@
 
       do_flake = .false.
       do i = 1, im
-            flag(i) = flag_iter(i) .and. use_flake(i) .gt. 0
+            flag(i) = flag_iter(i) .and. (use_lake_model(i)==lkm_flake .or. use_lake_model(i)==lkm_flake_nsst)
             do_flake  = flag(i) .or. do_flake
       enddo
       if (.not. do_flake) return
@@ -415,7 +416,7 @@
 !                fice(i) = 1.0
 !             endif
            enddo   !iter loop
-!           endif    !endif use_flake
+!           endif    !endif use_lake_model
 
          endif     !endif of flag
 
@@ -448,15 +449,15 @@ contains
 !> \section arg_table_flake_driver_post Argument Table
 !! \htmlinclude flake_driver_post.html
 !!
-subroutine flake_driver_post_run (im, use_flake, h_ML, T_wML, Tsurf,  &
+subroutine flake_driver_post_run (im, use_lake_model, h_ML, T_wML, Tsurf,  &
                            lakedepth, xz, zm, tref, tsfco,            &
-                           errmsg, errflg)
+                           lkm_flake,lkm_flake_nsst,errmsg, errflg)
 
 !use machine , only : kind_phys
 !==============================================================================
 
       implicit none
-      integer, intent(in) :: im
+      integer, intent(in) :: im,lkm_flake,lkm_flake_nsst
 !     integer, dimension(im), intent(in) :: islmsk
 
       real (kind=kind_phys), dimension(:), intent(in) ::               &
@@ -465,7 +466,7 @@ subroutine flake_driver_post_run (im, use_flake, h_ML, T_wML, Tsurf,  &
       real (kind=kind_phys),dimension(:),intent(inout) ::              &
      &           xz, zm, tref, tsfco   
 
-      integer, dimension(:), intent(in) :: use_flake
+      integer, dimension(:), intent(in) :: use_lake_model
 
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
@@ -476,8 +477,8 @@ subroutine flake_driver_post_run (im, use_flake, h_ML, T_wML, Tsurf,  &
       errflg = 0
 
       do I=1, im
-         if(use_flake(i).eq.2) then
-         write(0,*)'flake-post-use-flake= ',use_flake(i)
+         if(use_lake_model(i).eq.lkm_flake_nsst) then
+         write(0,*)'flake-post-use-flake= ',use_lake_model(i)
             xz(i) = lakedepth(i)
             zm(i) = h_ML(i)
             tref(i) = tsurf(i)

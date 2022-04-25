@@ -29,22 +29,23 @@ contains
 !!
    subroutine GFS_surface_composites_pre_run (im, flag_init, flag_restart, lkm, frac_grid,                                &
                                  flag_cice, cplflx, cplice, cplwav2atm, landfrac, lakefrac, lakedepth, oceanfrac, frland, &
-                                 dry, icy, lake, use_flake, wet, hice, cice, zorlo, zorll, zorli,                         &
+                                 dry, icy, lake, use_lake_model, wet, hice, cice, zorlo, zorll, zorli,                    &
                                  snowd,            snowd_lnd, snowd_ice, tprcp, tprcp_wat,                                &
                                  tprcp_lnd, tprcp_ice, uustar, uustar_wat, uustar_lnd, uustar_ice,                        &
                                  weasd,            weasd_lnd, weasd_ice, ep1d_ice, tsfc, tsfco, tsfcl, tsfc_wat,          &
                                            tisfc, tsurf_wat, tsurf_lnd, tsurf_ice,                                        &
+                                 lkm_flake, lkm_flake_nsst, lkm_clm_lake,                                                 &
                                  gflx_ice, tgice, islmsk, islmsk_cice, slmsk, qss, qss_wat, qss_lnd, qss_ice,             &
                                  min_lakeice, min_seaice, kdt, huge, errmsg, errflg)
 
       implicit none
 
       ! Interface variables
-      integer,                             intent(in   ) :: im, lkm, kdt
+      integer,                             intent(in   ) :: im, lkm, kdt, lkm_flake, lkm_flake_nsst, lkm_clm_lake
       logical,                             intent(in   ) :: flag_init, flag_restart, frac_grid, cplflx, cplice, cplwav2atm
       logical, dimension(:),              intent(inout)  :: flag_cice
       logical,              dimension(:), intent(inout)  :: dry, icy, lake, wet
-      integer,              dimension(:), intent(inout)  :: use_flake
+      integer,              dimension(:), intent(inout)  :: use_lake_model
       real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakefrac, lakedepth
       real(kind=kind_phys), dimension(:), intent(inout)  :: cice, hice, oceanfrac             
       real(kind=kind_phys), dimension(:), intent(  out)  :: frland
@@ -84,17 +85,11 @@ contains
             wet(i)  = .true.
 !            dry(i)  = .false.
 !            icy(i)  = .false.
-            if (lkm == 1 ) then
-               use_flake(i) = 1
-            elseif (lkm == 2 ) then
-               use_flake(i) = 2
-            else
-               use_flake(i) = 0
-            endif
+            use_lake_model(i) = lkm
          else
-            lake(i) = .false.
-            wet(i)  = .false.
-            use_flake(i) = 0
+            use_lake_model(i) = 0
+            lake(i)=.false.
+            wet(i)=.false.
          endif
       enddo
 
@@ -444,7 +439,7 @@ contains
       tprcp_lnd, tprcp_ice, evap, evap_wat, evap_lnd, evap_ice, hflx, hflx_wat, hflx_lnd, hflx_ice, qss, qss_wat, qss_lnd,        &
       qss_ice, tsfc, tsfco, tsfcl, tsfc_wat, tisfc, hice, cice, tiice,                                                            &
       sigmaf, zvfun, lheatstrg, h0facu, h0facs, hflxq, hffac, stc,                                                                &
-      grav, prsik1, prslk1, prslki, z1, ztmax_wat, ztmax_lnd, ztmax_ice, use_flake, huge, errmsg, errflg)
+      grav, prsik1, prslk1, prslki, z1, ztmax_wat, ztmax_lnd, ztmax_ice, use_lake_model, huge, errmsg, errflg)
 
       implicit none
 
@@ -452,7 +447,7 @@ contains
       logical,                              intent(in) :: cplflx, frac_grid, cplwav2atm
       logical,                              intent(in) :: lheatstrg
       logical, dimension(:),                intent(in) :: flag_cice, dry, wet, icy
-      integer, dimension(:),                intent(in)  :: use_flake
+      integer, dimension(:),                intent(in)  :: use_lake_model
       integer, dimension(:),                intent(in) :: islmsk
       real(kind=kind_phys), dimension(:),   intent(in) :: wind, t1, q1, prsl1, landfrac, lakefrac, oceanfrac,                   &
         cd_wat, cd_lnd, cd_ice, cdq_wat, cdq_lnd, cdq_ice, rb_wat, rb_lnd, rb_ice, stress_wat,                                  &

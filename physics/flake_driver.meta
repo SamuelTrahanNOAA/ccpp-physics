@@ -126,11 +126,25 @@
   type = real
   kind = kind_phys
   intent = in
-[use_flake]
-  standard_name = flag_for_using_flake
-  long_name = flag indicating lake points using flake model
+[use_lake_model]
+  standard_name = flag_for_using_a_lake_model
+  long_name = flag indicating lake points using a lake model
   units = flag
   dimensions = (horizontal_loop_extent)
+  type = integer
+  intent = in
+[lkm_flake]
+  standard_name = lake_surface_scheme_control_value_for_flake
+  long_name = value for the lake surface scheme selector that signifies flake used without nsst
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
+[lkm_flake_nsst]
+  standard_name = lake_surface_scheme_control_value_for_flake_with_nsst
+  long_name = value for the lake surface scheme selector that signifies flake used with nsst
+  units = flag
+  dimensions = ()
   type = integer
   intent = in
 [snow]
@@ -468,6 +482,27 @@
   standard_name = horizontal_loop_extent
   long_name = horizontal loop extent
   units = count
+  dimensions = ()
+  type = integer
+  intent = in
+[use_lake_model]
+  standard_name = flag_for_using_a_lake_model
+  long_name = flag indicating lake points using a lake model
+  units = flag
+  dimensions = (horizontal_loop_extent)
+  type = integer
+  intent = in
+[lkm_flake]
+  standard_name = lake_surface_scheme_control_value_for_flake
+  long_name = value for the lake surface scheme selector that signifies flake used without nsst
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
+[lkm_flake_nsst]
+  standard_name = lake_surface_scheme_control_value_for_flake_with_nsst
+  long_name = value for the lake surface scheme selector that signifies flake used with nsst
+  units = flag
   dimensions = ()
   type = integer
   intent = in

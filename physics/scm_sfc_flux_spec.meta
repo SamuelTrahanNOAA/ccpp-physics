@@ -329,13 +329,20 @@
   type = real
   kind = kind_phys
   intent = in
-[use_flake]
-  standard_name = flag_for_using_flake
-  long_name = flag indicating lake points using flake model
+[use_lake_model]
+  standard_name = flag_for_using_a_lake_model
+  long_name = flag indicating lake points using a lake model
   units = flag
   dimensions = (horizontal_loop_extent)
-  type = logical
+  type = integer
   intent = inout
+[lkm]
+  standard_name = control_for_lake_surface_scheme
+  long_name = flag for lake surface model
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
 [sh_flux]
   standard_name = surface_upward_temperature_flux
   long_name = surface upward sensible heat flux

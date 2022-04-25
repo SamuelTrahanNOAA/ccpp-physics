@@ -45,7 +45,7 @@
      &       t0c, rd, ps, t1, q1, delt,                                 &
      &       sfcemis, dlwflx, sfcnsw, sfcdsw, srflag,                   &
      &       cm, ch, prsl1, prslki, prsik1, prslk1, wind,               &
-     &       flag_iter, use_flake, lprnt, ipr, thsfc_loc,               &
+     &       flag_iter, use_lake_model, lprnt, ipr, thsfc_loc,          &
      &       hice, fice, tice, weasd, tsfc_wat, tprcp, tiice, ep,       & !  ---  input/outputs:
      &       snwdph, qss_i, qss_w, snowmt, gflux, cmm, chh,             &
      &       evapi, evapw, hflxi, hflxw, islmsk,                        &
@@ -111,7 +111,7 @@
 !     islimsk  - integer, sea/land/ice mask (=0/1/2)               im   !
 !     wind     - real,                                             im   !
 !     flag_iter- logical,                                          im   !
-!     use_flake- integer, true for lakes when when lkm > 0         im   !
+!     use_lake_model- integer, lake model selection                im   !
 !     thsfc_loc- logical, reference pressure for potential temp    im   !
 !                                                                       !
 !  input/outputs:                                                       !
@@ -168,7 +168,7 @@
       real (kind=kind_phys), intent(in)  :: delt
 
       logical, dimension(im), intent(in) :: flag_iter 
-      integer, dimension(im), intent(in) :: use_flake
+      integer, dimension(im), intent(in) :: use_lake_model
 
 !  ---  input/outputs:
       real (kind=kind_phys), dimension(:), intent(inout) :: hice,       &
@@ -215,8 +215,10 @@
 
       do_sice = .false.
       do i = 1, im
+! FIXME: insert a clause for lake model 3
         flag(i) = islmsk(i) == 2 .and. flag_iter(i)                     &
-     &                           .and. use_flake(i) /=1
+     &                           .and. (use_lake_model(i)==0            &
+     &        .or. use_lake_model(i)==2)
         do_sice = do_sice .or. flag(i)
 !       if (flag_iter(i) .and. islmsk(i) < 2) then
 !         hice(i) = zero

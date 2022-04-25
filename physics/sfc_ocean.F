@@ -28,7 +28,7 @@
 !  ---  inputs:
      &     ( im, hvap, cp, rd, eps, epsm1, rvrdm1, ps, u1, v1, t1, q1,  &
      &       tskin, cm, ch, lseaspray, fm, fm10,                        &
-     &       prsl1, prslki, wet, use_flake, wind,                       &,  ! --- inputs
+     &       prsl1, prslki, wet, use_lake_model, wind,                  &,  ! --- inputs
      &       flag_iter,                                                 &
      &       qsurf, cmm, chh, gflux, evap, hflx, ep,                    &   ! --- outputs
      &       errmsg, errflg                                             &
@@ -42,7 +42,7 @@
 !    call sfc_ocean                                                     !
 !       inputs:                                                         !
 !        ( im, ps, u1, v1, t1, q1, tskin, cm, ch, lseaspray, fm, fm10,  !
-!            prsl1, prslki, wet, use_flake, wind, flag_iter,            !
+!            prsl1, prslki, wet, use_lake_model, wind, flag_iter,       !
 !       outputs:                                                        !
 !            qsurf, cmm, chh, gflux, evap, hflx, ep )                   !
 !                                                                       !
@@ -112,7 +112,7 @@
       logical, intent(in) :: lseaspray
 !
       logical, dimension(:), intent(in) :: flag_iter, wet
-      integer, dimension(:), intent(in) :: use_flake
+      integer, dimension(:), intent(in) :: use_lake_model
 
 !  ---  outputs:
       real (kind=kind_phys), dimension(:), intent(inout) :: qsurf,      &
@@ -155,7 +155,9 @@
 !
 !  --- ...  flag for open water
       do i = 1, im
-        flag(i) = (wet(i) .and. flag_iter(i) .and. use_flake(i) /=1)
+! FIXME: include a  clause for lake model 3
+       flag(i) = (wet(i) .and. flag_iter(i) .and. (use_lake_model(i)==0       &
+     &        .or. use_lake_model(i)==2))
 !  --- ...  initialize variables. all units are supposedly m.k.s. unless specified
 !           ps is in pascals, wind is wind speed,
 !           rho is density, qss is sat. hum. at surface

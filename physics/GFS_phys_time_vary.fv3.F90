@@ -80,8 +80,7 @@
               zwtxy, xlaixy, xsaixy, lfmassxy, stmassxy, rtmassxy, woodxy, stblcpxy, fastcpxy,     &
               smcwtdxy, deeprechxy, rechxy, snowxy, snicexy, snliqxy, tsnoxy , smoiseq, zsnsoxy,   &
               slc, smc, stc, tsfcl, snowd, canopy, tg3, stype, con_t0c, lsm_cold_start, nthrds,    &
-              lkm, use_flake, lakefrac, lakedepth,                                                 &  
-              errmsg, errflg)
+              lkm, use_lake_model, lakefrac, lakedepth, errmsg, errflg)
 
          implicit none
 
@@ -93,7 +92,7 @@
          real(kind_phys),      intent(in)    :: xlat_d(:), xlon_d(:)
 
          integer,              intent(in) :: lkm
-         integer,              intent(inout)  :: use_flake(:)
+         integer,              intent(inout)  :: use_lake_model(:)
          real(kind=kind_phys), intent(in   )  :: lakefrac(:), lakedepth(:)
 
          integer,              intent(inout) :: jindx1_o3(:), jindx2_o3(:), jindx1_h(:), jindx2_h(:)
@@ -680,18 +679,12 @@
 
            endif noahmp_init
          endif lsm_init
-!Flake
+!Lake
        do i = 1, im
           if (lakefrac(i) > 0.0 .and. lakedepth(i) > 1.0 ) then
-             if (lkm == 1 ) then
-                use_flake(i) = 1
-             elseif (lkm == 2 ) then
-                use_flake(i) = 2
-             else
-                use_flake(i) = 0
-             endif
+              use_lake_model(i) = lkm
           else
-              use_flake(i) = 0
+              use_lake_model(i) = 0
           endif
        enddo
 
