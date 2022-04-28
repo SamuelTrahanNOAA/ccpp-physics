@@ -290,8 +290,7 @@ cc
       do i = 1, im
 !       flag(i) = wet(i) .and. .not.icy(i) .and. flag_iter(i)
          ! FIXME: should have .and. use_lake_model(i)/=3
-        flag(i) = wet(i) .and. flag_iter(i) .and. (use_lake_model(i)==0  &
-     &        .or. use_lake_model(i)==2)
+        flag(i) = wet(i) .and. flag_iter(i) .and. use_lake_model(i)/=1
         do_nst  = do_nst .or. flag(i)
       enddo
       if (.not. do_nst) return
@@ -301,8 +300,7 @@ cc
       do i=1, im
 !       if(wet(i) .and. .not.icy(i) .and. flag_guess(i)) then
          ! FIXME: should have .and. use_lake_model(i)/=3
-        if(wet(i) .and. flag_guess(i) .and. (use_lake_model(i)==0       &
-     &        .or. use_lake_model(i)==2)) then
+        if(wet(i) .and. flag_guess(i) .and. use_lake_model(i)/=1) then
           xt_old(i)      = xt(i)
           xs_old(i)      = xs(i)
           xu_old(i)      = xu(i)
@@ -622,8 +620,7 @@ cc
       do i=1, im
 !       if (wet(i) .and. .not.icy(i)) then
          ! FIXME: should have .and. use_lake_model(i)/=3
-        if (wet(i) .and. (use_lake_model(i)==0                          &
-     &        .or. use_lake_model(i)==2)) then
+        if (wet(i) .and. use_lake_model(i)/=1) then
           if (flag_guess(i)) then    ! when it is guess of
             xt(i)      = xt_old(i)
             xs(i)      = xs_old(i)
@@ -906,8 +903,7 @@ cc
 !         if (wet(i) .and. .not.icy(i)) then
 !         if (wet(i) .and. (frac_grid .or. .not. icy(i))) then
            ! FIXME: Should have a clause for lake model 3
-          if (wet(i) .and. (use_lake_model(i)==0                        &
-     &        .or. use_lake_model(i)==2)) then
+          if (wet(i) .and. use_lake_model(i)/=1) then
             tsfc_wat(i) = max(tgice, tref(i) + dtzm(i))
 !           tsfc_wat(i) = max(271.2, tref(i) + dtzm(i)) -  &
 !                           (oro(i)-oro_uf(i))*rlapse

@@ -244,8 +244,8 @@
   type = integer
   intent = in
 [h2osno2d]
-  standard_name = lwe_thickness_of_surface_snow_amount
-  long_name = water equiv of acc snow depth over land and sea ice
+  standard_name = water_equivalent_accumulated_snow_depth_in_clm_lake_model
+  long_name = water equiv of acc snow depth over lake in clm lake model
   units = mm
   dimensions = (horizontal_loop_extent)
   type = real
@@ -550,13 +550,3 @@
   dimensions = ()
   type = integer
   intent = out
-
-########################################################################
-[ccpp-arg-table]
-  name = clm_lake_init
-  type = scheme
-
-########################################################################
-[ccpp-arg-table]
-  name = clm_lake_finalize
-  type = scheme

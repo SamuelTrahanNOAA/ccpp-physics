@@ -156,8 +156,7 @@
 !  --- ...  flag for open water
       do i = 1, im
 ! FIXME: include a  clause for lake model 3
-       flag(i) = (wet(i) .and. flag_iter(i) .and. (use_lake_model(i)==0       &
-     &        .or. use_lake_model(i)==2))
+       flag(i) = (wet(i) .and. flag_iter(i) .and. use_lake_model(i)/=1)
 !  --- ...  initialize variables. all units are supposedly m.k.s. unless specified
 !           ps is in pascals, wind is wind speed,
 !           rho is density, qss is sat. hum. at surface
