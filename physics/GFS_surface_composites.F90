@@ -36,7 +36,8 @@ contains
                                            tisfc, tsurf_wat, tsurf_lnd, tsurf_ice,                                        &
                                  lkm_flake, lkm_flake_nsst, lkm_clm_lake,                                                 &
                                  gflx_ice, tgice, islmsk, islmsk_cice, slmsk, qss, qss_wat, qss_lnd, qss_ice,             &
-                                 min_lakeice, min_seaice, kdt, huge, errmsg, errflg)
+                                 min_lakeice, min_seaice, kdt, huge, oro, clm_lake_min_elev, clm_lake_min_lakefrac,       &
+                                 errmsg, errflg)
 
       implicit none
 
@@ -46,7 +47,7 @@ contains
       logical, dimension(:),              intent(inout)  :: flag_cice
       logical,              dimension(:), intent(inout)  :: dry, icy, lake, wet
       integer,              dimension(:), intent(inout)  :: use_lake_model
-      real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakefrac, lakedepth
+      real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakefrac, lakedepth, oro
       real(kind=kind_phys), dimension(:), intent(inout)  :: cice, hice, oceanfrac             
       real(kind=kind_phys), dimension(:), intent(  out)  :: frland
       real(kind=kind_phys), dimension(:), intent(in   )  :: snowd, tprcp, uustar, weasd, qss
@@ -60,6 +61,7 @@ contains
       integer,              dimension(:), intent(inout)  :: islmsk, islmsk_cice
       real(kind=kind_phys), dimension(:), intent(inout)  :: slmsk
       real(kind=kind_phys),               intent(in   )  :: min_lakeice, min_seaice, huge
+      real(kind=kind_phys),               intent(in   )  :: clm_lake_min_lakefrac, clm_lake_min_elev
       !
       real(kind=kind_phys), dimension(:), intent(inout)  :: zorlo, zorll, zorli
       !
@@ -80,17 +82,25 @@ contains
 
 ! to prepare to separate lake from ocean under water category!     
       do i = 1, im
-         if( lakefrac(i) > zero .and. lakedepth(i) > one) then
-            lake(i) = .true.
-            wet(i)  = .true.
-!            dry(i)  = .false.
-!            icy(i)  = .false.
-            use_lake_model(i) = lkm
-         else
-            use_lake_model(i) = 0
-            lake(i)=.false.
-            wet(i)=.false.
+         if(lkm==3) then
+           if(lakefrac(i)>clm_lake_min_lakefrac .and. oro(i)>clm_lake_min_elev .and. lakedepth(i)>one) then
+             use_lake_model(i)=lkm
+             lake(i) = .true.
+             wet(i)  = .true.
+             cycle
+           endif
+         elseif( lakefrac(i) > zero .and. lakedepth(i) > one) then
+           lake(i) = .true.
+           wet(i)  = .true.
+!          dry(i)  = .false.
+!          icy(i)  = .false.
+           use_lake_model(i) = lkm
+           cycle
          endif
+
+         use_lake_model(i) = 0
+         lake(i)=.false.
+         wet(i)=.false.
       enddo
 
 

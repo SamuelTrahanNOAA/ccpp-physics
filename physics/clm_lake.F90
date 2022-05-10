@@ -1174,7 +1174,9 @@ SUBROUTINE ShalLakeFluxes(forc_t,forc_pbot,forc_psrf,forc_hgt,forc_hgt_q,       
          end if
          if (abs(eflx_sh_tot(p)) > 10000 .or. abs(eflx_lh_tot(p)) > 10000 &
               .or. abs(t_grnd(c)-288)>200 ) then
-           errmsg='CLM_Lake ShalLakeFluxes: t_grnd is out of range'
+840        format('CLM_Lake ShalLakeFluxes: t_grnd is out of range: eflx_sh_tot(p)=',G20.12,' eflx_lh_tot(p)=',G20.12,' t_grnd(c)=',G20.12,' at p=',I0,' c=',I0)
+           write(message,840) eflx_sh_tot(p),eflx_lh_tot(p),t_grnd(c),p,c
+           errmsg=message
            errflg=1
            return
          endif
@@ -1705,7 +1707,8 @@ SUBROUTINE ShalLakeTemperature(t_grnd,h2osno,sabg,dz,dz_lake,z,zi,           & !
              end if
              t_soisno_bef(c,j) = t_soisno(c,j)
              if(abs(t_soisno(c,j)-288) > 150)   then 
-                WRITE( message,* ) 'WARNING: Extreme t_soisno at c, level',c, j
+48              format('WARNING: At c=',I0,' level=',I0,' extreme t_soisno = ',F15.10)
+                WRITE(message,48) c,j,t_soisno(c,j)
                 errmsg=trim(message)
                 errflg=1
                 return
@@ -1914,7 +1917,7 @@ SUBROUTINE ShalLakeTemperature(t_grnd,h2osno,sabg,dz,dz_lake,z,zi,           & !
           errsoi(c) = esum1(c)/dtime - eflx_soil_grnd(p)
                     ! eflx_soil_grnd includes all the solar radiation absorbed in the lake,
                     ! unlike eflx_gnet
-          if(abs(errsoi(c)) > 1.e-5_kind_phys) then
+          if(abs(errsoi(c)) > .001_kind_phys) then ! 1.e-5_kind_phys) then
              WRITE( message,* )'Primary soil energy conservation error in shlake &
                                 column during Tridiagonal Solution,', 'error (W/m^2):', c, errsoi(c) 
              errmsg=trim(message)
@@ -3417,9 +3420,6 @@ SUBROUTINE ShalLakeTemperature(t_grnd,h2osno,sabg,dz,dz_lake,z,zi,           & !
     ! !DESCRIPTION:
     ! Tridiagonal matrix solution
     !
-    ! !USES:
-    !  use shr_kind_mod, only: kind_phys => shr_kind_kind_phys
-    !
     ! !ARGUMENTS:
     implicit none
     integer , intent(in)    :: lbc, ubc               ! lbinning and ubing column indices
@@ -4830,8 +4830,8 @@ if_pergro: if (PERGRO) then
 
   REAL(KIND_PHYS),           DIMENSION(IM)         ,INTENT(INOUT)  :: lake_ht
   REAL(KIND_PHYS),           DIMENSION(IM)         ,INTENT(INOUT)  :: lake_rho0
-  real(kind_phys),    dimension(IM),intent(out)                        :: lakedepth2d,    &
-                                                                             savedtke12d
+  real(kind_phys),    dimension(IM),intent(inout)                      :: lakedepth2d
+  real(kind_phys),    dimension(IM),intent(out)                        :: savedtke12d
   real(kind_phys),    dimension(IM),intent(out)                        :: snowdp2d,       &
                                                                              h2osno2d,       &
                                                                              snl2d,          &
@@ -4890,8 +4890,6 @@ if_pergro: if (PERGRO) then
 
   integer :: used_lakedepth_default, init_points
 
-  logical, parameter :: EXTRALAKELAYERS = .false. ! Need to increase layers throughout model to use this
-
   used_lakedepth_default=0
 
   if(LAKEDEBUG .and. me==0) then
@@ -4912,81 +4910,48 @@ if_pergro: if (PERGRO) then
   init_const: if(sum(clm_lake_initialized(1:im))==0 .and. any(use_lake_model==lkm_clm_lake)) then
     print *,'init_const in clm_lake'
     
-    extra_lake_layers: if(.not.EXTRALAKELAYERS) then
-      !  dzlak(1) = 0.1_kind_phys
-      !  dzlak(2) = 1._kind_phys
-      !  dzlak(3) = 2._kind_phys
-      !  dzlak(4) = 3._kind_phys
-      !  dzlak(5) = 4._kind_phys
-      !  dzlak(6) = 5._kind_phys
-      !  dzlak(7) = 7._kind_phys
-      !  dzlak(8) = 7._kind_phys
-      !  dzlak(9) = 10.45_kind_phys
-      !  dzlak(10)= 10.45_kind_phys
-      !
-      !  zlak(1) =  0.05_kind_phys
-      !  zlak(2) =  0.6_kind_phys
-      !  zlak(3) =  2.1_kind_phys
-      !  zlak(4) =  4.6_kind_phys
-      !  zlak(5) =  8.1_kind_phys
-      !  zlak(6) = 12.6_kind_phys
-      !  zlak(7) = 18.6_kind_phys
-      !  zlak(8) = 25.6_kind_phys
-      !  zlak(9) = 34.325_kind_phys
-      !  zlak(10)= 44.775_kind_phys
-      dzlak(1) = 0.1_kind_phys
-      dzlak(2) = 0.1_kind_phys
-      dzlak(3) = 0.1_kind_phys
-      dzlak(4) = 0.1_kind_phys
-      dzlak(5) = 0.1_kind_phys
-      dzlak(6) = 0.1_kind_phys
-      dzlak(7) = 0.1_kind_phys
-      dzlak(8) = 0.1_kind_phys
-      dzlak(9) = 0.1_kind_phys
-      dzlak(10)= 0.1_kind_phys
-
-      zlak(1) =  0.05_kind_phys
-      zlak(2) =  0.15_kind_phys
-      zlak(3) =  0.25_kind_phys
-      zlak(4) =  0.35_kind_phys
-      zlak(5) =  0.45_kind_phys
-      zlak(6) = 0.55_kind_phys
-      zlak(7) = 0.65_kind_phys
-      zlak(8) = 0.75_kind_phys
-      zlak(9) = 0.85_kind_phys
-      zlak(10)= 0.95_kind_phys
-    else
-      dzlak(1) =0.1_kind_phys
-      dzlak(2) =0.25_kind_phys
-      dzlak(3) =0.25_kind_phys
-      dzlak(4) =0.25_kind_phys
-      dzlak(5) =0.25_kind_phys
-      dzlak(6) =0.5_kind_phys
-      dzlak(7) =0.5_kind_phys
-      dzlak(8) =0.5_kind_phys
-      dzlak(9) =0.5_kind_phys
-      dzlak(10) =0.75_kind_phys
-      dzlak(11) =0.75_kind_phys
-      dzlak(12) =0.75_kind_phys
-      dzlak(13) =0.75_kind_phys
-      dzlak(14) =2_kind_phys
-      dzlak(15) =2_kind_phys
-      dzlak(16) =2.5_kind_phys
-      dzlak(17) =2.5_kind_phys
-      dzlak(18) =3.5_kind_phys
-      dzlak(19) =3.5_kind_phys
-      dzlak(20) =3.5_kind_phys
-      dzlak(21) =3.5_kind_phys
-      dzlak(22) =5.225_kind_phys
-      dzlak(23) =5.225_kind_phys
-      dzlak(24) =5.225_kind_phys
-      dzlak(25) =5.225_kind_phys
-
-      zlak(1) = dzlak(1)/2._kind_phys
-      do k = 2,nlevlake
-        zlak(k) = zlak(k-1) + (dzlak(k-1)+dzlak(k))/2._kind_phys
-      end do
-    endif extra_lake_layers
+    !  dzlak(1) = 0.1_kind_phys
+    !  dzlak(2) = 1._kind_phys
+    !  dzlak(3) = 2._kind_phys
+    !  dzlak(4) = 3._kind_phys
+    !  dzlak(5) = 4._kind_phys
+    !  dzlak(6) = 5._kind_phys
+    !  dzlak(7) = 7._kind_phys
+    !  dzlak(8) = 7._kind_phys
+    !  dzlak(9) = 10.45_kind_phys
+    !  dzlak(10)= 10.45_kind_phys
+    !
+    !  zlak(1) =  0.05_kind_phys
+    !  zlak(2) =  0.6_kind_phys
+    !  zlak(3) =  2.1_kind_phys
+    !  zlak(4) =  4.6_kind_phys
+    !  zlak(5) =  8.1_kind_phys
+    !  zlak(6) = 12.6_kind_phys
+    !  zlak(7) = 18.6_kind_phys
+    !  zlak(8) = 25.6_kind_phys
+    !  zlak(9) = 34.325_kind_phys
+    !  zlak(10)= 44.775_kind_phys
+    dzlak(1) = 0.1_kind_phys
+    dzlak(2) = 0.1_kind_phys
+    dzlak(3) = 0.1_kind_phys
+    dzlak(4) = 0.1_kind_phys
+    dzlak(5) = 0.1_kind_phys
+    dzlak(6) = 0.1_kind_phys
+    dzlak(7) = 0.1_kind_phys
+    dzlak(8) = 0.1_kind_phys
+    dzlak(9) = 0.1_kind_phys
+    dzlak(10)= 0.1_kind_phys
+    
+    zlak(1) =  0.05_kind_phys
+    zlak(2) =  0.15_kind_phys
+    zlak(3) =  0.25_kind_phys
+    zlak(4) =  0.35_kind_phys
+    zlak(5) =  0.45_kind_phys
+    zlak(6) = 0.55_kind_phys
+    zlak(7) = 0.65_kind_phys
+    zlak(8) = 0.75_kind_phys
+    zlak(9) = 0.85_kind_phys
+    zlak(10)= 0.95_kind_phys
 
    ! "0" refers to soil surface and "nlevsoil" refers to the bottom of model soil
 
@@ -5055,7 +5020,6 @@ if_pergro: if (PERGRO) then
     h2osoi_vol3d(i,:)    = 0.0
     snl2d(i)             = 0.0
     if ( use_lakedepth ) then
-
       if (lakedepth2d(i) <= 0.0) then 
           errmsg='lakedepth<=0 should not get here'
           errflg=1
