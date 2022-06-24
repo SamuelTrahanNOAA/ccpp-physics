@@ -515,6 +515,22 @@
   type = real
   kind = kind_phys
   intent = in
+[xlat_d]
+  standard_name = latitude_in_degree
+  long_name = latitude in degree north
+  units = degree_north
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+[xlon_d]
+  standard_name = longitude_in_degree
+  long_name = longitude in degree east
+  units = degree_east
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP

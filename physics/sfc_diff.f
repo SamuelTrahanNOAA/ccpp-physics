@@ -177,8 +177,7 @@
 !       write(0,*)'in sfc_diff, sfc_z0_type=',sfc_z0_type
 
       do i=1,im
-         ! FIXME: Remove the <3 part here:
-       if(use_lake_model(i)>0 .and. use_lake_model(i)<3) wet(i) = .true.
+       if(use_lake_model(i)>0) wet(i) = .true.
       enddo
 
       do i=1,im

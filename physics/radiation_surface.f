@@ -959,7 +959,7 @@
                 sfcemis_ice = semis_ice(i) ! output from CICE
               endif
             elseif (lsm == lsm_ruc) then
-              if (use_lake_model(i)>0 .and. use_lake_model(i)<3) then   ! FIXME: remove <3
+              if (use_lake_model(i)>0) then
                 if (sncovr_ice(i) > f_zero) then
                   sfcemis_ice = emsref(7) * (f_one-sncovr_ice(i))       &
      &                        + emsref(8) * sncovr_ice(i)

@@ -215,9 +215,8 @@
 
       do_sice = .false.
       do i = 1, im
-! FIXME: insert a clause for lake model 3
         flag(i) = islmsk(i) == 2 .and. flag_iter(i)                     &
-     &                           .and. use_lake_model(i)/=1
+     &       .and. use_lake_model(i)/=3 .and. use_lake_model(i)/=1
         do_sice = do_sice .or. flag(i)
 !       if (flag_iter(i) .and. islmsk(i) < 2) then
 !         hice(i) = zero

@@ -37,11 +37,12 @@ contains
                                  lkm_flake, lkm_flake_nsst, lkm_clm_lake,                                                 &
                                  gflx_ice, tgice, islmsk, islmsk_cice, slmsk, qss, qss_wat, qss_lnd, qss_ice,             &
                                  min_lakeice, min_seaice, kdt, huge, oro, clm_lake_min_elev, clm_lake_min_lakefrac,       &
-                                 errmsg, errflg)
+                                 xlat_d,xlon_d, errmsg, errflg)
 
       implicit none
 
       ! Interface variables
+      real, intent(in) :: xlat_d(:),xlon_d(:)
       integer,                             intent(in   ) :: im, lkm, kdt, lkm_flake, lkm_flake_nsst, lkm_clm_lake
       logical,                             intent(in   ) :: flag_init, flag_restart, frac_grid, cplflx, cplice, cplwav2atm
       logical, dimension(:),              intent(inout)  :: flag_cice
@@ -66,7 +67,7 @@ contains
       real(kind=kind_phys), dimension(:), intent(inout)  :: zorlo, zorll, zorli
       !
       real(kind=kind_phys), parameter :: timin = 173.0_kind_phys  ! minimum temperature allowed for snow/ice
-
+      real(kind=kind_phys), parameter :: badlon = 75.329881943341, badlat = 18.817236853870
       real(kind=kind_phys) :: tem
 
       ! CCPP error handling
@@ -79,30 +80,6 @@ contains
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
-
-! to prepare to separate lake from ocean under water category!     
-      do i = 1, im
-         if(lkm==3) then
-           if(lakefrac(i)>clm_lake_min_lakefrac .and. oro(i)>clm_lake_min_elev .and. lakedepth(i)>one) then
-             use_lake_model(i)=lkm
-             lake(i) = .true.
-             wet(i)  = .true.
-             cycle
-           endif
-         elseif( lakefrac(i) > zero .and. lakedepth(i) > one) then
-           lake(i) = .true.
-           wet(i)  = .true.
-!          dry(i)  = .false.
-!          icy(i)  = .false.
-           use_lake_model(i) = lkm
-           cycle
-         endif
-
-         use_lake_model(i) = 0
-         lake(i)=.false.
-         wet(i)=.false.
-      enddo
-
 
       if (frac_grid) then  ! cice is ice fraction wrt water area
         do i=1,im
@@ -328,7 +305,52 @@ contains
         enddo
       endif
 
-!     write(0,*)' minmax of ice snow=',minval(snowd_ice),maxval(snowd_ice)
+! to prepare to separate lake from ocean under water category!     
+      separate_lake_from_ocean: do i = 1, im
+        if_wet_or_icy: if(wet(i) .or. icy(i)) then
+          if_frac_and_depth: if ( (lkm==3 .and. lakefrac(i)>clm_lake_min_lakefrac .and. lakedepth(i)>one) &
+               .or. (lkm/=3 .and. lakefrac(i) > zero .and. lakedepth(i) > one)) then
+            select_lake_model: select case(lkm)
+            case(3)        !-- CLM lake model
+              if(abs(xlon_d(i)-badlon)<.1 .and. abs(xlat_d(i)-badlat)<.1) then
+38              format('At lon=',F10.3,' lat=',F10.3,' clm_lake_point')
+                print 38,xlon_d(i),xlat_d(i)
+              endif
+              use_lake_model(i)=lkm
+              lake(i) = .true.
+            case(1,2)      !-- Flake model
+              if(abs(xlon_d(i)-badlon)<.1 .and. abs(xlat_d(i)-badlat)<.1) then
+39              format('At lon=',F10.3,' lat=',F10.3,' flake_point')
+                print 39,xlon_d(i),xlat_d(i)
+              endif
+              use_lake_model(i) = lkm
+              lake(i) = .true.
+            case default   !-- no lake model
+              if(abs(xlon_d(i)-badlon)<.3 .and. abs(xlat_d(i)-badlat)<.3) then
+37              format('At lon=',F10.3,' lat=',F10.3,' not a lake point')
+                print 37,xlon_d(i),xlat_d(i)
+              endif
+              use_lake_model(i) = 0
+              lake(i) = .false.
+            end select select_lake_model
+          else ! no lake frac or depth info
+             if(abs(xlon_d(i)-badlon)<.3 .and. abs(xlat_d(i)-badlat)<.3) then
+91              format('At lon=',F10.3,' lat=',F10.3,' no lake frac or depth info so not a lake point')
+                print 91,xlon_d(i),xlat_d(i)
+             endif
+             use_lake_model(i) = 0
+             lake(i) = .false.
+          endif if_frac_and_depth
+        else
+        !-- not wet or icy
+          use_lake_model(i) = 0
+          lake(i) = .false.
+          if(abs(xlon_d(i)-badlon)<.3 .and. abs(xlat_d(i)-badlat)<.3) then
+73          format('At lon=',F10.3,' lat=',F10.3,' not wet or icy, so not a lake point')
+            print 73,xlon_d(i),xlat_d(i)
+          endif
+        endif if_wet_or_icy
+      enddo separate_lake_from_ocean
 
    end subroutine GFS_surface_composites_pre_run
 
