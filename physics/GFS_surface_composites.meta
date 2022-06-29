@@ -491,26 +491,18 @@
   type = real
   kind = kind_phys
   intent = in
-[oro]
-  standard_name = height_above_mean_sea_level
-  long_name = height_above_mean_sea_level
-  units = m
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = kind_phys
-  intent = in
-[clm_lake_min_elev]
-  standard_name = minimum_lake_elevation_in_clm_lake_model
-  long_name = minimum lake elevation in clm lake model
-  units = m
+[min_lakefrac]
+  standard_name = minimum_lake_fraction_for_lake_models
+  long_name = lake fraction must be higher than this to run lake models on a gridpoint
+  units = frac
   dimensions = ()
   type = real
   kind = kind_phys
   intent = in
-[clm_lake_min_lakefrac]
-  standard_name = minimum_lake_fraction_in_clm_lake_model
-  long_name = minimum lake fraction in clm lake model
-  units = m
+[min_lakedepth]
+  standard_name = minimum_lake_depth_for_lake_models
+  long_name = lake depth must be higher than this to run lake models on a gridpoint
+  units = depth
   dimensions = ()
   type = real
   kind = kind_phys

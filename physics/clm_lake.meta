@@ -236,13 +236,6 @@
   type = real
   kind = kind_phys
   intent = in
-[xland]
-  standard_name = sea_land_ice_mask
-  long_name = sea/land/ice mask (=0/1/2)
-  units = flag
-  dimensions = (horizontal_loop_extent)
-  type = integer
-  intent = inout
 [iswater]
   standard_name = index_of_water_vegetation_category
   long_name = index of the water body vegetation category in the chosen vegetation dataset
@@ -262,14 +255,6 @@
   standard_name = min_lake_ice_area_fraction
   long_name = minimum lake ice value
   units = frac
-  dimensions = ()
-  type = real
-  kind = kind_phys
-  intent = in
-[lake_min_elev]
-  standard_name = minimum_lake_elevation_in_clm_lake_model
-  long_name = minimum lake elevation in clm lake model
-  units = m
   dimensions = ()
   type = real
   kind = kind_phys
@@ -463,13 +448,6 @@
   dimensions = (horizontal_loop_extent)
   type = integer
   intent = inout
-[ivgtyp]
-  standard_name = vegetation_type_classification
-  long_name = vegetation type at each grid cell
-  units = index
-  dimensions = (horizontal_loop_extent)
-  type = integer
-  intent = inout
 [isltyp]
   standard_name = soil_type_classification
   long_name = soil type at each grid cell
@@ -504,22 +482,6 @@
   long_name = default lake depth in clm lake model
   units = m
   dimensions = ()
-  type = real
-  kind = kind_phys
-  intent = in
-[lake_ht]
-  standard_name = test_lake_ht
-  long_name = test_lake_ht
-  dimensions = (horizontal_loop_extent)
-  units = unitless
-  type = real
-  kind = kind_phys
-  intent = inout
-[oro]
-  standard_name = height_above_mean_sea_level
-  long_name = height_above_mean_sea_level
-  units = m
-  dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
   intent = in

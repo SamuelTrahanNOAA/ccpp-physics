@@ -36,7 +36,7 @@ contains
                                            tisfc, tsurf_wat, tsurf_lnd, tsurf_ice,                                        &
                                  lkm_flake, lkm_flake_nsst, lkm_clm_lake,                                                 &
                                  gflx_ice, tgice, islmsk, islmsk_cice, slmsk, qss, qss_wat, qss_lnd, qss_ice,             &
-                                 min_lakeice, min_seaice, kdt, huge, oro, clm_lake_min_elev, clm_lake_min_lakefrac,       &
+                                 min_lakeice, min_seaice, kdt, huge, min_lakefrac, min_lakedepth,                         &
                                  xlat_d,xlon_d, errmsg, errflg)
 
       implicit none
@@ -48,7 +48,7 @@ contains
       logical, dimension(:),              intent(inout)  :: flag_cice
       logical,              dimension(:), intent(inout)  :: dry, icy, lake, wet
       integer,              dimension(:), intent(inout)  :: use_lake_model
-      real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakefrac, lakedepth, oro
+      real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakefrac, lakedepth
       real(kind=kind_phys), dimension(:), intent(inout)  :: cice, hice, oceanfrac             
       real(kind=kind_phys), dimension(:), intent(  out)  :: frland
       real(kind=kind_phys), dimension(:), intent(in   )  :: snowd, tprcp, uustar, weasd, qss
@@ -62,12 +62,11 @@ contains
       integer,              dimension(:), intent(inout)  :: islmsk, islmsk_cice
       real(kind=kind_phys), dimension(:), intent(inout)  :: slmsk
       real(kind=kind_phys),               intent(in   )  :: min_lakeice, min_seaice, huge
-      real(kind=kind_phys),               intent(in   )  :: clm_lake_min_lakefrac, clm_lake_min_elev
+      real(kind=kind_phys),               intent(in   )  :: min_lakefrac, min_lakedepth
       !
       real(kind=kind_phys), dimension(:), intent(inout)  :: zorlo, zorll, zorli
       !
       real(kind=kind_phys), parameter :: timin = 173.0_kind_phys  ! minimum temperature allowed for snow/ice
-      real(kind=kind_phys), parameter :: badlon = 75.329881943341, badlat = 18.817236853870
       real(kind=kind_phys) :: tem
 
       ! CCPP error handling
@@ -305,50 +304,41 @@ contains
         enddo
       endif
 
-! to prepare to separate lake from ocean under water category!     
+      ! Determine where the lake model should model lakes. This must
+      ! be after wet and icy are calculated, due to the requirement of
+      ! lakes being wet (except on the fractional grid where
+      ! everything may be in any gridpoint).
       separate_lake_from_ocean: do i = 1, im
-        if_wet_or_icy: if(wet(i) .or. icy(i)) then
-          if_frac_and_depth: if ( (lkm==3 .and. lakefrac(i)>clm_lake_min_lakefrac .and. lakedepth(i)>one) &
-               .or. (lkm/=3 .and. lakefrac(i) > zero .and. lakedepth(i) > one)) then
+
+        ! Only allow lakes if there is water, except for fractional grids.
+        if_wet_or_icy: if(frac_grid .or. wet(i) .or. icy(i)) then ! Lakes must have water
+
+          ! Only allow lakes if there is valid lake data. Backyard hobbyist fish ponds are not lakes.
+          if_lake_data: if (lakefrac(i)>min_lakefrac .and. lakedepth(i)>min_lakedepth) then
+
+            ! Enable or disable lake modeling on this lake point, based on lake model selection (lkm)
             select_lake_model: select case(lkm)
-            case(3)        !-- CLM lake model
-              if(abs(xlon_d(i)-badlon)<.1 .and. abs(xlat_d(i)-badlat)<.1) then
-38              format('At lon=',F10.3,' lat=',F10.3,' clm_lake_point')
-                print 38,xlon_d(i),xlat_d(i)
-              endif
-              use_lake_model(i)=lkm
-              lake(i) = .true.
-            case(1,2)      !-- Flake model
-              if(abs(xlon_d(i)-badlon)<.1 .and. abs(xlat_d(i)-badlat)<.1) then
-39              format('At lon=',F10.3,' lat=',F10.3,' flake_point')
-                print 39,xlon_d(i),xlat_d(i)
-              endif
+            case(1)        !-- Flake model
               use_lake_model(i) = lkm
               lake(i) = .true.
-            case default   !-- no lake model
-              if(abs(xlon_d(i)-badlon)<.3 .and. abs(xlat_d(i)-badlat)<.3) then
-37              format('At lon=',F10.3,' lat=',F10.3,' not a lake point')
-                print 37,xlon_d(i),xlat_d(i)
-              endif
+            case(2)        !-- Both flake model and NSST on lake points
+              use_lake_model(i) = lkm
+              lake(i) = .true.
+            case(3)        !-- CLM lake model
+              use_lake_model(i) = lkm
+              lake(i) = .true.
+            case default   !-- no lake model or invalid selection
               use_lake_model(i) = 0
               lake(i) = .false.
             end select select_lake_model
-          else ! no lake frac or depth info
-             if(abs(xlon_d(i)-badlon)<.3 .and. abs(xlat_d(i)-badlat)<.3) then
-91              format('At lon=',F10.3,' lat=',F10.3,' no lake frac or depth info so not a lake point')
-                print 91,xlon_d(i),xlat_d(i)
-             endif
+          else ! no lake frac or depth info or not a lake
              use_lake_model(i) = 0
              lake(i) = .false.
-          endif if_frac_and_depth
+          endif if_lake_data
         else
-        !-- not wet or icy
+          !-- not wet or icy (error in lake data)
           use_lake_model(i) = 0
           lake(i) = .false.
-          if(abs(xlon_d(i)-badlon)<.3 .and. abs(xlat_d(i)-badlat)<.3) then
-73          format('At lon=',F10.3,' lat=',F10.3,' not wet or icy, so not a lake point')
-            print 73,xlon_d(i),xlat_d(i)
-          endif
         endif if_wet_or_icy
       enddo separate_lake_from_ocean
 
