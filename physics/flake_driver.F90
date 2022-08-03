@@ -51,8 +51,9 @@
 ! ---- Inputs
             im, ps, t1, q1, wind,                            &
             dlwflx, dswsfc, weasd, lakedepth,                &
-            use_flake, xlat, delt, zlvl, elev,               &
+            use_lake_model, xlat, delt, zlvl, elev,          &
             wet, flag_iter, yearlen, julian, imon,           &
+            lake_model, lake_model_flake,                    &
 ! ---- in/outs
             snwdph, hice, tsurf, fice, T_sfc, hflx, evap,    &
             ustar, qsfc, ch, cm, chh, cmm,                   &
@@ -95,7 +96,7 @@
 
       real (kind=kind_phys),  intent(in) :: julian
 
-      logical, dimension(:), intent(in) :: flag_iter, wet, use_flake
+      logical, dimension(:), intent(in) :: flag_iter, wet, use_lake_model
 
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
@@ -210,7 +211,8 @@
 
       do_flake = .false.
       do i = 1, im
-        flag(i) = wet(i) .and. flag_iter(i) .and. use_flake(i)
+        flag(i) = wet(i) .and. flag_iter(i) .and. use_lake_model(i) &
+             .and. lake_model==lake_model_flake
         do_flake  = flag(i) .or. do_flake
       enddo
 

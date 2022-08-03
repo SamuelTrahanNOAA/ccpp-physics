@@ -118,9 +118,9 @@
   type = real
   kind = kind_phys
   intent = in
-[use_flake]
-  standard_name = flag_for_using_flake
-  long_name = flag indicating lake points using flake model
+[use_lake_model]
+  standard_name = flag_for_using_lake_model
+  long_name = flag indicating lake points using a lake model
   units = flag
   dimensions = (horizontal_loop_extent)
   type = logical
@@ -190,6 +190,20 @@
   standard_name = forecast_month
   long_name = current forecast month
   units = none
+  dimensions = ()
+  type = integer
+  intent = in
+[lake_model]
+  standard_name = control_for_lake_model_selection
+  long_name = control for lake model selection
+  units = 1
+  dimensions = ()
+  type = integer
+  intent = in
+[lake_model_flake]
+  standard_name = flake_model_control_selection_value
+  long_name = value that indicates flake model in the control for lake model selection
+  units = 1
   dimensions = ()
   type = integer
   intent = in

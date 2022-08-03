@@ -23,12 +23,12 @@ contains
 !!
    subroutine GFS_surface_composites_pre_run (im, lkm, frac_grid,                                                         &
                                  flag_cice, cplflx, cplice, cplwav2atm, lsm, lsm_ruc,                                     &
-                                 landfrac, lakefrac, lakedepth, oceanfrac, frland,                                        &
-                                 dry, icy, lake, use_flake, wet, hice, cice, zorlo, zorll, zorli,                         &
+                                 landfrac, lakefrac, lakedepth, oceanfrac, frland, lakedepth_threshold,lakefrac_threshold,&
+                                 dry, icy, lake, use_lake_model, wet, hice, cice, zorlo, zorll, zorli,                         &
                                  snowd,            snowd_lnd, snowd_ice, tprcp, tprcp_wat,                                &
                                  tprcp_lnd, tprcp_ice, uustar, uustar_wat, uustar_lnd, uustar_ice,                        &
                                  weasd,            weasd_lnd, weasd_ice, ep1d_ice, tsfc, tsfco, tsfcl, tsfc_wat,          &
-                                           tisfc, tsurf_wat, tsurf_lnd, tsurf_ice,                                        &
+                                 tisfc, tsurf_wat, tsurf_lnd, tsurf_ice, lake_model, lake_model_flake, lake_model_clm,    &
                                  gflx_ice, tgice, islmsk, islmsk_cice, slmsk, qss, qss_wat, qss_lnd, qss_ice,             &
                                  min_lakeice, min_seaice, kdt, huge, errmsg, errflg)
 
@@ -38,12 +38,12 @@ contains
       integer,                             intent(in   ) :: im, lkm, kdt, lsm, lsm_ruc
       logical,                             intent(in   ) :: cplflx, cplice, cplwav2atm, frac_grid
       logical, dimension(:),              intent(inout)  :: flag_cice
-      logical,              dimension(:), intent(inout)  :: dry, icy, lake, use_flake, wet
+      logical,              dimension(:), intent(inout)  :: dry, icy, lake, use_lake_model, wet
       real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakefrac, lakedepth, oceanfrac
       real(kind=kind_phys), dimension(:), intent(inout)  :: cice, hice
       real(kind=kind_phys), dimension(:), intent(  out)  :: frland
       real(kind=kind_phys), dimension(:), intent(in   )  :: snowd, tprcp, uustar, weasd, qss
-
+      integer,                            intent(in   )  :: lake_model, lake_model_flake, lake_model_clm
       real(kind=kind_phys), dimension(:), intent(inout)  :: tsfc, tsfco, tsfcl, tisfc
       real(kind=kind_phys), dimension(:), intent(inout)  :: snowd_lnd, snowd_ice, tprcp_wat,            &
                     tprcp_lnd, tprcp_ice, tsfc_wat, tsurf_wat,tsurf_lnd, tsurf_ice,                     &
@@ -240,19 +240,33 @@ contains
       enddo
 
 ! to prepare to separate lake from ocean under water category
-      do i = 1, im
-        if ((wet(i) .or. icy(i)) .and. lakefrac(i) > zero) then
-          lake(i) = .true.
-          if (lkm == 1 .and. lakefrac(i) >= 0.15 .and. lakedepth(i) > one) then
-            use_flake(i) = .true.
-          else
-            use_flake(i) = .false.
-          endif
-        else
-          lake(i) = .false.
-          use_flake(i) = .false.
-        endif
-      enddo
+      if(lkm==0 .or. (lake_model/=lake_model_clm .and. lake_model/=lake_model_flake)) then
+        ! Lake model is disabled or invalid
+        use_lake_model = .false.
+        lake = .false.
+      else
+        ! Lake model is valid. Which points should run the lake model?
+        where((wet .or. icy) .and. lakefrac>lakefrac_threshold .and. lakedepth>lakedepth_threshold)
+          lake=.true.
+          use_lake_model=.true.
+        end where
+      endif
+
+      ! FIXME: Delete this old code.
+      ! do i = 1, im
+      !   if ((wet(i) .or. icy(i)) .and. lakefrac(i) > zero) then
+      !     lake(i) = .true.
+      !     if (lkm == 1 .and. lakefrac(i) >= 0.15 .and. lakedepth(i) > one) then
+      !       use_lake_model(i) = .true.
+      !     else
+      !       use_lake_model(i) = .false.
+      !     endif
+      !   else
+      !     lake(i) = .false.
+      !     use_lake_model(i) = .false.
+      !   endif
+      ! enddo
+
 !
       if (frac_grid) then
         do i=1,im
