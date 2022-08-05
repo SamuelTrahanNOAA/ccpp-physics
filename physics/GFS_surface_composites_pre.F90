@@ -38,7 +38,8 @@ contains
       integer,                             intent(in   ) :: im, lkm, kdt, lsm, lsm_ruc
       logical,                             intent(in   ) :: cplflx, cplice, cplwav2atm, frac_grid
       logical, dimension(:),              intent(inout)  :: flag_cice
-      logical,              dimension(:), intent(inout)  :: dry, icy, lake, use_lake_model, wet
+      logical,              dimension(:), intent(inout)  :: dry, icy, lake, wet
+      integer,              dimension(:), intent(inout)  :: use_lake_model
       real(kind=kind_phys), dimension(:), intent(in   )  :: landfrac, lakefrac, lakedepth, oceanfrac
       real(kind=kind_phys), dimension(:), intent(inout)  :: cice, hice
       real(kind=kind_phys), dimension(:), intent(  out)  :: frland
@@ -49,6 +50,7 @@ contains
                     tprcp_lnd, tprcp_ice, tsfc_wat, tsurf_wat,tsurf_lnd, tsurf_ice,                     &
                     uustar_wat, uustar_lnd, uustar_ice, weasd_lnd, weasd_ice,                           &
                     qss_wat, qss_lnd, qss_ice, ep1d_ice, gflx_ice
+      real(kind=kind_phys),               intent(in   )  :: lakedepth_threshold, lakefrac_threshold
       real(kind=kind_phys),                intent(in   ) :: tgice
       integer,              dimension(:), intent(inout)  :: islmsk, islmsk_cice
       real(kind=kind_phys), dimension(:), intent(inout)  :: slmsk
@@ -240,17 +242,27 @@ contains
       enddo
 
 ! to prepare to separate lake from ocean under water category
-      if(lkm==0 .or. (lake_model/=lake_model_clm .and. lake_model/=lake_model_flake)) then
+      if_lake_model: if(lkm==0 .or. (lake_model/=lake_model_clm .and. lake_model/=lake_model_flake)) then
         ! Lake model is disabled or invalid
-        use_lake_model = .false.
         lake = .false.
+        use_lake_model = 0
       else
         ! Lake model is valid. Which points should run the lake model?
-        where((wet .or. icy) .and. lakefrac>lakefrac_threshold .and. lakedepth>lakedepth_threshold)
-          lake=.true.
-          use_lake_model=.true.
-        end where
-      endif
+        separate_lake_from_ocean: do i=1,im
+          if_wet_or_icy: if(frac_grid .or. wet(i) .or. icy(i)) then
+            if_lake_data: if(lakefrac(i)>lakefrac_threshold .and. lakedepth(i)>lakedepth_threshold) then
+              lake(i)=.true.
+              use_lake_model(i)=1
+            else
+              lake(i)=.false.
+              use_lake_model(i)=0
+            endif if_lake_data
+          else
+            lake(i)=.false.
+            use_lake_model(i)=0
+          endif if_wet_or_icy
+        enddo separate_lake_from_ocean
+      endif if_lake_model
 
       ! FIXME: Delete this old code.
       ! do i = 1, im

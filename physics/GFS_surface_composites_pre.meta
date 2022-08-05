@@ -114,7 +114,7 @@
   standard_name = lakefrac_threshold_for_enabling_lake_model
   long_name = fraction of horizontal grid area occupied by lake must be greater than this value to enable a lake model
   units = frac
-  dimensions = (horizontal_loop_extent)
+  dimensions = ()
   type = real
   kind = kind_phys
   intent = in
@@ -122,7 +122,7 @@
   standard_name = lake_depth_threshold_for_enabling_lake_model
   long_name = lake depth must be greater than this value to enable a lake model
   units = m
-  dimensions = (horizontal_loop_extent)
+  dimensions = ()
   type = real
   kind = kind_phys
   intent = in

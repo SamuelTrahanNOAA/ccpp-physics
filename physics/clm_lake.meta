@@ -7,6 +7,43 @@
 [ccpp-arg-table]
   name = clm_lake_run
   type = scheme
+[tg3]
+  standard_name = deep_soil_temperature
+  long_name = deep soil temperature
+  units = K
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+[kdt]
+  standard_name = index_of_timestep
+  long_name = current forecast iteration
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+[first_time_step]
+  standard_name = flag_for_first_timestep
+  long_name = flag for first time step for time integration loop (cold/warmstart)
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[flag_iter]
+  standard_name = flag_for_iteration
+  long_name = flag for iteration
+  units = flag
+  dimensions = (horizontal_loop_extent)
+  type = logical
+  intent = in
+[zlvl]
+  standard_name = height_above_ground_at_lowest_model_layer
+  long_name = layer 1 height above ground (not MSL)
+  units = m
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
 [gt0]
   standard_name = air_temperature_of_new_state
   long_name = temperature updated by physics
@@ -40,10 +77,18 @@
   kind = kind_phys
   intent = in
 [qvcurr]
-  standard_name = specific_humidity_of_new_state
-  long_name = water vapor specific humidity updated by physics
+  standard_name = specific_humidity_of_new_state_at_surface_adjacent_layer
+  long_name = water vapor specific humidity at lowest model layer updated by physics
   units = kg kg-1
-  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+[rho0]
+  standard_name = air_pressure_at_surface_adjacent_layer
+  long_name = mean pressure at lowest model layer
+  units = Pa
+  dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
   intent = in
@@ -198,13 +243,6 @@
   dimensions = (horizontal_loop_extent)
   type = integer
   intent = inout
-[iswater]
-  standard_name = index_of_water_vegetation_category
-  long_name = index of the water body vegetation category in the chosen vegetation dataset
-  units = index
-  dimensions = ()
-  type = integer
-  intent = inout
 [xice]
   standard_name = sea_ice_area_fraction_of_sea_area_fraction
   long_name = ice fraction over open water
@@ -217,14 +255,6 @@
   standard_name = min_lake_ice_area_fraction
   long_name = minimum lake ice value
   units = frac
-  dimensions = ()
-  type = real
-  kind = kind_phys
-  intent = in
-[lake_min_elev]
-  standard_name = minimum_lake_elevation_in_clm_lake_model
-  long_name = minimum lake elevation in clm lake model
-  units = m
   dimensions = ()
   type = real
   kind = kind_phys
@@ -363,27 +393,6 @@
   type = real
   kind = kind_phys
   intent = in
-[wet]
-  standard_name = flag_nonzero_wet_surface_fraction
-  long_name = flag indicating presence of some ocean or lake surface area fraction
-  units = flag
-  dimensions = (horizontal_loop_extent)
-  type = logical
-  intent = in
-[lake_model]
-  standard_name = control_for_lake_model_selection
-  long_name = control for lake model selection
-  units = 1
-  dimensions = ()
-  type = integer
-  intent = in
-[lake_model_clm]
-  standard_name = clm_lake_model_control_selection_value
-  long_name = value that indicates clm lake model in the control for lake model selection
-  units = 1
-  dimensions = ()
-  type = integer
-  intent = in
 [hflx]
   standard_name = kinematic_surface_upward_sensible_heat_flux_over_water
   long_name = kinematic surface upward sensible heat flux over water
@@ -408,14 +417,14 @@
   type = real
   kind = kind_phys
   intent = out
-[tsk]
+[tsfco]
   standard_name = sea_surface_temperature
   long_name = sea surface temperature
   units = K
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
-  intent = inout
+  intent = in
 [lake_t2m]
   standard_name =  temperature_at_2m_from_clm_lake
   long_name = temperature at 2m from clm lake
@@ -453,6 +462,20 @@
   dimensions = (horizontal_loop_extent)
   type = integer
   intent = inout
+[lake_model]
+  standard_name = control_for_lake_model_selection
+  long_name = control for lake model selection
+  units = 1
+  dimensions = ()
+  type = integer
+  intent = in
+[lake_model_clm]
+  standard_name = clm_lake_model_control_selection_value
+  long_name = value that indicates clm lake model in the control for lake model selection
+  units = 1
+  dimensions = ()
+  type = integer
+  intent = in
 [snow]
   standard_name = surface_snow_thickness_water_equivalent_over_land
   long_name = water equivalent snow depth over land
@@ -483,14 +506,6 @@
   type = real
   kind = kind_phys
   intent = in
-[lake_rho0]
-  standard_name = test_lake_rho0
-  long_name = test_lake_rho0
-  dimensions = (horizontal_loop_extent)
-  units = unitless
-  type = real
-  kind = kind_phys
-  intent = inout
 [lake_ht]
   standard_name = test_lake_ht
   long_name = test_lake_ht
@@ -508,19 +523,12 @@
   kind = kind_phys
   intent = in
 [use_lake_model]
-  standard_name = flag_for_using_a_lake_model
+  standard_name = flag_for_using_lake_model
   long_name = flag indicating lake points using a lake model
   units = flag
   dimensions = (horizontal_loop_extent)
   type = logical
   intent = inout
-[lkm_clm_lake]
-  standard_name = lake_surface_scheme_control_value_for_clm_lake
-  long_name = value for the lake surface scheme selector that signifies the clm lake model
-  units = flag
-  dimensions = ()
-  type = integer
-  intent = in
 [clay3d]
   standard_name = clm_lake_percent_clay
   long_name = percent clay in clm lake model
@@ -685,46 +693,6 @@
   dimensions = ()
   type = integer
   intent = in
-[errmsg]
-  standard_name = ccpp_error_message
-  long_name = error message for error handling in CCPP
-  units = none
-  dimensions = ()
-  type = character
-  kind = len=*
-  intent = out
-[errflg]
-  standard_name = ccpp_error_code
-  long_name = error code for error handling in CCPP
-  units = 1
-  dimensions = ()
-  type = integer
-  intent = out
-
-########################################################################
-[ccpp-arg-table]
-  name = clm_lake_init
-  type = scheme
-[errmsg]
-  standard_name = ccpp_error_message
-  long_name = error message for error handling in CCPP
-  units = none
-  dimensions = ()
-  type = character
-  kind = len=*
-  intent = out
-[errflg]
-  standard_name = ccpp_error_code
-  long_name = error code for error handling in CCPP
-  units = 1
-  dimensions = ()
-  type = integer
-  intent = out
-
-########################################################################
-[ccpp-arg-table]
-  name = clm_lake_finalize
-  type = scheme
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP

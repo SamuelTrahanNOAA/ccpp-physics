@@ -79,7 +79,7 @@
 !==============================================================================
 
       implicit none
-      integer, intent(in) :: im, imon,yearlen
+      integer, intent(in) :: im, imon,yearlen, lake_model, lake_model_flake
 !     integer, dimension(im), intent(in) :: islmsk
 
       real (kind=kind_phys), dimension(:), intent(in) :: ps, wind,     &
@@ -96,7 +96,8 @@
 
       real (kind=kind_phys),  intent(in) :: julian
 
-      logical, dimension(:), intent(in) :: flag_iter, wet, use_lake_model
+      logical, dimension(:), intent(in) :: flag_iter, wet
+      integer, dimension(:), intent(in) :: use_lake_model
 
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
@@ -211,7 +212,7 @@
 
       do_flake = .false.
       do i = 1, im
-        flag(i) = wet(i) .and. flag_iter(i) .and. use_lake_model(i) &
+        flag(i) = wet(i) .and. flag_iter(i) .and. use_lake_model(i)/=0 &
              .and. lake_model==lake_model_flake
         do_flake  = flag(i) .or. do_flake
       enddo

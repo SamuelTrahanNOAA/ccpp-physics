@@ -119,7 +119,7 @@ contains
       rain0, ice0, snow0, graupel0, prcp0, sr,                                     &
       dtp, hydrostatic, phys_hydrostatic, lradar, refl_10cm,                       &
       reset, effr_in, rew, rei, rer, res, reg,                                     &
-      cplchm, pfi_lsan, pfl_lsan, errmsg, errflg)
+      cplchm, pfi_lsan, pfl_lsan, xlon_d, xlat_d, errmsg, errflg)
 
       use machine, only: kind_phys
 
@@ -136,7 +136,7 @@ contains
       ! interface variables
       integer,              intent(in   ) :: levs, im
       real(kind=kind_phys), intent(in   ) :: con_g, con_fvirt, con_rd, con_eps, rainmin
-      real(kind=kind_phys), intent(in   ), dimension(:)     :: frland, garea
+      real(kind=kind_phys), intent(in   ), dimension(:)     :: frland, garea, xlon_d, xlat_d
       integer,              intent(in   ), dimension(:)     :: islmsk
       real(kind=kind_phys), intent(inout), dimension(:,:)   :: gq0, gq0_ntcw, gq0_ntrw, gq0_ntiw, &
                                                                gq0_ntsw, gq0_ntgl, gq0_ntclamt
@@ -175,7 +175,7 @@ contains
       real(kind=kind_phys), dimension(1:im,1,1:levs) :: pfils, pflls
       real(kind=kind_phys), dimension(:,:), allocatable :: den
       real(kind=kind_phys) :: onebg
-      real(kind=kind_phys) :: tem
+      real(kind=kind_phys) :: tem, check
 
       ! Initialize CCPP error handling variables
       errmsg = ''
@@ -223,6 +223,11 @@ contains
             uin(i,k)  = gu0(i,kk)
             vin(i,k)  = gv0(i,kk)
             delp(i,k) = del(i,kk)
+            check = phii(i,kk)-phii(i,kk+1)
+            if(.not. abs(check)>1e-12) then
+308           format('BAD PHII DELTA AT lon ',F14.7,' lat ',F14.7)
+              write(0,308) xlon_d(i),xlat_d(i)
+            endif
             dz(i,k)   = (phii(i,kk)-phii(i,kk+1))*onebg
             p123(i,k) = prsl(i,kk)
             refl(i,k) = refl_10cm(i,kk)

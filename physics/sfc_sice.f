@@ -167,7 +167,8 @@
       integer, dimension(:), intent(in)  :: islmsk
       real (kind=kind_phys), intent(in)  :: delt
 
-      logical, dimension(im), intent(in) :: flag_iter, use_lake_model
+      logical, dimension(im), intent(in) :: flag_iter
+      integer, dimension(im), intent(in) :: use_lake_model
 
 !  ---  input/outputs:
       real (kind=kind_phys), dimension(:), intent(inout) :: hice,       &
@@ -215,7 +216,7 @@
       do_sice = .false.
       do i = 1, im
         flag(i) = islmsk(i) == 2 .and. flag_iter(i)                     &
-     &                           .and. .not. use_lake_model(i)
+     &                           .and. use_lake_model(i)==0
         do_sice = do_sice .or. flag(i)
 !       if (flag_iter(i) .and. islmsk(i) < 2) then
 !         hice(i) = zero
