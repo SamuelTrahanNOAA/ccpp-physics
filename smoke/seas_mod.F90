@@ -28,7 +28,7 @@ module seas_mod
 
 CONTAINS
 
-  subroutine gocart_seasalt_driver(ktau,dt,alt,t_phy,moist,u_phy,  &
+  subroutine gocart_seasalt_driver(dt,alt,t_phy,moist,u_phy,  &
          v_phy,chem,rho_phy,dz8w,u10,v10,ustar,p8w,tsk,            &
          xland,xlat,xlong,area,g,emis_seas,pi, &
          seashelp,num_emis_seas,num_moist,num_chem,seas_opt,  &
@@ -36,7 +36,7 @@ CONTAINS
          ims,ime, jms,jme, kms,kme,                                        &
          its,ite, jts,jte, kts,kte                                         )
 
-     INTEGER,      INTENT(IN   ) :: ktau,num_emis_seas,num_moist,num_chem,   &
+     INTEGER,      INTENT(IN   ) :: num_emis_seas,num_moist,num_chem,        &
                                     ids,ide, jds,jde, kds,kde,               &
                                     ims,ime, jms,jme, kms,kme,               &
                                     its,ite, jts,jte, kts,kte,seas_opt

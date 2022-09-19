@@ -93,7 +93,7 @@ contains
     ppm2ugkg(p_sulf) = 1.e+03_kind_phys * mw_so4_aer / mwdry
 
     ! -- initialize large-sacle wet depostion
-    if (ktau==1) then
+    if (.not.data%lsdep_wrapper_initialized) then
      call dep_wet_ls_init(data)
     endif
 
@@ -115,7 +115,7 @@ contains
 !!!
 
 !>- get ready for chemistry run
-    call rrfs_smoke_prep_lsdep(data,ktau,dtstep,                        &
+    call rrfs_smoke_prep_lsdep(data,dtstep,                             &
         pr3d,ph3d,phl3d,tk3d,prl3d,us3d,vs3d,spechum,w, dqdt,           &
         rri,t_phy,u_phy,v_phy,p_phy,rho_phy,dz8w,p8w,                   &
         t8w,dqdti,z_at_w,vvel,g,                                        &
@@ -166,7 +166,7 @@ contains
    end subroutine rrfs_smoke_lsdep_wrapper_run
 !> @}
 
-  subroutine rrfs_smoke_prep_lsdep(data,ktau,dtstep,                        &
+  subroutine rrfs_smoke_prep_lsdep(data,dtstep,                        &
         pr3d,ph3d,phl3d,tk3d,prl3d,us3d,vs3d,spechum,w,dqdt,           &
         rri,t_phy,u_phy,v_phy,p_phy,rho_phy,dz8w,p8w,                  &
         t8w,dqdti,z_at_w,vvel,g,                                       &
@@ -180,7 +180,6 @@ contains
     type(smoke_data), intent(inout) :: data
 
     !Chem input configuration
-    integer, intent(in) :: ktau
     real(kind=kind_phys), intent(in) :: dtstep,g
 
     !FV3 input variables

@@ -19,7 +19,7 @@ module dep_simple_mod
 
     CONTAINS
 
-SUBROUTINE wesely_driver( data, ktau, dtstep, current_month,  &
+SUBROUTINE wesely_driver( data, dtstep, current_month,  &
                           gmt, julday, t_phy,moist, p8w, t8w, raincv,     &
                           p_phy, chem, rho_phy, dz8w, ddvel, aer_res_def, &
                           aer_res_zcen, ivgtyp, tsk, gsw, vegfra, pbl,    &
@@ -45,7 +45,6 @@ SUBROUTINE wesely_driver( data, ktau, dtstep, current_month,  &
                                   ids,ide, jds,jde, kds,kde,              &
                                   ims,ime, jms,jme, kms,kme,              &
                                   its,ite, jts,jte, kts,kte     
-   INTEGER,      INTENT(IN   ) :: ktau            
       REAL(kind_phys),      INTENT(IN   ) :: dtstep,gmt
 
 !--------------------------------------------------

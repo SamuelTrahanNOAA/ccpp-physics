@@ -170,7 +170,6 @@ contains
     aero_ind_fdb      = aero_ind_fdb_in
     dbg_opt           = dbg_opt_in
 
-    !print*,'hli ktau',ktau
     ! -- set domain
     ide=im 
     ime=im
@@ -236,7 +235,7 @@ contains
 
 !>- get ready for chemistry run
     call rrfs_smoke_prep(                                               &
-        ktau, current_month, current_hour,                              &
+              current_month, current_hour,                              &
         u10m,v10m,ustar,land,garea,rlat,rlon,tskin,                     &
         pr3d,ph3d,phl3d,tk3d,prl3d,us3d,vs3d,spechum,exch,w,            &
         nsoil,smc,vegtype,soiltyp,sigmaf,dswsfc,zorl,                   &
@@ -259,7 +258,6 @@ contains
 
 ! Make this global, calculate at 1st time step only
 !>-- for plumerise --
-!IF (ktau==1) THEN
      do j=jts,jte
        do i=its,ite
           if (xlong(i,j)<-130.) then
@@ -277,7 +275,6 @@ contains
           endif
        enddo
      enddo
-!END IF
 
      IF (ktau==1) THEN
       ebu = 0.
@@ -301,7 +298,7 @@ contains
 !>- compute sea-salt
     ! -- compute sea salt
     if (seas_opt >= SEAS_OPT_DEFAULT) then
-    call gocart_seasalt_driver(ktau,dt,rri,t_phy,moist,                 &
+    call gocart_seasalt_driver(     dt,rri,t_phy,moist,                 &
         u_phy,v_phy,chem,rho_phy,dz8w,u10,v10,ust,p8w,tsk,              &
         xland,xlat,xlong,dxy,g,emis_seas,pi,                            &
         seashelp,num_emis_seas,num_moist,num_chem,seas_opt,             &
@@ -335,7 +332,7 @@ contains
                    data,flam_frac,ebu_in,ebu,                          &
                    t_phy,moist(:,:,:,p_qv),                            &
                    rho_phy,vvel,u_phy,v_phy,p_phy,                     &
-                   z_at_w,zmid,ktau,g,con_cp,con_rd,                   &
+                   z_at_w,zmid,     g,con_cp,con_rd,                   &
                    plume_frp, min_fplume2, max_fplume2,                &   ! new approach
                    ids,ide, jds,jde, kds,kde,                          &
                    ims,ime, jms,jme, kms,kme,                          &
@@ -345,7 +342,7 @@ contains
 
     ! -- add biomass burning emissions at every timestep
     if (addsmoke_flag == 1) then
-    call add_emis_burn(data,dtstep,ktau,dz8w,rho_phy,rel_hum,chem,        &
+    call add_emis_burn(data,dtstep,     dz8w,rho_phy,rel_hum,chem,        &
                        julday,gmt,xlat,xlong,                        &
                        ivgtyp, vegfrac, peak_hr,                     &   ! RAR
                        curr_secs,ebu,                                &
@@ -356,11 +353,10 @@ contains
                        ims,ime, jms,jme, kms,kme,                    &
                        its,ite, jts,jte, kts,kte                     )
     endif
-!       WRITE(*,*) 'after add_emis_burn  at ktau= ',ktau
 
     !>-- compute dry deposition
     if (drydep_opt == 1) then
-    call dry_dep_driver(data,ktau,dt,julday,current_month,t_phy,p_phy,    &
+    call dry_dep_driver(data,     dt,julday,current_month,t_phy,p_phy,    &
        moist,p8w,rmol,rri,gmt,t8w,rcav,                              &
        chem,rho_phy,dz8w,exch_h,hfx,                                 &
        ivgtyp,tsk,swdown,vegfrac,pbl,ust,znt,zmid,z_at_w,            &
@@ -372,7 +368,6 @@ contains
        ims,ime, jms,jme, kms,kme,                                    &
        its,ite, jts,jte, kts,kte)
     endif
-!    WRITE(*,*) 'dry depostion is done at ktau= ',ktau
 
     do k=kts,kte
      do i=its,ite
@@ -416,7 +411,6 @@ contains
     enddo
 !-------------------------------------
 !-- to output for diagnostics
-!    WRITE(*,*) 'rrfs nwfa/nifa 1 at ktau= ',ktau
     do i = 1, im
      emseas     (i) = emis_seas  (i,1,1,1)*1.e+9   ! size bin 1 sea salt emission: ug/m2/s
      emdust     (i) = emis_dust  (i,1,1,1)         ! size bin 1 dust emission    : ug/m2/s
@@ -427,7 +421,6 @@ contains
      max_fplume (i) = real(max_fplume2(i,1))
     enddo
 
-!    WRITE(*,*) 'rrfs nwfa/nifa 2 at ktau= ',ktau
 !-- to provide real aerosol emission for Thompson MP
     if (imp_physics == imp_physics_thompson .and. aero_ind_fdb) then
       fact_wfa = 1.e-9*6.0/pi*exp(4.5*log(sigma1)**2)/mean_diameter1**3
@@ -453,12 +446,11 @@ contains
        enddo
       enddo
     endif
-!    WRITE(*,*) 'rrfs smoke wrapper is done at ktau= ',ktau
 
  end subroutine rrfs_smoke_wrapper_run
 
  subroutine rrfs_smoke_prep(                                            &
-        ktau,current_month,current_hour,                                &
+             current_month,current_hour,                                &
         u10m,v10m,ustar,land,garea,rlat,rlon,ts2d,                      &
         pr3d,ph3d,phl3d,tk3d,prl3d,us3d,vs3d,spechum,exch,w,            &
         nsoil,smc,vegtype,soiltyp,sigmaf,dswsfc,zorl,                   &
@@ -482,7 +474,7 @@ contains
         its,ite, jts,jte, kts,kte)
 
     !Chem input configuration
-    integer, intent(in) :: ktau, current_month, current_hour
+    integer, intent(in) :: current_month, current_hour
 
     !FV3 input variables
     integer, intent(in) :: nsoil
@@ -616,11 +608,6 @@ contains
       enddo
      enddo
     enddo
-
-    !if (ktau <= 1) then
-    !  emis_ant = 0.
-    ! !emis_vol = 0.
-    !end if
 
     do j=jts,jte
       jp = j - jts + 1

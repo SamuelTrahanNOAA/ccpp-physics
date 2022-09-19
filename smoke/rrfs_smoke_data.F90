@@ -63,6 +63,8 @@ module rrfs_smoke_data
     REAL(KIND_PHYS) :: dratio(1000), hstar(1000), hstar4(1000)
     REAL(KIND_PHYS) :: f0(1000), dhr(1000), scpr23(1000)
 
+    integer :: testvar
+
     ! Note: scpr23 is only read, never written
 
     ! never used: type(wesely_pft) :: seasonal_pft
@@ -72,29 +74,25 @@ module rrfs_smoke_data
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Taken from dep_wet_ls_mod
     real(kind_phys), dimension(:), pointer :: alpha => NULL()
+
+    logical :: lsdep_wrapper_initialized
   contains
     final :: smoke_data_destructor
     procedure :: dep_init
   end type smoke_data
 
-  interface smoke_data
-    procedure :: smoke_data_constructor
-  end interface smoke_data
-
-  type(smoke_data), target, private :: private_thread_data
-  logical, private :: rrfs_smoke_data_initialized = .false.
-
+  type(smoke_data), pointer, private :: private_thread_data => NULL()
   !$OMP THREADPRIVATE(private_thread_data)
-  !$OMP THREADPRIVATE(rrfs_smoke_data_initialized)
 
 contains
 
   function get_thread_smoke_data() result(data)
     implicit none
     class(smoke_data), pointer :: data
-    if(.not. rrfs_smoke_data_initialized) then
-      private_thread_data = smoke_data()
-      rrfs_smoke_data_initialized = .true.
+
+    if(.not. associated(private_thread_data)) then
+      allocate(private_thread_data)
+      private_thread_data%lsdep_wrapper_initialized = .false.
     endif
     data => private_thread_data
   end function get_thread_smoke_data
@@ -113,22 +111,6 @@ contains
     class(wesely_pft), pointer :: this
     nullify(this%seasonal_wes)
   end function wesely_pft_constructor
-
-  function smoke_data_constructor() result(this)
-    implicit none
-    type(smoke_data) :: this
-    ! These are never used:
-    ! this%c0_pan = (/ 0.000, 0.006, 0.002, 0.009, 0.015, &
-    !               0.006, 0.000, 0.000, 0.000, 0.002, 0.002 /)
-    ! this%k_pan = (/ 0.000, 0.010, 0.005, 0.004, 0.003, &
-    !              0.005, 0.000, 0.000, 0.000, 0.075, 0.002 /)
-    ! this%month = 0
-    ! this%seasonal_pft = wesely_pft()
-    ! nullify(this%is_aerosol)
-    nullify(this%alpha)
-    ! This is not called in the original non-thread-safe code:
-    ! call this%dep_init()
-  end function smoke_data_constructor
 
   subroutine smoke_data_destructor(this)
     implicit none

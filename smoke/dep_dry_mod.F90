@@ -22,7 +22,7 @@ module dep_dry_mod
 
 contains
 
-    subroutine dry_dep_driver(data,ktau,dtstep,julday,current_month,t_phy,p_phy,      &
+    subroutine dry_dep_driver(data,dtstep,julday,current_month,t_phy,p_phy,      &
                moist,p8w,rmol,alt,gmt,t8w,raincv,                         &
                chem,rho_phy,dz8w,exch_h,hfx,                              &
                ivgtyp,tsk,gsw,vegfra,pbl,ust,znt,z,z_at_w,                &
@@ -57,8 +57,6 @@ contains
                                   ids,ide, jds,jde, kds,kde,    &
                                   ims,ime, jms,jme, kms,kme,    &
                                   its,ite, jts,jte, kts,kte
-   INTEGER,      INTENT(IN   ) ::                               &
-                                  ktau
    REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_moist ),        &
          INTENT(IN ) ::                                   moist
    REAL(kind_phys), DIMENSION( ims:ime, kms:kme, jms:jme, num_chem ),         &
@@ -173,7 +171,7 @@ contains
 !      CALL wrf_debug(15,'DOING DRY DEP VELOCITIES WITH WESELY METHOD')
 
       IF( chem_opt /= GOCART_SIMPLE ) THEN
-         call wesely_driver(data,ktau,dtstep,                                  &
+         call wesely_driver(data,dtstep,                                  &
               current_month,                                              &
               gmt,julday,t_phy,moist,p8w,t8w,raincv,                      &
               p_phy,chem,rho_phy,dz8w,ddvel,aer_res_def,aer_res_zcen,    &

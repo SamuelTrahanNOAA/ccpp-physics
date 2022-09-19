@@ -39,12 +39,14 @@ contains
 
     ! -- set aerosol wet scavenging coefficients
     if (associated(data%alpha)) then
-      deallocate(data%alpha, stat=ios)
+      write(0,*) 'deallocate data%alpha'
+      deallocate(data%alpha)
       !if (chem_rc_test((ios /= 0), msg="Failed to deallocate memory", &
       !  file=__FILE__, line=__LINE__, rc=rc)) return
     end if
 
-    allocate(data%alpha(num_chem), stat=ios)
+    print *,'allocate data%alpha(num_chem) ',num_chem
+    allocate(data%alpha(num_chem))
     !if (chem_rc_test((ios /= 0), msg="Failed to allocate memory", &
     !  file=__FILE__, line=__LINE__, rc=rc)) return
 
@@ -169,6 +171,15 @@ contains
        do k=kts,kte
         if(var(i,k,j,nv).gt.1.e-08 .and. (moist(i,k,j,p_qc)+moist(i,k,j,p_qi)).gt.1.e-8)then
         factor = max(0.,frc(i,j)*rho(i,k,j)*dz8w(i,k,j)*vvel(i,k,j))
+        dvar=999
+        if(.not.associated(data%alpha)) then
+          write(0,*) 'BAD! No data%alpha'
+          stop 104
+        endif
+        if(size(data%alpha)<nv) then
+          write(0,*) 'data%alpha too small ',size(data%alpha),nv
+          stop 105
+        endif
         dvar=max(0.,data%alpha(nv)*factor/(1+factor)*var(i,k,j,nv))
         dvar=min(dvar,var(i,k,j,nv))
         var_rmvl(i,k,j)=dvar

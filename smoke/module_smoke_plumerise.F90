@@ -30,7 +30,7 @@ CONTAINS
 !                         firesize,mean_fct,                         &
                         ! nspecies,eburn_in,eburn_out,               &
                          up,vp,wp,theta,pp,dn0,rv,zt_rams,zm_rams,  &
-                         frp_inst,k1,k2, ktau, dbg_opt, g, cp, rgas, &
+                         frp_inst,k1,k2, dbg_opt, g, cp, rgas, &
                          cpor,  errmsg, errflg   )
 
   implicit none
@@ -46,7 +46,6 @@ CONTAINS
 
   integer :: ng,m1,m2,m3,ia,iz,ja,jz,ibcon,mynum,i,j,k,imm,ixx,ispc !,nspecies
 
-  INTEGER, INTENT (IN)  :: ktau
   INTEGER, INTENT (OUT) :: k1,k2
   character(*), intent(inout) :: errmsg
   integer, intent(inout) :: errflg
@@ -106,9 +105,6 @@ CONTAINS
   !----------------------------------------------------------------------
 ! print *,' Plumerise_scalar 1',ncall
   coms => get_thread_coms()
-  if (ktau==2) then
-    call coms%set_to_zero()
-  endif
 
 IF (frp_inst<frp_threshold) THEN
    k1=1
@@ -145,7 +141,7 @@ END IF
 !  enddo
 
          !- get envinronmental state (temp, water vapor mix ratio, ...)
-         call get_env_condition(coms,1,m1,kmt,wind_eff,ktau,g,cp,rgas,cpor,errmsg,errflg)
+         call get_env_condition(coms,1,m1,kmt,wind_eff,g,cp,rgas,cpor,errmsg,errflg)
          if(errflg/=0) return
 
          !- loop over the four types of aggregate biomes with fires for plumerise version 1
@@ -165,18 +161,13 @@ END IF
         endif
         burnt_area= max(1.0e4,burnt_area)
         
-        IF (dbg_opt .AND. ktau<2000) THEN
-            WRITE(*,*) 'plumerise: m1,ktau ', m1,ktau
             WRITE(*,*) 'plumerise: imm, FRP,burnt_area ', imm, FRP,burnt_area
          !   WRITE(*,*) 'convert_smold_to_flam ',convert_smold_to_flam
             WRITE(*,*) 'plumerise:  zcon ',  coms%zcon
             WRITE(*,*) 'plumerise: zzcon ', coms%zzcon
-         END IF
 
-         IF (dbg_opt .AND. ktau<2000) then
              WRITE(*,*) 'plumerise: imm ', imm
              WRITE(*,*) 'plumerise: burnt_area ',burnt_area
-         END IF
     
        !- get fire properties (burned area, plume radius, heating rates ...)
        call get_fire_properties(coms,imm,iveg_ag,burnt_area,FRP,errmsg,errflg)
@@ -185,18 +176,14 @@ END IF
        !------  generates the plume rise    ------
        call makeplume (coms,kmt,ztopmax(imm),ixx,imm)
 
-       IF (dbg_opt .AND. ktau<2000) then
             WRITE(*,*) 'plumerise after makeplume: imm,kmt,ztopmax(imm) ',imm,kmt,ztopmax(imm)
-       END IF
 
     enddo lp_minmax
 
         !- define o dominio vertical onde a emissao flaming ira ser colocada
         call set_flam_vert(ztopmax,k1,k2,nkp,coms%zzcon)     !,W_VMD,VMD)
 
-        ! IF (ktau<2000) then
         !     WRITE(6,*) 'module_chem_plumerise_scalar: eburn_out(:,3) ', eburn_out(:,3)
-        ! END IF
 
         !- thickness of the vertical layer between k1 and k2 eta levels (lower and upper bounds for the injection height )
         !dzi= 1./(coms%zzcon(k2)-coms%zzcon(k1))   ! RAR: k2>=k1+1  
@@ -208,19 +195,17 @@ END IF
         !   enddo
         !enddo
 
-    IF (dbg_opt .AND. ktau<2000) then
         WRITE(*,*) 'plumerise after set_flam_vert: nkp,k1,k2, ', nkp,k1,k2
         WRITE(*,*) 'plumerise after set_flam_vert: dzi ', dzi
        !WRITE(*,*) 'plumerise after set_flam_vert: eburn_in(2) ', eburn_in(2)
        !WRITE(*,*) 'plumerise after set_flam_vert: eburn_out(:,2) ',eburn_out(:,2)
-    END IF
 
 !   enddo lp_veg   ! sub-grid vegetation, currently it's aggregated
 
 end subroutine plumerise
 !-------------------------------------------------------------------------
 
-subroutine get_env_condition(coms,k1,k2,kmt,wind_eff,ktau,g,cp,rgas,cpor,errmsg,errflg)
+subroutine get_env_condition(coms,k1,k2,kmt,wind_eff,g,cp,rgas,cpor,errmsg,errflg)
 
 !se module_zero_plumegen_coms
 !use rconstants
@@ -232,11 +217,11 @@ real(kind=kind_phys),parameter :: p1000mb = 100000.  ! p at 1000mb (pascals)
 real(kind=kind_phys),parameter :: p00=p1000mb
 real(kind=kind_phys) :: znz,themax,tlll,plll,rlll,zlll,dzdd,dzlll,tlcl,plcl,dzlcl,dummy
 !integer :: n_setgrid = 0 
-integer :: wind_eff,ktau
+integer :: wind_eff
 character(*), intent(inout) :: errmsg
 integer, intent(inout) :: errflg
 
-if(ktau==2) then
+if(.not.coms%initialized) then
  ! n_setgrid = 1
   call set_grid(coms) ! define vertical grid of plume model
                 ! coms%zt(k) =  thermo and water levels
