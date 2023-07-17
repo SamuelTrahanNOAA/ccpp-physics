@@ -643,13 +643,13 @@ MODULE clm_lake
             if(salty(i)/=0) then
              Tclim = tfrz + wght1*saltlk_T(num1)  &
                           + wght2*saltlk_T(num2)
-             if(lakedebug) print *,'Tclim,tsfc,t_lake3d',i,Tclim,t_grnd(c),t_lake(c,:),t_soisno(c,:)
+             !if(lakedebug) print *,'Tclim,tsfc,t_lake3d',i,Tclim,t_grnd(c),t_lake(c,:),t_soisno(c,:)
              t_grnd(c) = min(Tclim+3.0_kind_lake,(max(t_grnd(c),Tclim-3.0_kind_lake)))
              do k = 1,nlevlake
                t_lake(c,k) = min(Tclim+3.0_kind_lake,(max(t_lake(c,k),Tclim-3.0_kind_lake)))
              enddo
              t_soisno(c,1) = min(Tclim+3.0_kind_lake,(max(t_soisno(c,1),Tclim-3.0_kind_lake)))
-             if(lakedebug) print *,'After Tclim,tsfc,t_lake3d',i,Tclim,t_grnd(c),t_lake(c,:),t_soisno(c,:)
+             !if(lakedebug) print *,'After Tclim,tsfc,t_lake3d',i,Tclim,t_grnd(c),t_lake(c,:),t_soisno(c,:)
             endif 
            
             savedtke12d(i)         = savedtke1(c)
@@ -1148,7 +1148,7 @@ SUBROUTINE ShalLakeFluxes(forc_t,forc_pbot,forc_psrf,forc_hgt,forc_hgt_q,       
     character*256 :: message 
     ! tgs COARE
     real(kind_lake) :: tc, visc, ren
-
+    logical :: to_print
       ! This assumes all radiation is absorbed in the top snow layer and will need
       ! to be changed for CLM 4.
     !
@@ -1489,18 +1489,23 @@ SUBROUTINE ShalLakeFluxes(forc_t,forc_pbot,forc_psrf,forc_hgt,forc_hgt_q,       
        if(LAKEDEBUG) then
 1604     format('CLM_Lake ShalLakeFluxes: c=',I0,' sensible heat = ',F12.4,' latent heat =',F12.4, &
                 ' ground temp = ', F12.4, ' h2osno = ', F12.4, ' at xlat_d=',F10.3,' xlon_d=',F10.3)
-         print 1604, c, eflx_sh_tot(p), eflx_lh_tot(p), t_grnd(c), h2osno(c),xlat_d,xlon_d
+         to_print=.false.
          if (abs(eflx_sh_tot(p)) > 1500 .or. abs(eflx_lh_tot(p)) > 1500) then
+           to_print=.true.
 3018       format('CLM_Lake ShalLakeFluxes: WARNING: SH=',F12.4,' LH=',F12.4,' at xlat_d=',F10.3,' xlon_d=',F10.3)
            print 3018,eflx_sh_tot(p), eflx_lh_tot(p),xlat_d,xlon_d
          end if
          if (abs(eflx_sh_tot(p)) > 10000 .or. abs(eflx_lh_tot(p)) > 10000 &
               .or. abs(t_grnd(c)-288)>200 ) then
+           to_print=.true.
 840        format('CLM_Lake ShalLakeFluxes: t_grnd is out of range: eflx_sh_tot(p)=',G20.12,' eflx_lh_tot(p)=',G20.12,' t_grnd(c)=',G20.12,' at p=',I0,' c=',I0,' xlat_d=',F10.3,' xlon_d=',F10.3)
            write(message,840) eflx_sh_tot(p),eflx_lh_tot(p),t_grnd(c),p,c,xlat_d,xlon_d
            ! errmsg=message
            ! errflg=1
            write(0,'(A)') trim(message)
+         endif
+         if(to_print) then
+           print 1604, c, eflx_sh_tot(p), eflx_lh_tot(p), t_grnd(c), h2osno(c),xlat_d,xlon_d
          endif
        endif
        ! 2 m height air temperature
@@ -2373,11 +2378,6 @@ SUBROUTINE ShalLakeTemperature(t_grnd,h2osno,sabg,dz,dz_lake,z,zi,           & !
              c = filter_shlakec(fc)
              if (rhow(c,j) > rhow(c,j+1) .or. &
                 (lake_icefrac(c,j) < 1._kind_lake .and. lake_icefrac(c,j+1) > 0._kind_lake) ) then
-               if(LAKEDEBUG) then
-                 if (i==1)  then
-                   print *, 'Convective Mixing in column ', c, '.'
-                 endif
-               endif
                 qav(c) = qav(c) + dz_lake(c,i)*(t_lake(c,i)-tfrz) * & 
                         ((1._kind_lake - lake_icefrac(c,i))*cwat + lake_icefrac(c,i)*cice_eff)
                 !                tav(c) = tav(c) + t_lake(c,i)*dz_lake(c,i)
@@ -2462,9 +2462,6 @@ SUBROUTINE ShalLakeTemperature(t_grnd,h2osno,sabg,dz,dz_lake,z,zi,           & !
           c = filter_shlakec(fc)
 
           cv_lake(c,j) = dz_lake(c,j) * (cwat*(1._kind_lake-lake_icefrac(c,j)) + cice_eff*lake_icefrac(c,j))
-          if (LAKEDEBUG) then
-            print *,'Lake Ice Fraction, c, level:', c, j, lake_icefrac(c,j)
-          endif
        end do
     end do
     ! For snow / soil
@@ -2525,9 +2522,9 @@ SUBROUTINE ShalLakeTemperature(t_grnd,h2osno,sabg,dz,dz_lake,z,zi,           & !
              print *,'errsoi incorporated into sensible heat in ShalLakeTemperature: c, (W/m^2):', c, errsoi(c)
           end if
           errsoi(c) = 0._kind_lake
-       else if(LAKEDEBUG) then
-          print *,'Soil Energy Balance Error at column, ', c, 'G, fintotal, column E tendency = ', &
-             eflx_gnet(p), fin(c), (ncvts(c)-ocvts(c)) / dtime
+       ! else if(LAKEDEBUG) then
+       !    print *,'Soil Energy Balance Error at column, ', c, 'G, fintotal, column E tendency = ', &
+       !       eflx_gnet(p), fin(c), (ncvts(c)-ocvts(c)) / dtime
        end if
     end do
     ! This loop assumes only one point per column.
@@ -3633,10 +3630,6 @@ SUBROUTINE ShalLakeTemperature(t_grnd,h2osno,sabg,dz,dz_lake,z,zi,           & !
 
        ! Insure water balance using qflx_qrgwl
        qflx_qrgwl(c)     = forc_rain(g) + forc_snow(g) - qflx_evap_tot(p) - (endwb(c)-begwb(c))/dtime
-       if (LAKEDEBUG) then
-         print *,'c, rain, snow, evap, endwb, begwb, qflx_qrgwl:', &
-              c, forc_rain(g), forc_snow(g), qflx_evap_tot(p), endwb(c), begwb(c), qflx_qrgwl(c)
-       endif
 
        ! The pft average must be done here for output to history tape
        qflx_evap_tot_col(c) = qflx_evap_tot(p)
