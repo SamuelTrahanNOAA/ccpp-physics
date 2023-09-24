@@ -258,8 +258,8 @@ MODULE clm_lake
 
          salty, savedtke12d, snowdp2d, h2osno2d, snl2d, t_grnd2d, t_lake3d,       &
          lake_icefrac3d, t_soisno3d, h2osoi_ice3d, h2osoi_liq3d, h2osoi_vol3d,    &
-         z3d, dz3d, zi3d, z_lake3d, dz_lake3d,           csol3d,                  &
-         tkmg3d, tkdry3d, tksatu3d, clm_lakedepth, cannot_freeze,                 &
+         z3d, dz3d, zi3d, z_lake3d, dz_lake3d,                                    &
+                                    clm_lakedepth, cannot_freeze,                 &
 
          ! Error reporting:
          errflg, errmsg)
@@ -338,10 +338,6 @@ MODULE clm_lake
 
     REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: z_lake3d
     REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: dz_lake3d
-    REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: csol3d
-    REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: tkmg3d
-    REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: tkdry3d
-    REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: tksatu3d
     REAL(KIND_PHYS),           DIMENSION( : )  ,INTENT(INOUT)  :: clm_lakedepth
 
     !
@@ -453,10 +449,10 @@ MODULE clm_lake
              lake_icefrac3d=lake_icefrac3d, z_lake3d=z_lake3d, dz_lake3d=dz_lake3d,       &
              t_soisno3d=t_soisno3d, h2osoi_ice3d=h2osoi_ice3d, h2osoi_liq3d=h2osoi_liq3d, &
              h2osoi_vol3d=h2osoi_vol3d, z3d=z3d, dz3d=dz3d, zi3d=zi3d,                    &
-             csol3d=csol3d, tkmg3d=tkmg3d, fice=fice, hice=hice, min_lakeice=min_lakeice, &
+                                           fice=fice, hice=hice, min_lakeice=min_lakeice, &
              tsfc=tsfc,                                                                   &
-             use_lake_model=use_lake_model, use_lakedepth=use_lakedepth, tkdry3d=tkdry3d, &
-             tksatu3d=tksatu3d, im=im, prsi=prsi, xlat_d=xlat_d, xlon_d=xlon_d,           &
+             use_lake_model=use_lake_model, use_lakedepth=use_lakedepth,                  &
+                                im=im, prsi=prsi, xlat_d=xlat_d, xlon_d=xlon_d,           &
              clm_lake_initialized=clm_lake_initialized,                                   &
              tg3=tg3, clm_lakedepth=clm_lakedepth, km=km, me=me, master=master,           &
              errmsg=errmsg, errflg=errflg)
@@ -538,6 +534,8 @@ MODULE clm_lake
 
            lake_points = lake_points+1
 
+           call calculate_constants(i, ISLTYP, watsat(1,1), tkdry(1,1), tkmg(1,1), tksatu(1,1), csol(1,1))
+
            do c = 1,column
      
             forc_t(c)          = SFCTMP           ! [K]
@@ -580,11 +578,11 @@ MODULE clm_lake
                zi(c,k)            = zi3d(i,k)
             enddo
             do k = 1,nlevsoil
-               watsat(c,k)        = 0.489_kind_lake - 0.00126_kind_lake*sand(isl)
-               csol(c,k)          = csol3d(i,k)
-               tkmg(c,k)          = tkmg3d(i,k)
-               tkdry(c,k)         = tkdry3d(i,k)
-               tksatu(c,k)        = tksatu3d(i,k)
+               watsat(c,k)        = watsat(1,1)
+               csol(c,k)          = csol(1,1)
+               tkmg(c,k)          = tkmg(1,1)
+               tkdry(c,k)         = tkdry(1,1)
+               tksatu(c,k)        = tksatu(1,1)
             enddo
             
           enddo
@@ -5309,16 +5307,37 @@ if_pergro: if (PERGRO) then
 
   end subroutine clm_lake_init
 
+  subroutine calculate_constants(i, ISLTYP, watsat, tkdry, tkmg, tksatu, csol)
+    implicit none
+    integer, intent(in) :: i, ISLTYP(:)
+    real(kind_lake), intent(inout) :: watsat, tkdry, tkmg, tksatu, csol
+    ! locals
+    real(kind_lake) :: bd, tkm
+    integer :: isl
+
+    isl = ISLTYP(i)
+    if (isl == 0  ) isl = 14
+    if (isl == 14 ) isl = isl + 1
+
+    watsat = 0.489_kind_lake - 0.00126_kind_lake*sand(isl)
+    bd = (1._kind_lake-watsat)*2.7e3_kind_lake
+    tkm = (8.80_kind_lake*sand(isl)+2.92_kind_lake*clay(isl))/(sand(isl)+clay(isl))          ! W/(m K)
+    tkmg = tkm ** (1._kind_lake- watsat)
+    tksatu = tkmg*0.57_kind_lake**watsat
+    tkdry = (0.135_kind_lake*bd + 64.7_kind_lake) / (2.7e3_kind_lake - 0.947_kind_lake*bd)
+    csol = (2.128_kind_lake*sand(isl)+2.385_kind_lake*clay(isl)) / (sand(isl)+clay(isl))*1.e6_kind_lake  ! J/(m3 K)
+  end subroutine calculate_constants
+
  SUBROUTINE lakeini(kdt,            ISLTYP,          gt0,             snowd,          & !i
                     weasd,                           lakedepth_default,  fhour,       &
                     oro_lakedepth,  savedtke12d,     snowdp2d,        h2osno2d,       & !o
                     snl2d,          t_grnd2d,        t_lake3d,        lake_icefrac3d, &
                     z_lake3d,       dz_lake3d,       t_soisno3d,      h2osoi_ice3d,   &
                     h2osoi_liq3d,   h2osoi_vol3d,    z3d,             dz3d,           &
-                    zi3d,                            csol3d,          tkmg3d,         &
+                    zi3d,                                                             &
                     fice,           hice,            min_lakeice,     tsfc,           &
                     use_lake_model, use_lakedepth,                                    &
-                    tkdry3d,        tksatu3d,        im,              prsi,           &
+                                                     im,              prsi,           &
                     xlat_d,         xlon_d,          clm_lake_initialized,            &
                                                      tg3,             clm_lakedepth,  &
                     km,   me,       master,          errmsg,          errflg)
@@ -5352,7 +5371,7 @@ if_pergro: if (PERGRO) then
   !INTEGER , INTENT (INOUT) :: lake_depth_flag
   LOGICAL, INTENT (IN) ::   use_lakedepth
 
-  INTEGER, DIMENSION(IM), INTENT(IN)       :: ISLTYP
+  INTEGER, DIMENSION(:), INTENT(IN)       :: ISLTYP
   REAL(KIND_PHYS),    DIMENSION(IM), INTENT(INOUT)    :: snowd,weasd
   REAL(kind_phys),    DIMENSION(IM,KM), INTENT(IN)       :: gt0, prsi
   real(kind_phys),    intent(in)                                      :: lakedepth_default
@@ -5375,27 +5394,11 @@ if_pergro: if (PERGRO) then
                                                                              h2osoi_vol3d,   &
                                                                              z3d,            &
                                                                              dz3d
-  real(kind_phys),    dimension(IM,nlevsoil),INTENT(out)                  :: csol3d,         &
-                                                                             tkmg3d,         &
-                                                                             tkdry3d,        &
-                                                                             tksatu3d
   real(kind_phys),    dimension( IM,-nlevsnow+0:nlevsoil ),INTENT(out)   :: zi3d            
 
   !LOGICAL, DIMENSION( : ),intent(out)                      :: lake
   !REAL(KIND_PHYS), OPTIONAL,    DIMENSION( : ), INTENT(IN)    ::  lake_depth ! no separate variable for this in CCPP
-
-  real(kind_lake),   dimension( 1:im,1:nlevsoil )     :: bsw3d,    &
-                                                        bsw23d,   &
-                                                        psisat3d, &
-                                                        vwcsat3d, &
-                                                        watdry3d, &
-                                                        watopt3d, &
-                                                        hksat3d,  &
-                                                        sucsat3d
   integer  :: n,i,j,k,ib,lev,bottom      ! indices
-  real(kind_lake),dimension(1:im )    :: bd2d               ! bulk density of dry soil material [kg/m^3]
-  real(kind_lake),dimension(1:im )    :: tkm2d              ! mineral conductivity
-  real(kind_lake),dimension(1:im )    :: xksat2d            ! maximum hydraulic conductivity of soil [mm/s]
   real(kind_lake),dimension(1:im )    :: depthratio2d       ! ratio of lake depth to standard deep lake depth 
 
   logical,parameter        :: arbinit = .false.
@@ -5406,7 +5409,7 @@ if_pergro: if (PERGRO) then
   real(kind_lake) :: ht
   real(kind_lake) :: rhosn
   real(kind_lake) :: depth
-  real(kind_lake) :: watsat
+  real(kind_lake) :: watsat, tkdry, tkmg, tksatu, csol
 
   logical :: climatology_limits
 
@@ -5493,26 +5496,8 @@ if_pergro: if (PERGRO) then
     if (isl == 0  ) isl = 14
     if (isl == 14 ) isl = isl + 1 
 
-    do k = 1,nlevsoil
-      watsat = 0.489_kind_lake - 0.00126_kind_lake*sand(isl)
-      bd2d(i)    = (1._kind_lake-watsat)*2.7e3_kind_lake
-      xksat2d(i) = 0.0070556_kind_lake *( 10._kind_lake**(-0.884_kind_lake+0.0153_kind_lake*sand(isl)) ) ! mm/s
-      tkm2d(i) = (8.80_kind_lake*sand(isl)+2.92_kind_lake*clay(isl))/(sand(isl)+clay(isl))          ! W/(m K)
+    call calculate_constants(i, ISLTYP, watsat, tkdry, tkmg, tksatu, csol)
 
-      bsw3d(i,k) = 2.91_kind_lake + 0.159_kind_lake*clay(isl)
-      bsw23d(i,k) = -(3.10_kind_lake + 0.157_kind_lake*clay(isl) - 0.003_kind_lake*sand(isl))
-      psisat3d(i,k) = -(exp((1.54_kind_lake - 0.0095_kind_lake*sand(isl) + 0.0063_kind_lake*(100.0_kind_lake-sand(isl)  &
-           -clay(isl)))*log(10.0_kind_lake))*9.8e-5_kind_lake)
-      vwcsat3d(i,k) = (50.5_kind_lake - 0.142_kind_lake*sand(isl) - 0.037_kind_lake*clay(isl))/100.0_kind_lake
-      hksat3d(i,k) = xksat2d(i)
-      sucsat3d(i,k) = 10._kind_lake * ( 10._kind_lake**(1.88_kind_lake-0.0131_kind_lake*sand(isl)) )
-      tkmg3d(i,k) = tkm2d(i) ** (1._kind_lake- watsat)
-      tksatu3d(i,k) = tkmg3d(i,k)*0.57_kind_lake**watsat
-      tkdry3d(i,k) = (0.135_kind_lake*bd2d(i) + 64.7_kind_lake) / (2.7e3_kind_lake - 0.947_kind_lake*bd2d(i))
-      csol3d(i,k) = (2.128_kind_lake*sand(isl)+2.385_kind_lake*clay(isl)) / (sand(isl)+clay(isl))*1.e6_kind_lake  ! J/(m3 K)
-      watdry3d(i,k) = watsat * (316230._kind_lake/sucsat3d(i,k)) ** (-1._kind_lake/bsw3d(i,k))
-      watopt3d(i,k) = watsat * (158490._kind_lake/sucsat3d(i,k)) ** (-1._kind_lake/bsw3d(i,k))
-    end do
     if (clm_lakedepth(i) == spval) then
       clm_lakedepth(i) = zlak(nlevlake) + 0.5_kind_lake*dzlak(nlevlake)
       z_lake3d(i,1:nlevlake) = zlak(1:nlevlake)
@@ -5655,7 +5640,6 @@ if_pergro: if (PERGRO) then
 
     do k = 1,nlevsoil
        h2osoi_vol3d(i,k) = 1.0_kind_lake
-       watsat = 0.489_kind_lake - 0.00126_kind_lake*sand(isl)
        h2osoi_vol3d(i,k) = min(h2osoi_vol3d(i,k),watsat)
 
       ! soil layers
