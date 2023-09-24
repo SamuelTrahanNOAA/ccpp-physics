@@ -716,22 +716,6 @@
   type = real
   kind = kind_phys
   intent = inout
-[z_lake3d]
-  standard_name = depth_of_lake_interface_layers
-  long_name = depth of lake interface layers
-  units = fraction
-  dimensions = (horizontal_loop_extent, lake_vertical_dimension_for_clm_lake_model)
-  type = real
-  kind = kind_phys
-  intent = inout
-[dz_lake3d]
-  standard_name = thickness_of_lake_layers
-  long_name = thickness of lake layers
-  units = fraction
-  dimensions = (horizontal_loop_extent, lake_vertical_dimension_for_clm_lake_model)
-  type = real
-  kind = kind_phys
-  intent = inout
 [clm_lakedepth]
   standard_name = clm_lake_depth
   long_name = clm internal copy of lake depth with 10.0 replaced by default lake depth

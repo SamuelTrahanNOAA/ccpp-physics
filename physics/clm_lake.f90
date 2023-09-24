@@ -258,7 +258,7 @@ MODULE clm_lake
 
          salty, savedtke12d, snowdp2d, h2osno2d, snl2d, t_grnd2d, t_lake3d,       &
          lake_icefrac3d, t_soisno3d, h2osoi_ice3d, h2osoi_liq3d, h2osoi_vol3d,    &
-         z3d, dz3d, zi3d, z_lake3d, dz_lake3d,                                    &
+         z3d, dz3d, zi3d,                                                         &
                                     clm_lakedepth, cannot_freeze,                 &
 
          ! Error reporting:
@@ -336,8 +336,6 @@ MODULE clm_lake
                                                                                   dz3d 
     real(kind_phys),    dimension( :,-nlevsnow+0: )  ,INTENT(inout)  :: zi3d    
 
-    REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: z_lake3d
-    REAL(KIND_PHYS),           DIMENSION( :,: ),INTENT(INOUT)  :: dz_lake3d
     REAL(KIND_PHYS),           DIMENSION( : )  ,INTENT(INOUT)  :: clm_lakedepth
 
     !
@@ -446,7 +444,7 @@ MODULE clm_lake
                               lakedepth_default=lakedepth_default, fhour=fhour,           &
              oro_lakedepth=oro_lakedepth, savedtke12d=savedtke12d, snowdp2d=snowdp2d,     &
              h2osno2d=h2osno2d, snl2d=snl2d, t_grnd2d=t_grnd2d, t_lake3d=t_lake3d,        &
-             lake_icefrac3d=lake_icefrac3d, z_lake3d=z_lake3d, dz_lake3d=dz_lake3d,       &
+             lake_icefrac3d=lake_icefrac3d,                                               &
              t_soisno3d=t_soisno3d, h2osoi_ice3d=h2osoi_ice3d, h2osoi_liq3d=h2osoi_liq3d, &
              h2osoi_vol3d=h2osoi_vol3d, z3d=z3d, dz3d=dz3d, zi3d=zi3d,                    &
                                            fice=fice, hice=hice, min_lakeice=min_lakeice, &
@@ -457,12 +455,6 @@ MODULE clm_lake
              tg3=tg3, clm_lakedepth=clm_lakedepth, km=km, me=me, master=master,           &
              errmsg=errmsg, errflg=errflg)
         if(errflg/=0) then
-          return
-        endif
-        if(any(dz_lake3d>0 .and. dz_lake3d<.1)) then
-          write(message,*) 'Invalid dz_lake3d. Abort.'
-          errmsg=trim(message)
-          errflg=1
           return
         endif
 
@@ -534,7 +526,7 @@ MODULE clm_lake
 
            lake_points = lake_points+1
 
-           call calculate_constants(i, ISLTYP, watsat(1,1), tkdry(1,1), tkmg(1,1), tksatu(1,1), csol(1,1))
+           call calculate_constants(i, ISLTYP, clm_lakedepth, watsat(1,1), tkdry(1,1), tkmg(1,1), tksatu(1,1), csol(1,1), z_lake(1,:), dz_lake(1,:))
 
            do c = 1,column
      
@@ -563,8 +555,6 @@ MODULE clm_lake
             do k = 1,nlevlake
                t_lake(c,k)        = t_lake3d(i,k)
                lake_icefrac(c,k)  = lake_icefrac3d(i,k)
-               z_lake(c,k)        = z_lake3d(i,k)
-               dz_lake(c,k)       = dz_lake3d(i,k)
             enddo
             do k = -nlevsnow+1,nlevsoil
                t_soisno(c,k)      = t_soisno3d(i,k)
@@ -743,7 +733,7 @@ MODULE clm_lake
                   hice(I) = 0                               ! sea_ice_thickness
                   do k=1,nlevlake
                     if(lake_icefrac3d(i,k)>0) then
-                      hice(i) = hice(i) + dz_lake3d(i,k)
+                      hice(i) = hice(i) + dz_lake(1,k)
                     endif
                   end do
                 else ! Not an ice point
@@ -5307,14 +5297,15 @@ if_pergro: if (PERGRO) then
 
   end subroutine clm_lake_init
 
-  subroutine calculate_constants(i, ISLTYP, watsat, tkdry, tkmg, tksatu, csol)
+  subroutine calculate_constants(i, ISLTYP, clm_lakedepth, watsat, tkdry, tkmg, tksatu, csol, z_lake, dz_lake)
     implicit none
     integer, intent(in) :: i, ISLTYP(:)
-    real(kind_lake), intent(inout) :: watsat, tkdry, tkmg, tksatu, csol
+    real(kind_lake), intent(inout) :: clm_lakedepth(:), watsat, tkdry, tkmg, tksatu, csol
+    real(kind_lake), intent(inout) :: z_lake(:), dz_lake(:)
     ! locals
-    real(kind_lake) :: bd, tkm
+    real(kind_lake) :: bd, tkm, depthratio
     integer :: isl
-
+    
     isl = ISLTYP(i)
     if (isl == 0  ) isl = 14
     if (isl == 14 ) isl = isl + 1
@@ -5326,13 +5317,26 @@ if_pergro: if (PERGRO) then
     tksatu = tkmg*0.57_kind_lake**watsat
     tkdry = (0.135_kind_lake*bd + 64.7_kind_lake) / (2.7e3_kind_lake - 0.947_kind_lake*bd)
     csol = (2.128_kind_lake*sand(isl)+2.385_kind_lake*clay(isl)) / (sand(isl)+clay(isl))*1.e6_kind_lake  ! J/(m3 K)
+
+    if (clm_lakedepth(i) == spval) then
+      clm_lakedepth(i) = zlak(nlevlake) + 0.5_kind_lake*dzlak(nlevlake)
+      z_lake(1:nlevlake) = zlak(1:nlevlake)
+      dz_lake(1:nlevlake) = dzlak(1:nlevlake)
+    else
+      depthratio = clm_lakedepth(i) / (zlak(nlevlake) + 0.5_kind_lake*dzlak(nlevlake)) 
+      z_lake(1) = zlak(1)
+      dz_lake(1) = dzlak(1)
+      dz_lake(2:nlevlake) = dzlak(2:nlevlake)*depthratio
+      z_lake(2:nlevlake) = zlak(2:nlevlake)*depthratio + dz_lake(1)*(1._kind_lake - depthratio)
+    end if
+
   end subroutine calculate_constants
 
  SUBROUTINE lakeini(kdt,            ISLTYP,          gt0,             snowd,          & !i
                     weasd,                           lakedepth_default,  fhour,       &
                     oro_lakedepth,  savedtke12d,     snowdp2d,        h2osno2d,       & !o
                     snl2d,          t_grnd2d,        t_lake3d,        lake_icefrac3d, &
-                    z_lake3d,       dz_lake3d,       t_soisno3d,      h2osoi_ice3d,   &
+                                                     t_soisno3d,      h2osoi_ice3d,   &
                     h2osoi_liq3d,   h2osoi_vol3d,    z3d,             dz3d,           &
                     zi3d,                                                             &
                     fice,           hice,            min_lakeice,     tsfc,           &
@@ -5385,9 +5389,7 @@ if_pergro: if (PERGRO) then
                                                                              t_grnd2d
                                                                               
   real(kind_phys),    dimension(IM,nlevlake),INTENT(out)                  :: t_lake3d,       &
-                                                                             lake_icefrac3d, &
-                                                                             z_lake3d,       &
-                                                                             dz_lake3d
+                                                                             lake_icefrac3d
   real(kind_phys),    dimension(IM,-nlevsnow+1:nlevsoil ),INTENT(out)     :: t_soisno3d,     &
                                                                              h2osoi_ice3d,   &
                                                                              h2osoi_liq3d,   &
@@ -5398,12 +5400,11 @@ if_pergro: if (PERGRO) then
 
   !LOGICAL, DIMENSION( : ),intent(out)                      :: lake
   !REAL(KIND_PHYS), OPTIONAL,    DIMENSION( : ), INTENT(IN)    ::  lake_depth ! no separate variable for this in CCPP
-  integer  :: n,i,j,k,ib,lev,bottom      ! indices
-  real(kind_lake),dimension(1:im )    :: depthratio2d       ! ratio of lake depth to standard deep lake depth 
+
+  real(kind_lake) :: z_lake(nlevlake), dz_lake(nlevlake)
 
   logical,parameter        :: arbinit = .false.
   real(kind_lake),parameter           :: defval  = -999.0
-  integer                  :: isl
   integer                  :: numb_lak    ! for debug
   character*256 :: message
   real(kind_lake) :: ht
@@ -5419,6 +5420,8 @@ if_pergro: if (PERGRO) then
   integer :: used_lakedepth_default, init_points, month, julday
   integer :: mon, iday, num2, num1, juld, day2, day1, wght1, wght2
   real(kind_lake) :: Tclim
+
+  integer  :: n,i,j,k,ib,lev,bottom      ! indices
 
   used_lakedepth_default=0
 
@@ -5464,8 +5467,6 @@ if_pergro: if (PERGRO) then
     do k = 1,nlevlake 
         t_lake3d(i,k)          = defval
         lake_icefrac3d(i,k)    = defval
-        z_lake3d(i,k)          = defval
-        dz_lake3d(i,k)         = defval
     enddo
     
     if (use_lake_model(i) == 1) then
@@ -5491,24 +5492,8 @@ if_pergro: if (PERGRO) then
         h2osno2d(i)         = 0.
       endif
     
-    ! Soil hydraulic and thermal properties
-    isl = ISLTYP(i)   
-    if (isl == 0  ) isl = 14
-    if (isl == 14 ) isl = isl + 1 
+    call calculate_constants(i, ISLTYP, clm_lakedepth, watsat, tkdry, tkmg, tksatu, csol, z_lake, dz_lake)
 
-    call calculate_constants(i, ISLTYP, watsat, tkdry, tkmg, tksatu, csol)
-
-    if (clm_lakedepth(i) == spval) then
-      clm_lakedepth(i) = zlak(nlevlake) + 0.5_kind_lake*dzlak(nlevlake)
-      z_lake3d(i,1:nlevlake) = zlak(1:nlevlake)
-      dz_lake3d(i,1:nlevlake) = dzlak(1:nlevlake)
-    else
-      depthratio2d(i) = clm_lakedepth(i) / (zlak(nlevlake) + 0.5_kind_lake*dzlak(nlevlake)) 
-      z_lake3d(i,1) = zlak(1)
-      dz_lake3d(i,1) = dzlak(1)
-      dz_lake3d(i,2:nlevlake) = dzlak(2:nlevlake)*depthratio2d(i)
-      z_lake3d(i,2:nlevlake) = zlak(2:nlevlake)*depthratio2d(i) + dz_lake3d(i,1)*(1._kind_lake - depthratio2d(i))
-    end if
     z3d(i,1:nlevsoil) = zsoi(1:nlevsoil)
     zi3d(i,0:nlevsoil) = zisoi(0:nlevsoil)
     dz3d(i,1:nlevsoil) = dzsoi(1:nlevsoil)
@@ -5589,9 +5574,9 @@ if_pergro: if (PERGRO) then
      if(lake_icefrac3d(i,1) > 0.) then
        depth = 0.
        do k=2,nlevlake
-         depth = depth + dz_lake3d(i,k)
+         depth = depth + dz_lake(k)
          if(hice(i) >= depth) then
-           lake_icefrac3d(i,k) = max(0.,lake_icefrac3d(i,1)+(0.-lake_icefrac3d(i,1))/z_lake3d(i,nlevlake)*depth)
+           lake_icefrac3d(i,k) = max(0.,lake_icefrac3d(i,1)+(0.-lake_icefrac3d(i,1))/z_lake(nlevlake)*depth)
          else
            lake_icefrac3d(i,k) = 0.
          endif
@@ -5605,8 +5590,8 @@ if_pergro: if (PERGRO) then
        t_grnd2d(i)          = max(tfrz,tsfc(i))
      endif
      do k = 2, nlevlake
-       if(z_lake3d(i,k).le.depth_c) then
-         t_lake3d(i,k) = tsfc(i)+(277.2_kind_lake-tsfc(i))/depth_c*z_lake3d(i,k)
+       if(z_lake(k).le.depth_c) then
+         t_lake3d(i,k) = tsfc(i)+(277.2_kind_lake-tsfc(i))/depth_c*z_lake(k)
        else
          t_lake3d(i,k) = 277.2_kind_lake
        end if
@@ -5618,7 +5603,7 @@ if_pergro: if (PERGRO) then
      ! initial t_soisno3d
      ! in snow
      if(snowdp2d(i) > 0.) then
-       do k = snl2d(i)+1, 0
+       do k = nint(snl2d(i))+1, 0
          t_soisno3d(i,k) =min(tfrz,tsfc(i))
        enddo
      endif
