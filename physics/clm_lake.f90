@@ -5300,7 +5300,8 @@ if_pergro: if (PERGRO) then
   subroutine calculate_constants(i, ISLTYP, clm_lakedepth, watsat, tkdry, tkmg, tksatu, csol, z_lake, dz_lake)
     implicit none
     integer, intent(in) :: i, ISLTYP(:)
-    real(kind_lake), intent(inout) :: clm_lakedepth(:), watsat, tkdry, tkmg, tksatu, csol
+    real(kind_phys), intent(inout) :: clm_lakedepth(:)
+    real(kind_lake), intent(inout) :: watsat, tkdry, tkmg, tksatu, csol
     real(kind_lake), intent(inout) :: z_lake(:), dz_lake(:)
     ! locals
     real(kind_lake) :: bd, tkm, depthratio
