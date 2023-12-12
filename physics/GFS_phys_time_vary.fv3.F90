@@ -361,7 +361,8 @@
 !> - Call  cires_indx_ugwp to read monthly-mean GW-tau diagnosed from FV3GFS-runs that can resolve GWs
          if (do_ugwp_v1) then
             call cires_indx_ugwp (im, me, master, xlat_d, jindx1_tau, jindx2_tau,  &
-                                  ddy_j1tau, ddy_j2tau)
+                                  ddy_j1tau, ddy_j2tau, myerrmsg, myerrflg)
+            call copy_error(myerrmsg, myerrflg, errmsg, errflg)
          endif
 
 !$OMP section
@@ -832,9 +833,14 @@
          real(kind_dbl_prec)  :: rinc(5)
          real(kind_sngl_prec) :: rinc4(5)
 
+         character(255) :: taumsg
+         integer :: tauflg
+
          ! Initialize CCPP error handling variables
          errmsg = ''
          errflg = 0
+         taumsg = ' '
+         tauflg = 0
 
          ! Check initialization status
          if (.not.is_initialized) then
@@ -851,7 +857,7 @@
 !$OMP          shared(levs,prsl,iccn,jindx1_ci,jindx2_ci,ddy_ci,iindx1_ci,iindx2_ci)     &
 !$OMP          shared(ddx_ci,in_nm,ccn_nm,do_ugwp_v1,jindx1_tau,jindx2_tau,ddy_j1tau)    &
 !$OMP          shared(ddy_j2tau,tau_amf,iflip,ozphys,rjday,n1,n2,idat,jdat,rinc,rinc4)   &
-!$OMP          shared(w3kindreal,w3kindint,jdow,jdoy,jday)                               &
+!$OMP          shared(w3kindreal,w3kindint,jdow,jdoy,jday,taumsg,tauflg)                 &
 !$OMP          private(iseed,iskip,i,j,k)
 
 !$OMP sections
@@ -962,11 +968,17 @@
          if (do_ugwp_v1) then
            call tau_amf_interp(me, master, im, idate, fhour, &
                                jindx1_tau, jindx2_tau,       &
-                               ddy_j1tau, ddy_j2tau, tau_amf)
+                               ddy_j1tau, ddy_j2tau, tau_amf, taumsg, tauflg)
          endif
 
 !$OMP end sections
 !$OMP end parallel
+
+         if(tauflg /= 0) then
+           errmsg = taumsg
+           errflg = tauflg
+           return
+         endif
 
 !> - Call aerinterpol() to make aerosol interpolation
          if (iaerclm) then
@@ -1052,9 +1064,9 @@
          if (allocated(ci_pres) ) deallocate(ci_pres)
 
          ! Deallocate UGWP-input arrays
-         if (allocated(ugwp_taulat)) deallocate(ugwp_taulat)
-         if (allocated(tau_limb   )) deallocate(tau_limb)
-         if (allocated(days_limb  )) deallocate(days_limb)
+         ! if (allocated(ugwp_taulat)) deallocate(ugwp_taulat)
+         ! if (allocated(tau_limb   )) deallocate(tau_limb)
+         ! if (allocated(days_limb  )) deallocate(days_limb)
 
          is_initialized = .false.
 
