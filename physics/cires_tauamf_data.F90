@@ -201,7 +201,7 @@ contains
       errmsg = ' '
       errflg = 0
 
-    if(ntau_d1y /= 73) then
+    if(ntau_d1y<1 .or. ntau_d1y>4000) then
       errmsg = 'corrupted ntau_d1y (lat) dimension'
       errflg = 1
       return
@@ -260,7 +260,7 @@ contains
     errmsg = ' '
     errflg = 0
 
-    if(ntau_d2t /= 14) then
+    if(ntau_d2t<1 .or. ntau_d2t>366) then
       errmsg = 'corrupted ntau_d2t (days) dimension'
       errflg = 1
       return
