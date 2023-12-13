@@ -6,18 +6,34 @@ module cires_tauamf_data
 !...........................................................................................
 implicit none
 
-   integer           :: ntau_d1y, ntau_d2t  
    real(kind=kind_phys), pointer :: ugwp_taulat(:) => null()
    real(kind=kind_phys), pointer :: tau_limb(:,:) => null()
    real(kind=kind_phys), pointer :: days_limb(:) => null()
-   logical           :: flag_alloctau = .false.          
-   character(len=255):: ugwp_taufile =  'ugwp_limb_tau.nc' 
+   character(len=255), parameter:: ugwp_taufile =  'ugwp_limb_tau.nc' 
 
-   public :: read_tau_amf, cires_indx_ugwp, tau_amf_interp 
+   private
+   public :: free_tau_amf, read_tau_amf, cires_indx_ugwp, tau_amf_interp 
 
 contains
   
- 
+   subroutine free_tau_amf
+     implicit none
+     if(associated(ugwp_taulat)) then
+       deallocate(ugwp_taulat)
+       nullify(ugwp_taulat)
+     endif
+     
+     if(associated(days_limb)) then
+       deallocate(days_limb)
+       nullify(days_limb)
+     endif
+     
+     if(associated(tau_limb)) then
+       deallocate(tau_limb)
+       nullify(tau_limb)
+     endif
+   end subroutine free_tau_amf
+
    logical function netcdf_check(status, errmsg, errflg, why)
      use netcdf
      implicit none
@@ -50,6 +66,7 @@ contains
      character(len=*), intent(out) :: errmsg
      integer,          intent(out) :: errflg    
      !
+     integer :: ntau_d1y, ntau_d2t
      write(0,*) 'read_tau_amf'      
 
      ntau_d1y = 0
@@ -96,7 +113,7 @@ contains
      allocate(local_days_limb(ntau_d2t))
      allocate(local_tau_limb(ntau_d1y, ntau_d2t))
 
-     call free_globals
+     call free_tau_amf
 
      allocate(ugwp_taulat(ntau_d1y))
      allocate(days_limb(ntau_d2t))
@@ -154,26 +171,9 @@ contains
        deallocate(local_tau_limb)
      end subroutine free_locals
 
-     subroutine free_globals
-       if(associated(ugwp_taulat)) then
-         deallocate(ugwp_taulat)
-         nullify(ugwp_taulat)
-       endif
-
-       if(associated(days_limb)) then
-         deallocate(days_limb)
-         nullify(days_limb)
-       endif
-
-       if(associated(tau_limb)) then
-         deallocate(tau_limb)
-         nullify(tau_limb)
-       endif
-     end subroutine free_globals
-
      subroutine cleanup
        call free_locals
-       call free_globals
+       call free_tau_amf
      end subroutine cleanup
 
    end subroutine read_tau_amf
@@ -195,17 +195,23 @@ contains
       
 !locals
 
-      integer :: i,j, j1, j2     
+      integer :: i,j, j1, j2, ntau_d1y
 !     
-
+      ntau_d1y = size(ugwp_taulat)
       errmsg = ' '
       errflg = 0
 
-    if(ntau_d1y<1 .or. ntau_d1y>4000) then
-      errmsg = 'corrupted ntau_d1y (lat) dimension'
-      errflg = 1
-      return
-    endif
+      if(size(dlat)/=npts .or. size(w1_j1tau)/=npts .or. size(w2_j2tau)/=npts .or. size(j1_tau)/=npts .or. size(j2_tau)/=npts) then
+        errmsg = 'mismatch in argument array sizes'
+        errflg = 1
+        return
+      endif
+
+      if(ntau_d1y<1 .or. ntau_d1y>4000 .or. ntau_d1y/=size(ugwp_taulat) .or. ntau_d1y/=size(tau_limb,1)) then
+        errmsg = 'corrupted ntau_d1y (lat) dimension'
+        errflg = 1
+        return
+      endif
 
       do j=1,npts
         j2_tau(j) = ntau_d1y
@@ -248,7 +254,7 @@ contains
     character(*), intent(out) :: errmsg
 !locals
 
-    integer :: i, j1, j2, it1, it2 , iday
+    integer :: i, j1, j2, it1, it2 , iday, ntau_d2t
     integer :: ddd    
     real(kind=kind_phys)  :: tx1, tx2, w1, w2, fddd 
 !
@@ -256,11 +262,17 @@ contains
 ! 
     ddd = 1e9
     fddd = 1e9
-
+    ntau_d2t = size(days_limb)
     errmsg = ' '
     errflg = 0
 
-    if(ntau_d2t<1 .or. ntau_d2t>366) then
+    if(size(ddy_j1)/=im .or. size(ddy_j2)/=im .or. size(j1_tau)/=im .or. size(j2_tau)/=im .or. size(tau_ddd)/=im) then
+      errmsg = 'mismatch in argument array sizes'
+      errflg = 1
+      return
+    endif
+
+    if(ntau_d2t<1 .or. ntau_d2t>366 .or. ntau_d2t/=size(days_limb) .or. ntau_d2t/=size(tau_limb,2)) then
       errmsg = 'corrupted ntau_d2t (days) dimension'
       errflg = 1
       return

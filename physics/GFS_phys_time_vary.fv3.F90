@@ -16,8 +16,8 @@
 
       use module_ozphys, only: ty_ozphys
 
-      use h2o_def,   only : levh2o, h2o_coeff, h2o_lat, h2o_pres, h2o_time, h2oplin
-      use h2ointerp, only : read_h2odata, setindxh2o, h2ointerpol
+      use h2o_def, only: levh2o, h2o_coeff
+      use h2ointerp, only : free_h2odata, read_h2odata, setindxh2o, h2ointerpol
 
       use aerclm_def, only : aerin, aer_pres, ntrcaer, ntrcaerm, iamin, iamax, jamin, jamax
       use aerinterp,  only : read_aerdata, setindxaer, aerinterpol, read_aerdataf
@@ -27,8 +27,7 @@
 
       use gcycle_mod, only : gcycle
 
-      use cires_tauamf_data,   only:  cires_indx_ugwp,  read_tau_amf, tau_amf_interp
-      use cires_tauamf_data,   only:  tau_limb,  days_limb, ugwp_taulat
+      use cires_tauamf_data,   only:  free_tau_amf, cires_indx_ugwp,  read_tau_amf, tau_amf_interp
 
       !--- variables needed for calculating 'sncovr'
       use namelist_soilveg, only: salp_data, snupx
@@ -225,7 +224,7 @@
 !$OMP parallel num_threads(nthrds) default(none)                                    &
 !$OMP          shared (me,master,ntoz,h2o_phys,im,nx,ny,levs,idate)                 &
 !$OMP          shared (xlat_d,xlon_d,imap,jmap,errmsg,errflg)                       &
-!$OMP          shared (levh2o,h2o_coeff,h2o_pres,h2opl)                             &
+!$OMP          shared (h2opl, levh2o, h2o_coeff)                                    &
 !$OMP          shared (iamin, iamax, jamin, jamax, lsm_noahmp)                      &
 !$OMP          shared (iaerclm,iaermdl,ntrcaer,aer_nm,iflip,iccn)                   &
 !$OMP          shared (jindx1_o3,jindx2_o3,ddy_o3,jindx1_h,jindx2_h,ddy_h)          &
@@ -1048,12 +1047,6 @@
 
          if (.not.is_initialized) return
 
-         ! Deallocate h2o arrays
-         if (allocated(h2o_lat) ) deallocate(h2o_lat)
-         if (allocated(h2o_pres)) deallocate(h2o_pres)
-         if (allocated(h2o_time)) deallocate(h2o_time)
-         if (allocated(h2oplin) ) deallocate(h2oplin)
-
          ! Deallocate aerosol arrays
          if (allocated(aerin)   ) deallocate(aerin)
          if (allocated(aer_pres)) deallocate(aer_pres)
@@ -1063,10 +1056,8 @@
          if (allocated(ccnin)   ) deallocate(ccnin)
          if (allocated(ci_pres) ) deallocate(ci_pres)
 
-         ! Deallocate UGWP-input arrays
-         ! if (allocated(ugwp_taulat)) deallocate(ugwp_taulat)
-         ! if (allocated(tau_limb   )) deallocate(tau_limb)
-         ! if (allocated(days_limb  )) deallocate(days_limb)
+         call free_h2odata
+         call free_tau_amf
 
          is_initialized = .false.
 

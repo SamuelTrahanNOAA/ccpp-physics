@@ -6,18 +6,33 @@
 !> This module contains subroutines of reading and interpolating
 !! h2o coefficients.
 module h2ointerp
-
+   use machine, only: kind_phys
+   use h2o_def, only: levh2o, h2o_coeff, h2o_pres
    implicit none
 
    private
 
-   public :: read_h2odata, setindxh2o, h2ointerpol
+   integer, parameter :: kh2opltc=29
+   
+   integer :: latsh2o=-1, timeh2o=-1
+   real (kind=kind_phys), allocatable :: h2o_lat(:), h2o_time(:)
+   real (kind=kind_phys), allocatable :: h2oplin(:,:,:,:)
+
+   public :: read_h2odata, setindxh2o, h2ointerpol, free_h2odata
 
 contains
 
+      subroutine free_h2odata
+        implicit none
+        if(allocated(h2o_lat)) deallocate(h2o_lat)
+        if(allocated(h2o_pres)) deallocate(h2o_pres)
+        if(allocated(h2o_time)) deallocate(h2o_time)
+        if(allocated(h2oplin)) deallocate(h2oplin)
+      end subroutine free_h2odata
+
       subroutine read_h2odata (h2o_phys, me, master)
       use machine,  only: kind_phys
-      use h2o_def
+      implicit none
 !--- in/out
       logical, intent(in) :: h2o_phys
       integer, intent(in) :: me
@@ -91,26 +106,25 @@ contains
 ! May 2015 Shrinivas Moorthi - Prepare for H2O interpolation
 !
       use machine, only: kind_phys
-      use h2o_def, only: jh2o => latsh2o, h2o_lat, h2o_time
 !
       implicit none
 !
       integer                     npts
-      integer, dimension(npts) :: jindx1, jindx2
-      real(kind=kind_phys)     :: dlat(npts),ddy(npts)
+      integer, dimension(:) :: jindx1, jindx2
+      real(kind=kind_phys)     :: dlat(:),ddy(:)
 !
       integer i,j,lat
 !
       do j=1,npts
-        jindx2(j) = jh2o + 1
-        do i=1,jh2o
+        jindx2(j) = latsh2o + 1
+        do i=1,latsh2o
           if (dlat(j) < h2o_lat(i)) then
             jindx2(j) = i
             exit
           endif
         enddo
         jindx1(j) = max(jindx2(j)-1,1)
-        jindx2(j) = min(jindx2(j),jh2o)
+        jindx2(j) = min(jindx2(j),latsh2o)
         if (jindx2(j) /= jindx1(j)) then
           ddy(j) = (dlat(j)            - h2o_lat(jindx1(j))) &
                  / (h2o_lat(jindx2(j)) - h2o_lat(jindx1(j)))
@@ -132,7 +146,6 @@ contains
 ! May 2015 Shrinivas Moorthi - Prepare for H2O interpolation
 !
       use machine , only : kind_phys
-      use h2o_def
       implicit none
       integer             j,j1,j2,l,npts,nc,n1,n2
       real(kind=kind_phys) fhour,tem, tx1, tx2
@@ -142,8 +155,8 @@ contains
       integer  me,idate(4)
       integer  idat(8),jdat(8)
 !
-      real(kind=kind_phys) ddy(npts)
-      real(kind=kind_phys) h2oplout(npts,levh2o,h2o_coeff)
+      real(kind=kind_phys) ddy(:)
+      real(kind=kind_phys) h2oplout(:,:,:)
       real(kind=kind_phys) rjday
       integer              jdow, jdoy, jday
       real(8)              rinc(5)

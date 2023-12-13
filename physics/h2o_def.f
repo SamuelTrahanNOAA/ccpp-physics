@@ -11,12 +11,7 @@
 
       use machine , only : kind_phys
       implicit none
-
-      integer, parameter :: kh2opltc=29
-
-      integer latsh2o, levh2o, timeh2o,  h2o_coeff
-      real (kind=kind_phys), allocatable :: h2o_lat(:), h2o_pres(:)
-     &,                                     h2o_time(:)
-      real (kind=kind_phys), allocatable :: h2oplin(:,:,:,:)
-
+      private
+      integer, public :: levh2o=-1, h2o_coeff=-1
+      real(kind=kind_phys), allocatable, public :: h2o_pres(:)
       end module h2o_def
