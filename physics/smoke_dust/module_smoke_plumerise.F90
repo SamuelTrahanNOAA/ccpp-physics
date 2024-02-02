@@ -629,7 +629,7 @@ type(plumegen_coms), pointer :: coms
 character (len=10) :: varn
 integer ::  izprint, iconv,  itime, k, kk, kkmax, deltak,ilastprint,kmt &
            ,ixx,nrectotal,i_micro,n_sub_step
-real(kind=kind_phys) ::  vc, g,  r,  cp,  eps,  &
+real(kind=kind_phys) ::  vc, g,  r,  cp,  eps,  min_dt, max_dt, &
          tmelt,  heatsubl,  heatfus,  heatcond, tfreeze, &
          ztopmax, wmax, rmaxtime, es, esat, heat,dt_save !ESAT_PR,
 character (len=2) :: cixx 
@@ -685,6 +685,8 @@ izprint  = 0          ! if = 0 => no printout
 
 ! ******************* model evolution ******************************
 rmaxtime = float(coms%maxtime)
+min_dt = rmaxtime*1e-4
+max_dt = 5
 !
 !print * ,' TIME=',coms%time,' RMAXTIME=',rmaxtime
 !print*,'======================================================='
@@ -698,7 +700,7 @@ rmaxtime = float(coms%maxtime)
 !sam     write(0,81) coms%nm1,kmt,kkmax,deltak
 !-- set timestep
     !coms%dt = (coms%zm(2)-coms%zm(1)) / (coms%tstpf * wmax)  
-    coms%dt = min(5.,(coms%zm(2)-coms%zm(1)) / (coms%tstpf * wmax))
+    coms%dt = min(max_dt, max(min_dt, (coms%zm(2)-coms%zm(1)) / (coms%tstpf * wmax)))
                                 
 !-- elapsed time, sec
     coms%time = coms%time+coms%dt 
