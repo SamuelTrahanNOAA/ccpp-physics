@@ -47,6 +47,14 @@ module cu_c3_driver_post
       real(kind_phys) :: ze, ze_conv, dbz_sum
       integer :: i, k
 
+      ! Bug fix for non-reproducible results: initialize all variables.
+      cuprate = 0
+      ze = 0
+      ze_conv = 0
+      dbz_sum = 0
+      i = 0
+      k = 0
+
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0

@@ -47,6 +47,9 @@ module cu_c3_driver_pre
       ! local variables
       real(kind=kind_phys) :: dtdyn
 
+      ! Bug fix for non-reproducible results: initialize all variables.
+      dtdyn = 0
+
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
