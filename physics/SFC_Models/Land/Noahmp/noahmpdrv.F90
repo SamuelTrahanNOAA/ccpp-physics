@@ -1084,7 +1084,12 @@ end subroutine noahmpdrv_timestep_init
       spec_humidity_surface        = undefined  ! doesn't need inout; should be out
       snowfall                     = qsnowxy(i) ! doesn't need inout; should be out
       rainfall                     = -9999.0    ! doesn't need inout; should be out
-      snow_levels                  = nint(snowxy(i))
+      if(snowxy(i) >= -999 .and. snowxy(i) <= 999) then
+        snow_levels                  = nint(snowxy(i))
+      else
+        write(0,*) 'bad i,snowxy',i, snowxy(i)
+        snow_levels = -1
+      endif
       interface_depth              = zsnsoxy(i,:)
       snow_depth                   = snwdph(i) * 0.001         ! convert from mm to m
       snow_water_equiv             = weasd(i)
